@@ -1,0 +1,310 @@
+body {
+    background: #000033;
+    color: #fff;
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    letter-spacing: 1px;
+}
+
+canvas {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    height: 100vh;
+    max-width: 100%;
+    object-fit: contain;
+    z-index: 1;
+}
+
+.left-panel, .right-panel {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.8);
+    z-index: 2;
+}
+
+.left-panel {
+    left: calc(50% - (10 * 32px) - 20px);  /* Half board width (10 blocks * 32px) plus small gap */
+    text-align: right;
+}
+
+.right-panel {
+    right: calc(50% - (10 * 32px) - 20px);  /* Mirror of left panel */
+    text-align: right;
+}
+
+.stat-section, .hold-section, .zone-section, .next-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.stat-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.7;
+    text-align: right;
+    margin-top: 10px;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: right;
+    margin-bottom: 5px;
+}
+
+.hold-box {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;  /* Center the box */
+    margin-bottom: 10px;  /* Space between box and text */
+}
+
+#zone-indicator {
+    width: 60px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-left: auto;
+}
+
+#zone-meter {
+    width: 0%;
+    height: 100%;
+    background: #00ffff;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.combo-count {
+    color: #ff00ff;
+    text-shadow: 0 0 10px #ff00ff;
+}
+
+.time {
+    font-family: monospace;
+    font-size: 24px;
+}
+
+#area-score {
+    color: #FFD700;
+}
+
+.pause-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3em;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.8);
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+    display: none;
+}
+
+.settings-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: none;
+    text-align: left;
+}
+
+.settings-panel h2 {
+    margin-top: 0;
+    color: #fff;
+    font-size: 1.2em;
+}
+
+.game-over {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 30px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: none;
+    text-align: center;
+    min-width: 300px;
+}
+
+.game-over h1 {
+    color: #ff0000;
+    font-size: 2.5em;
+    margin: 0 0 20px 0;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+.game-over .stats {
+    margin: 20px 0;
+    font-size: 1.2em;
+}
+
+.game-over .stat-item {
+    margin: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 20px;
+}
+
+.game-over .value {
+    color: #FFD700;
+    font-weight: bold;
+}
+
+.game-over .restart-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+}
+
+.game-over .restart-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.start-menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+    min-width: 300px;
+    z-index: 1000;
+}
+
+.start-menu h1 {
+    color: #fff;
+    font-size: 3em;
+    margin: 0 0 30px 0;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+.menu-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.2em;
+    margin: 10px;
+    min-width: 200px;
+    transition: all 0.3s ease;
+}
+
+.menu-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.high-score-display {
+    color: #FFD700;
+    margin: 20px 0;
+    font-size: 1.2em;
+}
+
+.controls-section {
+    margin: 20px 0;
+    padding: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.controls-section h3 {
+    color: #fff;
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+}
+
+.control-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.control-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.control-item span:last-child {
+    color: #FFD700;
+    font-family: monospace;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.game-over, .start-menu, .settings-panel {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.stats-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.hold-section {
+    margin-top: 60px;  /* Space for the held piece above */
+    text-align: center;  /* Center the HOLD text */
+}
+
+.hold-box {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;  /* Center the box */
+    margin-bottom: 10px;  /* Space between box and text */
+}
+
+.stat-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.7;
+    text-align: right;
+}
+
+/* Special case for hold label */
+.hold-section .stat-label {
+    text-align: center;
+    margin-top: 0;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: right;
+    margin-bottom: 5px;
+}

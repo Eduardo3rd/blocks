@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tetris Clone</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            font-size: 1.2em;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        canvas {
+            height: 100vh;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        .left-panel {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: right;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            left: calc(50% - (12 * 40px)/2 - 100px);
+        }
+
+        .right-panel {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: left;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            right: calc(50% - (12 * 40px)/2 - 100px);
+        }
+
+        .stat-label {
+            font-size: 0.7em;
+            opacity: 0.8;
+            margin: 3px 0;
+        }
+
+        .stat-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 0 0 12px 0;
+        }
+
+        .time {
+            font-family: monospace;
+            font-size: 1.4em;
+        }
+
+        .area-score {
+            color: #FFD700;
+            text-align: left;
+        }
+
+        #zone-indicator {
+            width: 100px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin: 12px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #zone-meter {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #00ffff, #ff00ff);
+            transition: width 0.3s ease;
+        }
+
+        .in-zone {
+            animation: zoneFlash 1s infinite;
+        }
+
+        @keyframes zoneFlash {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        .pause-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            display: none;
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none;
+            text-align: left;
+        }
+
+        .settings-panel h2 {
+            margin-top: 0;
+            color: #fff;
+            font-size: 1.2em;
+        }
+
+        .settings-item {
+            margin: 15px 0;
+        }
+
+        .settings-item label {
+            display: block;
+            margin-bottom: 5px;
+            color: #fff;
+            font-size: 0.9em;
+        }
+
+        .settings-item input {
+            width: 200px;
+        }
+
+        .settings-item .value-display {
+            color: #aaa;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+
+        .combo-count {
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+            transition: all 0.2s ease;
+        }
+
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none;
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .game-over h1 {
+            color: #ff0000;
+            font-size: 2.5em;
+            margin: 0 0 20px 0;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+
+        .game-over .stats {
+            margin: 20px 0;
+            font-size: 1.2em;
+        }
+
+        .game-over .stat-item {
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 20px;
+        }
+
+        .game-over .value {
+            color: #FFD700;
+            font-weight: bold;
+        }
+
+        .game-over .restart-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .game-over .restart-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="left-panel">
+        <div class="stat-label">SPEED LV</div>
+        <div class="stat-value" id="level">0</div>
+        
+        <div class="stat-label">LINES</div>
+        <div class="stat-value"><span id="lines">0</span>/90</div>
+        
+        <div id="zone-indicator">
+            <div id="zone-meter"></div>
+        </div>
+    </div>
+
+    <div class="pause-overlay" id="pause-text">PAUSE</div>
+
+    <div class="settings-panel" id="settings-panel">
+        <h2>Controller Settings</h2>
+        <div class="settings-item">
+            <label>DPad Repeat Delay (ms)</label>
+            <input type="range" id="dpad-delay" min="50" max="500" step="10" value="150">
+            <span class="value-display" id="dpad-delay-value">150ms</span>
+        </div>
+        <div class="settings-item">
+            <label>Analog Stick Deadzone</label>
+            <input type="range" id="deadzone" min="0.1" max="0.9" step="0.1" value="0.5">
+            <span class="value-display" id="deadzone-value">0.5</span>
+        </div>
+        <div class="settings-item">
+            <label>Analog Stick Sensitivity</label>
+            <input type="range" id="stick-sensitivity" min="1" max="10" step="1" value="5">
+            <span class="value-display" id="sensitivity-value">5</span>
+        </div>
+    </div>
+
+    <div class="game-over" id="game-over">
+        <h1>GAME OVER</h1>
+        <div class="stats">
+            <div class="stat-item">
+                <span>Final Score:</span>
+                <span class="value" id="final-score">0</span>
+            </div>
+            <div class="stat-item">
+                <span>Lines Cleared:</span>
+                <span class="value" id="final-lines">0</span>
+            </div>
+            <div class="stat-item">
+                <span>Level Reached:</span>
+                <span class="value" id="final-level">0</span>
+            </div>
+            <div class="stat-item">
+                <span>Time Played:</span>
+                <span class="value" id="final-time">00:00</span>
+            </div>
+        </div>
+        <button class="restart-btn" onclick="restartGame()">Play Again</button>
+    </div>
+
+    <div class="controls"></div>
+    <canvas id="tetris" width="1200" height="800"></canvas>
+
+    <div class="right-panel">
+        <div class="stat-label">TIME</div>
+        <div class="stat-value time" id="time">00:00</div>
+        
+        <div class="stat-label">AREA SCORE</div>
+        <div class="stat-value area-score" id="area-score">0</div>
+        
+        <div class="stat-label">TOTAL SCORE</div>
+        <div class="stat-value" id="score">0</div>
+        
+        <div class="stat-label">COMBO</div>
+        <div class="stat-value combo-count" id="combo">0x</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('tetris');
+        const context = canvas.getContext('2d');
+
+        // Game constants
+        const grid = 40;
+        const PREVIEW_COUNT = 3;
+        const COMBO_WINDOW = 3000;
+        const MAX_ZONE_ENERGY = 100;
+        const ZONE_TIME = 10000;
+        const DEADZONE = 0.5;
+
+        // Game state variables
+        let dropCounter = 0;
+        let dropInterval = 1000;
+        let lastTime = 0;
+        let gameTime = 0;
+        let paused = false;
+        let score = 0;
+        let level = 0;
+        let lines = 0;
+        let dropScore = 0;
+        let nextPieces = [];
+        let heldPiece = null;
+        let canHold = true;
+        let comboCount = 0;
+        let lastClearTime = 0;
+        let zoneEnergy = 0;
+        let inZone = false;
+        let zoneLines = [];
+        let zoneTimeLeft = 0;
+        let normalDropInterval;
+        let gamepadIndex = null;
+        let lastGamepadState = null;
+
+        const tetrominoes = {
+            'I': [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]],
+            'J': [[1,0,0], [1,1,1], [0,0,0]],
+            'L': [[0,0,1], [1,1,1], [0,0,0]],
+            'O': [[1,1], [1,1]],
+            'S': [[0,1,1], [1,1,0], [0,0,0]],
+            'T': [[0,1,0], [1,1,1], [0,0,0]],
+            'Z': [[1,1,0], [0,1,1], [0,0,0]]
+        };
+
+        let piece = {
+            pos: {x: 0, y: 0},
+            matrix: null,
+            type: null
+        };
+
+        const arena = createMatrix(12, 20);
+
+        const levelThemes = {
+            0: {  // Default theme (blue)
+                background: ['#000033', '#000066'],
+                gridLines: 'rgba(255, 255, 255, 0.05)',
+                particles: '#ffffff'
+            },
+            5: {  // Purple theme
+                background: ['#1a0033', '#330066'],
+                gridLines: 'rgba(255, 255, 255, 0.07)',
+                particles: '#cc99ff'
+            },
+            10: {  // Red theme
+                background: ['#330000', '#660000'],
+                gridLines: 'rgba(255, 255, 255, 0.08)',
+                particles: '#ff9999'
+            },
+            15: {  // Green theme
+                background: ['#003300', '#006600'],
+                gridLines: 'rgba(255, 255, 255, 0.06)',
+                particles: '#99ff99'
+            },
+            20: {  // Gold theme
+                background: ['#332200', '#664400'],
+                gridLines: 'rgba(255, 255, 255, 0.1)',
+                particles: '#ffcc66'
+            }
+        };
+
+        function getCurrentTheme() {
+            const thresholds = Object.keys(levelThemes)
+                .map(Number)
+                .sort((a, b) => b - a);
+            
+            for (const threshold of thresholds) {
+                if (level >= threshold) {
+                    return levelThemes[threshold];
+                }
+            }
+            return levelThemes[0];
+        }
+
+        function createMatrix(w, h) {
+            const matrix = [];
+            while (h--) {
+                matrix.push(new Array(w).fill(0));
+            }
+            return matrix;
+        }
+
+        function collide(arena, player) {
+            const [m, o] = [player.matrix, player.pos];
+            for (let y = 0; y < m.length; ++y) {
+                for (let x = 0; x < m[y].length; ++x) {
+                    if (m[y][x] !== 0 &&
+                        (arena[y + o.y] &&
+                        arena[y + o.y][x + o.x]) !== 0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function merge(arena, player) {
+            const boardX = (canvas.width - arena[0].length * grid) / 2;
+            const boardY = (canvas.height - arena.length * grid) / 2;
+
+            player.matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        arena[y + player.pos.y][x + player.pos.x] = value;
+                        // Add particles at piece placement with board offset
+                        for (let i = 0; i < 3; i++) {
+                            particles.push(createParticle(
+                                boardX + (x + player.pos.x) * grid + grid/2,
+                                boardY + (y + player.pos.y) * grid + grid/2,
+                                'piecePlace'
+                            ));
+                        }
+                    }
+                });
+            });
+        }
+
+        const colors = {
+            'I': '#00f0f0',  // Cyan
+            'O': '#f0f000',  // Yellow
+            'T': '#a000f0',  // Purple
+            'S': '#00f000',  // Green
+            'Z': '#f00000',  // Red
+            'J': '#0000f0',  // Blue
+            'L': '#f0a000'   // Orange
+        };
+
+        function drawMatrix(matrix, offset) {
+            matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        const pieceType = Object.keys(tetrominoes).find(key => 
+                            JSON.stringify(tetrominoes[key]) === JSON.stringify(matrix)) || 'I';
+                        
+                        // During Zone, draw pieces as outlines if they're part of a complete line
+                        if (inZone) {
+                            const isCompleteLine = arena[y + offset.y].every(cell => cell !== 0);
+                            if (isCompleteLine) {
+                                context.strokeStyle = colors[pieceType];
+                                context.lineWidth = 2;
+                                context.shadowBlur = 15;
+                                context.shadowColor = colors[pieceType];
+                                
+                                const xPos = (x + offset.x) * grid;
+                                const yPos = (y + offset.y) * grid;
+                                const size = grid - 1;
+                                
+                                context.beginPath();
+                                context.roundRect(xPos, yPos, size, size, 5);
+                                context.stroke();
+                                context.shadowBlur = 0;
+                                return;
+                            }
+                        }
+                        
+                        context.shadowBlur = 15;
+                        context.shadowColor = colors[pieceType];
+                        context.fillStyle = colors[pieceType];
+                        
+                        const xPos = (x + offset.x) * grid;
+                        const yPos = (y + offset.y) * grid;
+                        const size = grid - 1;
+                        
+                        context.beginPath();
+                        context.roundRect(xPos, yPos, size, size, 5);
+                        context.fill();
+                        context.shadowBlur = 0;
+                    }
+                });
+            });
+        }
+
+        function draw() {
+            const theme = getCurrentTheme();
+            
+            // Create gradient background with theme colors
+            const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, theme.background[0]);
+            gradient.addColorStop(1, theme.background[1]);
+            
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            drawParticles();
+            
+            // Draw game board outline
+            const boardWidth = arena[0].length * grid;
+            const boardHeight = arena.length * grid;
+            const boardX = (canvas.width - boardWidth) / 2;
+            const boardY = (canvas.height - boardHeight) / 2;
+            
+            // Draw semi-transparent background for game board
+            context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            context.fillRect(boardX - 2, boardY - 2, boardWidth + 4, boardHeight + 4);
+            
+            // Draw board border
+            context.strokeStyle = '#fff';
+            context.lineWidth = 2;
+            context.strokeRect(boardX - 2, boardY - 2, boardWidth + 4, boardHeight + 4);
+            
+            // Draw grid pattern with theme color
+            context.strokeStyle = theme.gridLines;
+            context.lineWidth = 1;
+            
+            // Draw vertical grid lines
+            for (let x = 0; x <= boardWidth; x += grid) {
+                context.beginPath();
+                context.moveTo(boardX + x, boardY);
+                context.lineTo(boardX + x, boardY + boardHeight);
+                context.stroke();
+            }
+            
+            // Draw horizontal grid lines
+            for (let y = 0; y <= boardHeight; y += grid) {
+                context.beginPath();
+                context.moveTo(boardX, boardY + y);
+                context.lineTo(boardX + boardWidth, boardY + y);
+                context.stroke();
+            }
+            
+            // Save context state
+            context.save();
+            // Translate to board position
+            context.translate(boardX, boardY);
+            
+            // Draw game elements
+            drawMatrix(arena, {x: 0, y: 0});
+            drawGhost();
+            drawMatrix(piece.matrix, piece.pos);
+            
+            // Restore context
+            context.restore();
+            
+            drawNextPieces();
+            drawHeldPiece();
+        }
+
+        // Add simple particle system
+        const particles = [];
+
+        function createParticle(x, y, type = 'ambient') {
+            const theme = getCurrentTheme();
+            const baseParticle = {
+                x,
+                y,
+                life: 1,
+                type
+            };
+
+            switch(type) {
+                case 'lineClear':
+                    return {
+                        ...baseParticle,
+                        size: Math.random() * 4 + 2,
+                        speedY: -Math.random() * 3 - 2,
+                        speedX: (Math.random() - 0.5) * 6,
+                        color: theme.particles,
+                        glow: true
+                    };
+                case 'piecePlace':
+                    return {
+                        ...baseParticle,
+                        size: Math.random() * 2 + 1,
+                        speedY: -Math.random() * 2,
+                        speedX: (Math.random() - 0.5) * 4,
+                        color: colors[piece.type],
+                        glow: true
+                    };
+                case 'combo':
+                    return {
+                        ...baseParticle,
+                        size: Math.random() * 6 + 3,
+                        speedY: (Math.random() - 0.5) * 8,
+                        speedX: (Math.random() - 0.5) * 8,
+                        color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                        glow: true,
+                        life: 2  // Longer life for combo particles
+                    };
+                case 'zone':
+                    return {
+                        ...baseParticle,
+                        size: Math.random() * 8 + 4,
+                        speedY: (Math.random() - 0.5) * 10,
+                        speedX: (Math.random() - 0.5) * 10,
+                        color: `hsl(${Math.random() * 60 + 180}, 100%, 50%)`,
+                        glow: true,
+                        life: 2
+                    };
+                default: // ambient particles
+                    return {
+                        ...baseParticle,
+                        size: Math.random() * 2,
+                        speedY: -Math.random() * 1,
+                        speedX: (Math.random() - 0.5) * 1,
+                        color: theme.particles,
+                        glow: false
+                    };
+            }
+        }
+
+        function drawParticles() {
+            // Add ambient particles
+            if (Math.random() < 0.1) {
+                particles.push(createParticle(
+                    Math.random() * canvas.width,
+                    canvas.height,
+                    'ambient'
+                ));
+            }
+            
+            // Update and draw all particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.speedX;
+                p.y += p.speedY;
+                p.life -= p.type === 'ambient' ? 0.01 : 0.02;
+                
+                context.save();
+                if (p.glow) {
+                    context.shadowBlur = 10;
+                    context.shadowColor = p.color;
+                }
+                context.fillStyle = `${p.color}${Math.floor(p.life * 255).toString(16).padStart(2, '0')}`;
+                context.beginPath();
+                context.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                context.fill();
+                context.restore();
+                
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        function playerDrop() {
+            piece.pos.y++;
+            if (collide(arena, piece)) {
+                piece.pos.y--;
+                merge(arena, piece);
+                pieceReset();
+                arenaSweep();
+                updateScore(dropScore);
+                dropScore = 0;
+            } else {
+                dropScore += 1;  // Add points for soft drop
+            }
+            dropCounter = 0;
+        }
+
+        function playerMove(dir) {
+            piece.pos.x += dir;
+            if (collide(arena, piece)) {
+                piece.pos.x -= dir;
+            }
+        }
+
+        function copyMatrix(matrix) {
+            return matrix.map(row => [...row]);
+        }
+
+        function pieceReset() {
+            if (nextPieces.length === 0) {
+                // Fill the queue with new pieces
+                for (let i = 0; i < PREVIEW_COUNT; i++) {
+                    const pieces = 'ILJOTSZ';
+                    const type = pieces[pieces.length * Math.random() | 0];
+                    nextPieces.push({
+                        matrix: copyMatrix(tetrominoes[type]),
+                        type: type
+                    });
+                }
+            }
+
+            // Get the next piece from the queue
+            piece.matrix = copyMatrix(nextPieces[0].matrix);
+            piece.type = nextPieces[0].type;
+            nextPieces.shift();
+
+            // Add a new piece to the queue
+            const pieces = 'ILJOTSZ';
+            const type = pieces[pieces.length * Math.random() | 0];
+            nextPieces.push({
+                matrix: copyMatrix(tetrominoes[type]),
+                type: type
+            });
+
+            piece.pos.y = 0;
+            piece.pos.x = (arena[0].length / 2 | 0) -
+                         (piece.matrix[0].length / 2 | 0);
+            canHold = true;
+            
+            if (collide(arena, piece)) {
+                gameOver();
+            }
+        }
+
+        function playerRotate(dir) {
+            const pos = piece.pos.x;
+            let offset = 1;
+            
+            rotate(piece.matrix, dir);
+            
+            while (collide(arena, piece)) {
+                piece.pos.x += offset;
+                offset = -(offset + (offset > 0 ? 1 : -1));
+                if (offset > piece.matrix[0].length) {
+                    rotate(piece.matrix, -dir);
+                    piece.pos.x = pos;
+                    return;
+                }
+            }
+        }
+
+        function rotate(matrix, dir) {
+            for (let y = 0; y < matrix.length; ++y) {
+                for (let x = 0; x < y; ++x) {
+                    [
+                        matrix[x][y],
+                        matrix[y][x],
+                    ] = [
+                        matrix[y][x],
+                        matrix[x][y],
+                    ];
+                }
+            }
+            if (dir > 0) {
+                matrix.forEach(row => row.reverse());
+            } else {
+                matrix.reverse();
+            }
+        }
+
+        function playerHardDrop() {
+            while (!collide(arena, piece)) {
+                piece.pos.y++;
+                dropScore += 2;  // Add points for hard drop
+            }
+            piece.pos.y--;
+            merge(arena, piece);
+            pieceReset();
+            arenaSweep();
+            updateScore(dropScore);
+            dropScore = 0;
+        }
+
+        function drawGhost() {
+            // Create a ghost piece
+            const ghostPiece = {
+                pos: { x: piece.pos.x, y: piece.pos.y },
+                matrix: piece.matrix
+            };
+
+            // Move ghost piece to bottom
+            while (!collide(arena, ghostPiece)) {
+                ghostPiece.pos.y++;
+            }
+            ghostPiece.pos.y--;
+
+            ghostPiece.matrix.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        const pieceType = piece.type || 'I';
+                        
+                        context.fillStyle = `${colors[pieceType]}33`; // 33 is hex for 20% opacity
+                        const xPos = (x + ghostPiece.pos.x) * grid;
+                        const yPos = (y + ghostPiece.pos.y) * grid;
+                        const size = grid - 1;
+                        
+                        context.beginPath();
+                        context.roundRect(xPos, yPos, size, size, 5);
+                        context.fill();
+                    }
+                });
+            });
+        }
+
+        function holdPiece() {
+            if (!canHold) return;
+
+            if (heldPiece === null) {
+                heldPiece = copyMatrix(piece.matrix);
+                pieceReset();
+            } else {
+                const temp = copyMatrix(piece.matrix);
+                piece.matrix = copyMatrix(heldPiece);
+                heldPiece = temp;
+                piece.pos.y = 0;
+                piece.pos.x = (arena[0].length / 2 | 0) -
+                             (piece.matrix[0].length / 2 | 0);
+            }
+            canHold = false;
+        }
+
+        function drawHeldPiece() {
+            if (heldPiece === null) return;
+
+            const boardWidth = arena[0].length * grid;
+            const boardX = (canvas.width - boardWidth) / 2;
+            const boardY = (canvas.height - arena.length * grid) / 2;
+
+            // Draw held piece first - moved further left
+            context.save();
+            context.translate(boardX - 180, boardY + 20);  // Changed from -120 to -180
+            context.scale(0.8, 0.8);
+
+            heldPiece.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value !== 0) {
+                        const pieceType = Object.keys(tetrominoes).find(key => 
+                            tetrominoes[key] === heldPiece) || 'I';
+                        
+                        context.fillStyle = colors[pieceType];
+                        context.shadowBlur = 15;
+                        context.shadowColor = colors[pieceType];
+                        context.beginPath();
+                        context.roundRect(x * grid, y * grid, grid - 1, grid - 1, 5);
+                        context.fill();
+                        context.shadowBlur = 0;
+                    }
+                });
+            });
+            context.restore();
+
+            // Draw "HOLD" text below the piece - moved further left
+            context.save();
+            context.translate(boardX - 140, boardY + 120);  // Changed from -120 to -180
+            context.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            context.font = '16px Arial';
+            context.textAlign = 'left';
+            context.fillText('HOLD', 0, 0);
+            context.restore();
+        }
+
+        function drawNextPieces() {
+            if (nextPieces.length === 0) return;
+
+            const boardWidth = arena[0].length * grid;
+            const boardX = (canvas.width - boardWidth) / 2;
+            const boardY = (canvas.height - arena.length * grid) / 2;
+
+            // Draw each piece in the preview
+            nextPieces.forEach((piece, index) => {
+                context.save();
+                context.translate(boardX + boardWidth + 20, boardY + 20 + (index * 100));
+                context.scale(0.8, 0.8);
+
+                piece.matrix.forEach((row, y) => {
+                    row.forEach((value, x) => {
+                        if (value !== 0) {
+                            context.fillStyle = colors[piece.type];
+                            context.shadowBlur = 15;
+                            context.shadowColor = colors[piece.type];
+                            context.beginPath();
+                            context.roundRect(x * grid, y * grid, grid - 1, grid - 1, 5);
+                            context.fill();
+                            context.shadowBlur = 0;
+                        }
+                    });
+                });
+                context.restore();
+            });
+
+            // Draw "NEXT" text
+            context.save();
+            context.translate(boardX + boardWidth + 20, boardY + 120);
+            context.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            context.font = '16px Arial';
+            context.textAlign = 'left';
+            context.fillText('NEXT', 0, 0);
+            context.restore();
+        }
+
+        // Add gamepad connection handlers
+        window.addEventListener("gamepadconnected", (e) => {
+            console.log("Gamepad connected:", e.gamepad.id);
+            gamepadIndex = e.gamepad.index;
+        });
+
+        window.addEventListener("gamepaddisconnected", (e) => {
+            console.log("Gamepad disconnected");
+            gamepadIndex = null;
+        });
+
+        // Add gamepad polling function
+        function pollGamepad() {
+            if (gamepadIndex !== null) {
+                const gamepad = navigator.getGamepads()[gamepadIndex];
+                if (!gamepad) return;
+
+                const currentTime = performance.now();
+
+                // Options button - Pause (moved outside of !paused check)
+                if (gamepad.buttons[9].pressed && !lastGamepadState?.buttons[9].pressed) {
+                    togglePause();  // Use the togglePause function instead of direct assignment
+                }
+
+                if (!paused) {
+                    // D-pad controls with delay
+                    if (currentTime - controllerConfig.lastMoveTime >= controllerConfig.dpadDelay) {
+                        if (gamepad.buttons[14].pressed) {  // Left
+                            playerMove(-1);
+                            controllerConfig.lastMoveTime = currentTime;
+                        }
+                        if (gamepad.buttons[15].pressed) {  // Right
+                            playerMove(1);
+                            controllerConfig.lastMoveTime = currentTime;
+                        }
+                        if (gamepad.buttons[13].pressed) {  // Down
+                            playerDrop();
+                            controllerConfig.lastMoveTime = currentTime;
+                        }
+                    }
+
+                    // Circle button (○) - Rotate - no delay needed
+                    if (gamepad.buttons[1].pressed && !lastGamepadState?.buttons[1].pressed) {
+                        playerRotate(1);
+                    }
+
+                    // Analog stick controls with sensitivity
+                    const leftStickX = gamepad.axes[0];
+                    if (Math.abs(leftStickX) > controllerConfig.deadzone) {
+                        if (currentTime - controllerConfig.lastMoveTime >= controllerConfig.dpadDelay) {
+                            const moveAmount = Math.sign(leftStickX) * 
+                                Math.ceil((Math.abs(leftStickX) - controllerConfig.deadzone) * 
+                                controllerConfig.sensitivity);
+                            playerMove(Math.sign(moveAmount));
+                            controllerConfig.lastMoveTime = currentTime;
+                        }
+                    }
+
+                    // Cross button (X) - Hard drop
+                    if (gamepad.buttons[0].pressed && !lastGamepadState?.buttons[0].pressed) {
+                        playerHardDrop();
+                    }
+
+                    // Square button (□) - Hold piece
+                    if (gamepad.buttons[2].pressed && !lastGamepadState?.buttons[2].pressed) {
+                        holdPiece();
+                    }
+                }
+
+                lastGamepadState = gamepad;
+            }
+        }
+
+        // Update function should be defined before it's used
+        function update(time = 0) {
+            if (!paused) {
+                const deltaTime = time - lastTime;
+                lastTime = time;
+                
+                gameTime += deltaTime;
+                document.getElementById('time').textContent = 
+                    new Date(gameTime).toISOString().substr(14, 5);
+
+                dropCounter += deltaTime;
+                if (dropCounter > dropInterval) {
+                    playerDrop();
+                    dropCounter = 0;
+                }
+
+                // Update Zone
+                if (inZone) {
+                    zoneTimeLeft -= deltaTime;
+                    if (zoneTimeLeft <= 0) {
+                        endZone();
+                    }
+                }
+
+                pollGamepad();
+            }
+
+            // Update zone meter display (do this even when paused)
+            const zoneMeter = document.getElementById('zone-meter');
+            if (inZone) {
+                zoneMeter.style.width = `${(zoneTimeLeft / ZONE_TIME) * 100}%`;
+            } else {
+                zoneMeter.style.width = `${(zoneEnergy / MAX_ZONE_ENERGY) * 100}%`;
+            }
+            document.getElementById('zone-indicator').classList.toggle('in-zone', inZone);
+
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        // Update the updateScore function
+        function updateScore(points) {
+            const oldLevel = level;
+            score += points;
+            document.getElementById('score').textContent = score.toLocaleString();
+            document.getElementById('area-score').textContent = score.toLocaleString();
+            document.getElementById('level').textContent = level;
+            document.getElementById('lines').textContent = lines;
+            document.getElementById('combo').textContent = comboCount > 1 ? `${comboCount}x` : '-';
+
+            // If level changed, add level-up particles
+            if (level > oldLevel) {
+                const boardWidth = arena[0].length * grid;
+                const boardHeight = arena.length * grid;
+                const boardX = (canvas.width - boardWidth) / 2;
+                const boardY = (canvas.height - boardHeight) / 2;
+
+                // Add extra particles for level up
+                for (let i = 0; i < 50; i++) {
+                    particles.push(createParticle(
+                        boardX + Math.random() * boardWidth,
+                        boardY + Math.random() * boardHeight,
+                        'lineClear'
+                    ));
+                }
+            }
+        }
+
+        // Add keyboard controls
+        document.addEventListener('keydown', event => {
+            if (paused && event.keyCode !== 27 && event.keyCode !== 80) return;  // Allow both ESC and P when paused
+
+            switch (event.keyCode) {
+                case 37: // Left arrow
+                    playerMove(-1);
+                    break;
+                case 39: // Right arrow
+                    playerMove(1);
+                    break;
+                case 40: // Down arrow
+                    playerDrop();
+                    break;
+                case 38: // Up arrow
+                    playerRotate(1);
+                    break;
+                case 32: // Space
+                    playerHardDrop();
+                    break;
+                case 67: // C key
+                    holdPiece();
+                    break;
+                case 27: // ESC
+                case 80: // P key
+                    togglePause();
+                    break;
+                case 16: // Shift key
+                    toggleZone();
+                    break;
+            }
+        });
+
+        // Add this function before the game initialization
+        function togglePause() {
+            paused = !paused;
+            document.getElementById('pause-text').style.display = paused ? 'block' : 'none';
+            document.getElementById('settings-panel').style.display = paused ? 'block' : 'none';
+        }
+
+        // Add these event listeners for the settings controls
+        document.getElementById('dpad-delay').addEventListener('input', (e) => {
+            controllerConfig.dpadDelay = parseInt(e.target.value);
+            document.getElementById('dpad-delay-value').textContent = e.target.value + 'ms';
+        });
+
+        document.getElementById('deadzone').addEventListener('input', (e) => {
+            controllerConfig.deadzone = parseFloat(e.target.value);
+            document.getElementById('deadzone-value').textContent = e.target.value;
+        });
+
+        document.getElementById('stick-sensitivity').addEventListener('input', (e) => {
+            controllerConfig.sensitivity = parseInt(e.target.value);
+            document.getElementById('sensitivity-value').textContent = e.target.value;
+        });
+
+        // Initialize the game
+        pieceReset();
+        update();  // Start the game loop
+
+        // Handle line clearing and scoring
+        function arenaSweep() {
+            const boardX = (canvas.width - arena[0].length * grid) / 2;
+            const boardY = (canvas.height - arena.length * grid) / 2;
+            const currentTime = performance.now();
+
+            let rowCount = 0;
+            outer: for (let y = arena.length - 1; y > 0; --y) {
+                for (let x = 0; x < arena[y].length; ++x) {
+                    if (arena[y][x] === 0) {
+                        continue outer;
+                    }
+                }
+
+                // Add particles for line clear
+                for (let x = 0; x < arena[y].length; x++) {
+                    for (let i = 0; i < 8; i++) {
+                        particles.push(createParticle(
+                            boardX + x * grid + grid/2,
+                            boardY + y * grid + grid/2,
+                            'lineClear'
+                        ));
+                    }
+                }
+
+                // Only clear lines immediately if not in Zone mode
+                if (!inZone) {
+                    const row = arena.splice(y, 1)[0].fill(0);
+                    arena.unshift(row);
+                    ++y;
+                }
+                rowCount++;
+            }
+
+            if (rowCount > 0) {
+                // Update lines and level first
+                lines += rowCount;
+                level = Math.floor(lines / 10);
+                dropInterval = 1000 * Math.pow(0.85, level);
+
+                if (inZone) {
+                    // Store the line numbers that are complete
+                    for (let y = arena.length - 1; y > 0; --y) {
+                        if (arena[y].every(value => value !== 0)) {
+                            zoneLines.push(y);
+                        }
+                    }
+                } else {
+                    // Add zone energy
+                    zoneEnergy = Math.min(MAX_ZONE_ENERGY, zoneEnergy + rowCount * 20);
+                }
+
+                if (currentTime - lastClearTime < COMBO_WINDOW) {
+                    comboCount++;
+                } else {
+                    comboCount = 1;
+                }
+                lastClearTime = currentTime;
+                
+                // Calculate score based on number of lines cleared
+                const lineScores = [0, 100, 300, 500, 800];
+                const lineScore = lineScores[rowCount] * (level + 1);
+                updateScore(lineScore);
+
+                // Show combo feedback if combo > 1
+                if (comboCount > 1) {
+                    showComboText(comboCount);
+                }
+            } else {
+                comboCount = 0;
+            }
+        }
+
+        // Add zone activation function
+        function toggleZone() {
+            if (!inZone && zoneEnergy >= MAX_ZONE_ENERGY) {
+                // Activate Zone
+                inZone = true;
+                zoneTimeLeft = ZONE_TIME;
+                normalDropInterval = dropInterval;
+                dropInterval *= 3;  // Slow down piece dropping more significantly
+                zoneLines = [];
+                
+                // Add visual effect when entering Zone
+                createZoneClearEffect();
+            }
+        }
+
+        // Add Zone end function
+        function endZone() {
+            inZone = false;
+            dropInterval = normalDropInterval;
+            zoneEnergy = 0;
+            
+            // Process all stored lines
+            let bonus = 0;
+            if (zoneLines.length > 0) {
+                // Calculate bonus based on number of unique lines cleared during Zone
+                const uniqueLines = Array.from(new Set(zoneLines));
+                const lineCount = uniqueLines.length;
+                
+                // Base score calculation
+                if (lineCount > 0) {
+                    const baseScore = 100 * lineCount;  // 100 points per line
+                    const multiplier = Math.min(8, Math.pow(2, lineCount - 1));  // Cap multiplier at 8x
+                    bonus = baseScore * multiplier * (level + 1);
+                }
+                
+                // Clear all filled lines at once
+                let y = arena.length - 1;
+                while (y > 0) {
+                    const isLineFilled = arena[y].every(value => value !== 0);
+                    if (isLineFilled) {
+                        const row = arena.splice(y, 1)[0].fill(0);
+                        arena.unshift(row);
+                    } else {
+                        y--;
+                    }
+                }
+                
+                // Add zone clear particles
+                createZoneClearEffect();
+                
+                // Update lines cleared
+                lines += uniqueLines.length;
+                level = Math.floor(lines / 10);
+                dropInterval = 1000 * Math.pow(0.85, level);
+            }
+            
+            // Ensure bonus is a valid number
+            bonus = Math.floor(bonus) || 0;
+            updateScore(bonus);
+            zoneLines = [];
+        }
+
+        // Add Zone particle effect
+        function createZoneClearEffect() {
+            const boardWidth = arena[0].length * grid;
+            const boardHeight = arena.length * grid;
+            const boardX = (canvas.width - boardWidth) / 2;
+            const boardY = (canvas.height - boardHeight) / 2;
+
+            for (let i = 0; i < 100; i++) {
+                particles.push(createParticle(
+                    boardX + Math.random() * boardWidth,
+                    boardY + Math.random() * boardHeight,
+                    'zone'
+                ));
+            }
+        }
+    </script>
+</body>
+</html>

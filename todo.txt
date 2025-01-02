@@ -1,0 +1,39 @@
+TETRIS IMPROVEMENTS TODO
+
+VISUAL/UI:
+[x] Add particle effects when completing lines
+[x] Add combo system with visual feedback
+[x] Show "Game Over" screen with final score
+[ ] Add animations for piece rotations
+[x] Add subtle grid pattern to play area
+[x] Add level-based color themes
+
+GAMEPLAY:
+[x] Add preview of multiple upcoming pieces
+[ ] Add sprint mode (clear 40 lines as fast as possible)
+[ ] Add marathon mode (reach highest level possible)
+[x] Add "Zone" mechanic like Tetris Effect (time slowdown)
+
+SOUND/MUSIC:
+[ ] Add sound effects for:
+    [ ] Piece movement
+    [ ] Rotation
+    [ ] Line clears
+[ ] Add background music that speeds up with level
+[ ] Add special effects for combos and T-spins
+
+TECHNICAL:
+[x] Add local high score storage
+[ ] Add touch controls for mobile play
+[ ] Add online multiplayer
+[ ] Add replay system
+[x] Add piece "lock delay" for more forgiving gameplay
+
+QUALITY OF LIFE:
+[x] Add proper start menu
+[ ] Add difficulty settings
+[ ] Add control remapping
+[ ] Add practice mode
+[ ] Save controller settings between sessions
+
+Each item can be marked with [x] when completed. 
