@@ -1,39 +1,98 @@
-TETRIS IMPROVEMENTS TODO
+TETRIS GAME IMPROVEMENTS TODO
+============================
 
-VISUAL/UI:
-[x] Add particle effects when completing lines
-[x] Add combo system with visual feedback
-[x] Show "Game Over" screen with final score
-[ ] Add animations for piece rotations
-[x] Add subtle grid pattern to play area
-[x] Add level-based color themes
+HIGH PRIORITY
+------------
+1. Sound System Implementation
+   - Add background music
+   - Create/source sound effects for:
+     * Line clears
+     * Piece movements
+     * Rotations
+     * Level up
+     * Game over
 
-GAMEPLAY:
-[x] Add preview of multiple upcoming pieces
-[ ] Add sprint mode (clear 40 lines as fast as possible)
-[ ] Add marathon mode (reach highest level possible)
-[x] Add "Zone" mechanic like Tetris Effect (time slowdown)
+2. Visual Effects
+   - Implement smooth piece movement animations
+   - Add particle effects for line clears
+   - Show "Perfect Clear" special effects
+   - Add screen shake for impactful moments
+   - Add background grid pulse effects
 
-SOUND/MUSIC:
-[ ] Add sound effects for:
-    [ ] Piece movement
-    [ ] Rotation
-    [ ] Line clears
-[ ] Add background music that speeds up with level
-[ ] Add special effects for combos and T-spins
+3. Core Gameplay Features
+   - T-Spin detection and bonus scoring
+   - Back-to-back bonus scoring system
+   - Add "Quick restart" shortcut key
+   - Implement piece movement interpolation
+   - Add frame rate counter
 
-TECHNICAL:
-[x] Add local high score storage
-[ ] Add touch controls for mobile play
-[ ] Add online multiplayer
-[ ] Add replay system
-[x] Add piece "lock delay" for more forgiving gameplay
+MEDIUM PRIORITY
+--------------
+1. Additional Game Modes
+   - Sprint Mode (clear 40 lines)
+   - Ultra Mode (2-minute score attack)
+   - Practice Mode with piece selection
+   - Zen Mode (endless, no game over)
 
-QUALITY OF LIFE:
-[x] Add proper start menu
-[ ] Add difficulty settings
-[ ] Add control remapping
-[ ] Add practice mode
-[ ] Save controller settings between sessions
+2. Statistics System
+   - Personal bests for each mode
+   - Session statistics
+   - Detailed metrics (pieces placed, T-spins, etc.)
+   - Achievement system
 
-Each item can be marked with [x] when completed. 
+3. Mobile Support
+   - Touch controls optimization
+   - Screen rotation handling
+   - Mobile-friendly UI adjustments
+   - Touch gesture support
+
+LOW PRIORITY
+-----------
+1. Multiplayer Features
+   - Local 2-player versus mode
+   - Online multiplayer support
+   - Global leaderboards
+   - Friend challenge system
+
+2. Customization Options
+   - Multiple color themes/skins
+   - Custom piece colors
+   - UI customization
+   - Custom keybindings
+
+3. Quality of Life
+   - Save states for practice
+   - Replay system
+   - Training mode with move suggestions
+   - Statistics export
+
+TECHNICAL IMPROVEMENTS
+---------------------
+1. Performance
+   - Optimize particle system
+   - Implement proper game loop
+   - Reduce memory usage
+   - Cache frequently used elements
+
+2. Code Structure
+   - Modularize codebase
+   - Implement proper state management
+   - Add comprehensive error handling
+   - Improve code documentation
+
+3. Testing
+   - Add unit tests
+   - Implement integration tests
+   - Add performance benchmarks
+   - Create testing framework
+
+BUGS TO FIX
+----------
+- Add bug tracking here as issues are discovered
+
+NOTES
+-----
+- Prioritize features based on user feedback
+- Test each feature thoroughly before implementation
+- Maintain backwards compatibility
+- Keep performance in mind for all additions 

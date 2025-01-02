@@ -5,126 +5,22 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="left-panel">
-        <div class="hold-section">
-            <div class="stat-label">HOLD</div>
-            <div class="hold-box" id="hold-piece"></div>
-        </div>
-
-        <div class="stats-group">
-            <div class="stat-label">SPEED LV</div>
-            <div class="stat-value" id="level">1</div>
-            
-            <div class="stat-label">LINES</div>
-            <div class="stat-value"><span id="lines">0</span>/90</div>
-            
-            <div class="stat-label">ZONE</div>
-            <div id="zone-indicator">
-                <div id="zone-meter"></div>
-            </div>
-        </div>
-    </div>
-
     <canvas id="tetris"></canvas>
 
-    <div class="right-panel">
-        <div class="next-section">
-            <div class="stat-label">NEXT</div>
-        </div>
-
-        <div class="stats-group">
-            <div class="stat-label">TIME</div>
-            <div class="stat-value time" id="time">00:00</div>
-            
-            <div class="stat-label">HIGH SCORE</div>
-            <div class="stat-value" id="high-score">0</div>
-            
-            <div class="stat-label">AREA SCORE</div>
-            <div class="stat-value" id="area-score">0</div>
-            
-            <div class="stat-label">TOTAL SCORE</div>
-            <div class="stat-value" id="score">0</div>
-            
-            <div class="stat-label">COMBO</div>
-            <div class="stat-value combo-count" id="combo">0</div>
-        </div>
+    <!-- Start Menu -->
+    <div class="menu" id="start-menu">
+        <button class="menu-btn" onclick="startGame()">Play</button>
     </div>
 
-    <div class="pause-overlay" id="pause-text">PAUSE</div>
-
-    <div class="settings-panel" id="settings-panel">
-        <h2>Controls</h2>
-        <div class="controls-section">
-            <h3>Keyboard</h3>
-            <div class="control-list">
-                <div class="control-item">
-                    <span>Move Left/Right</span>
-                    <span>← →</span>
-                </div>
-                <div class="control-item">
-                    <span>Soft Drop</span>
-                    <span>↓</span>
-                </div>
-                <div class="control-item">
-                    <span>Rotate</span>
-                    <span>↑</span>
-                </div>
-                <div class="control-item">
-                    <span>Hard Drop</span>
-                    <span>Space</span>
-                </div>
-                <div class="control-item">
-                    <span>Hold Piece</span>
-                    <span>C</span>
-                </div>
-                <div class="control-item">
-                    <span>Zone</span>
-                    <span>Shift</span>
-                </div>
-                <div class="control-item">
-                    <span>Pause</span>
-                    <span>P / ESC</span>
-                </div>
-            </div>
-        </div>
-        <button class="menu-button" onclick="hideControls()">BACK</button>
-    </div>
-    
-    <div class="game-over" id="game-over">
-        <h1>GAME OVER</h1>
-        <div class="stats">
-            <div class="stat-item">
-                <span>High Score:</span>
-                <span class="value" id="final-high-score">0</span>
-            </div>
-            <div class="stat-item">
-                <span>Final Score:</span>
-                <span class="value" id="final-score">0</span>
-            </div>
-            <div class="stat-item">
-                <span>Lines Cleared:</span>
-                <span class="value" id="final-lines">0</span>
-            </div>
-            <div class="stat-item">
-                <span>Level Reached:</span>
-                <span class="value" id="final-level">0</span>
-            </div>
-            <div class="stat-item">
-                <span>Time Played:</span>
-                <span class="value" id="final-time">00:00</span>
-            </div>
-        </div>
-        <button class="restart-btn" onclick="restartGame()">Play Again</button>
+    <!-- Pause Menu -->
+    <div class="menu" id="pause-menu">
+        <h1>Paused</h1>
+        <button class="menu-btn" onclick="togglePause()">Resume</button>
     </div>
 
-    <div class="start-menu" id="start-menu">
-        <h1>TETRIS</h1>
-        <div class="high-score-display">
-            High Score: <span id="menu-high-score">0</span>
-        </div>
-        <button class="menu-button" onclick="startGame('marathon')">Marathon Mode</button>
-        <button class="menu-button" onclick="startGame('flow')">Flow Mode</button>
-        <button class="menu-button" onclick="showControls()">Controls</button>
+    <!-- Game Over Menu -->
+    <div class="menu" id="game-over">
+        <button class="menu-btn" onclick="restartGame()">Play Again</button>
     </div>
 
     <script src="script.js"></script>

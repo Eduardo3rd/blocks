@@ -1,3 +1,4 @@
+/* Base layout */
 body {
     background: #000033;
     color: #fff;
@@ -19,194 +20,91 @@ canvas {
     z-index: 1;
 }
 
-.left-panel, .right-panel {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    color: rgba(255, 255, 255, 0.8);
-    z-index: 2;
-}
-
-.left-panel {
-    left: calc(50% - (10 * 32px) - 20px);  /* Half board width (10 blocks * 32px) plus small gap */
-    text-align: right;
-}
-
-.right-panel {
-    right: calc(50% - (10 * 32px) - 20px);  /* Mirror of left panel */
-    text-align: right;
-}
-
-.stat-section, .hold-section, .zone-section, .next-section {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.stat-label {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    opacity: 0.7;
-    text-align: right;
-    margin-top: 10px;
-}
-
-.stat-value {
-    font-size: 20px;
-    font-weight: bold;
-    text-align: right;
-    margin-bottom: 5px;
-}
-
-.hold-box {
-    width: 120px;
-    height: 120px;
-    margin: 0 auto;  /* Center the box */
-    margin-bottom: 10px;  /* Space between box and text */
-}
-
-#zone-indicator {
-    width: 60px;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-left: auto;
-}
-
-#zone-meter {
-    width: 0%;
-    height: 100%;
-    background: #00ffff;
-    border-radius: 4px;
-    transition: width 0.3s ease;
-}
-
-.combo-count {
-    color: #ff00ff;
-    text-shadow: 0 0 10px #ff00ff;
-}
-
-.time {
-    font-family: monospace;
-    font-size: 24px;
-}
-
-#area-score {
-    color: #FFD700;
-}
-
-.pause-overlay {
+/* Shared overlay styles for pause and game over */
+.pause-overlay, .game-over {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 3em;
-    font-weight: bold;
-    color: rgba(255, 255, 255, 0.8);
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-    pointer-events: none;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 40px;
+    border-radius: 12px;
     display: none;
+    text-align: center;  /* Center everything */
+    min-width: 300px;
+    z-index: 1000;
+    backdrop-filter: blur(8px);  /* Subtle blur effect */
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
 }
 
+/* Text styling for both overlays */
+.pause-overlay h1, .game-over h1 {
+    font-size: 36px;
+    letter-spacing: 3px;
+    margin: 0 0 30px 0;
+    font-weight: 400;
+    text-transform: uppercase;
+}
+
+/* Specific colors for each overlay */
+.pause-overlay h1 {
+    color: #fff;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.game-over h1 {
+    color: #ff4444;
+    text-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+}
+
+/* Button styling for both overlays */
+.pause-overlay .menu-button, .game-over .menu-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 12px 30px;
+    border-radius: 6px;
+    font-size: 18px;
+    min-width: 140px;
+    margin: 0;
+    transition: all 0.2s ease;
+    display: inline-block;  /* Center the button */
+}
+
+.pause-overlay .menu-button:hover, .game-over .menu-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Settings Panel */
 .settings-panel {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.9);
-    padding: 20px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    display: none;
-    text-align: left;
-}
-
-.settings-panel h2 {
-    margin-top: 0;
-    color: #fff;
-    font-size: 1.2em;
-}
-
-.game-over {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.95);
     padding: 30px;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     display: none;
-    text-align: center;
+    z-index: 1000;
     min-width: 300px;
 }
 
-.game-over h1 {
-    color: #ff0000;
-    font-size: 2.5em;
-    margin: 0 0 20px 0;
-    text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
-}
-
-.game-over .stats {
-    margin: 20px 0;
-    font-size: 1.2em;
-}
-
-.game-over .stat-item {
-    margin: 10px 0;
+.setting-item {
     display: flex;
     justify-content: space-between;
-    padding: 5px 20px;
+    align-items: center;
+    margin: 10px 0;
+    padding: 5px 0;
 }
 
-.game-over .value {
-    color: #FFD700;
-    font-weight: bold;
+.settings-group {
+    margin: 20px 0;
 }
 
-.game-over .restart-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1.1em;
-    margin-top: 20px;
-    transition: all 0.3s ease;
-}
-
-.game-over .restart-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.start-menu {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.9);
-    padding: 40px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    text-align: center;
-    min-width: 300px;
-    z-index: 1000;
-}
-
-.start-menu h1 {
-    color: #fff;
-    font-size: 3em;
-    margin: 0 0 30px 0;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-}
-
+/* Menu Styling */
 .menu-button {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -225,42 +123,31 @@ canvas {
     transform: scale(1.05);
 }
 
-.high-score-display {
-    color: #FFD700;
-    margin: 20px 0;
-    font-size: 1.2em;
+#mute-button {
+    padding: 5px 15px;
+    min-width: 80px;
 }
 
-.controls-section {
-    margin: 20px 0;
-    padding: 15px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+#mute-button.muted {
+    background: rgba(255, 0, 0, 0.2);
 }
 
-.controls-section h3 {
-    color: #fff;
-    margin: 0 0 15px 0;
-    font-size: 1.1em;
+/* Start Menu */
+.start-menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+    min-width: 300px;
+    z-index: 1000;
 }
 
-.control-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.control-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.control-item span:last-child {
-    color: #FFD700;
-    font-family: monospace;
-}
-
+/* Animations */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -270,41 +157,166 @@ canvas {
     animation: fadeIn 0.3s ease-out;
 }
 
-.stats-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.hold-section {
-    margin-top: 60px;  /* Space for the held piece above */
-    text-align: center;  /* Center the HOLD text */
-}
-
-.hold-box {
-    width: 120px;
-    height: 120px;
-    margin: 0 auto;  /* Center the box */
-    margin-bottom: 10px;  /* Space between box and text */
-}
-
-.stat-label {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    opacity: 0.7;
-    text-align: right;
-}
-
-/* Special case for hold label */
-.hold-section .stat-label {
+/* Base menu styling */
+.menu-base {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.2);
+    width: 260px;  /* Fixed width instead of min-width */
     text-align: center;
-    margin-top: 0;
+    display: none;
+    z-index: 1000;
 }
 
-.stat-value {
+/* Menu titles */
+.menu-title {
+    font-size: 24px;
+    font-weight: 300;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Menu-specific title colors */
+.start-menu .menu-title {
+    color: #4444FF;
+    text-shadow: 0 0 15px rgba(68, 68, 255, 0.5);
+}
+
+.pause-menu .menu-title {
+    color: #FFFFFF;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.game-over .menu-title {
+    color: #FF4444;
+    text-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+}
+
+/* Button styling */
+.menu-button {
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    padding: 10px 20px;
+    margin: 6px 0;
+    width: 200px;  /* Fixed width for buttons */
+    border-radius: 4px;
+    font-size: 16px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.menu-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.menu-button.primary {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.menu-button.compact {
+    width: auto;
+    min-width: 80px;
+    padding: 6px 12px;
+}
+
+/* Settings panel specific styles */
+.settings-content {
+    margin: 15px 0;
+    width: 100%;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px 0;
+    font-size: 14px;
+}
+
+.controls-list {
+    margin-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+}
+
+.control-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+}
+
+/* Make all inputs consistent width */
+input[type="range"] {
+    width: 120px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -48%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+/* Base Menu System */
+.menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    display: none;
+    z-index: 1000;
+}
+
+/* Menu Headers */
+.menu h1 {
+    color: white;
+    font-size: 24px;
+    font-weight: 400;
+    margin: 0 0 24px 0;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Menu Buttons */
+.menu-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 4px;
     font-size: 20px;
-    font-weight: bold;
-    text-align: right;
-    margin-bottom: 5px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.menu-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Shared styles for start and game over menus */
+#start-menu, #game-over {
+    width: 160px;
+}
+
+#start-menu .menu-btn, #game-over .menu-btn {
+    width: 100%;
+    margin: 0;
 }

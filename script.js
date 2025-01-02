@@ -52,7 +52,6 @@ const colors = {
 };
 
 // Game constants
-const PREVIEW_COUNT = 3;
 const COMBO_WINDOW = 3000;
 const MAX_ZONE_ENERGY = 100;
 const ZONE_TIME = 10000;
@@ -71,22 +70,28 @@ let inZone = false;
 let zoneLines = [];  // Store lines as arrays of row indices
 let normalDropInterval;
 let gamepadIndex = null;
-let lastGamepadState = null;
 let gameMode = null;
 let lockDelay = 0;
 let lockMoves = 0;
 let isLocking = false;
 
+// Add these to the game state variables at the top
+const gamepadState = {
+    left: { pressed: false, heldTime: 0, lastMove: 0 },
+    right: { pressed: false, heldTime: 0, lastMove: 0 },
+    down: { pressed: false, heldTime: 0, lastMove: 0 }
+};
+
 // Controller configuration
 const controllerConfig = {
-    left: 14,      // D-pad left
-    right: 15,     // D-pad right
-    down: 13,      // D-pad down
-    rotate: 0,     // A button
-    hardDrop: 3,   // Y button
-    hold: 2,       // X button
-    zone: 1,       // B button
-    pause: 9       // Start button
+    left: 14,        // D-pad left
+    right: 15,       // D-pad right
+    down: 13,        // D-pad down
+    rotate: 3,       // Y/Triangle
+    hardDrop: 0,     // A/Cross
+    hold: 2,         // X/Square
+    zone: 5,         // R1/RB
+    pause: 9         // Start/Options
 };
 
 // Theme system
@@ -143,65 +148,26 @@ function createPiece(type) {
     return tetrominoes[type];
 }
 
-function startGame(mode) {
-    // Hide menus
-    const startMenu = document.getElementById('start-menu');
-    const gameOverScreen = document.getElementById('game-over');
-    const pauseText = document.getElementById('pause-text');
-    
-    if (startMenu) startMenu.style.display = 'none';
-    if (gameOverScreen) gameOverScreen.style.display = 'none';
-    if (pauseText) pauseText.style.display = 'none';
-    
-    // Reset game state
-    gameMode = mode;
-    score = 0;
-    lines = 0;
-    level = 1;
-    dropScore = 0;
-    zoneEnergy = 0;
-    inZone = false;
-    gameTime = 0;
-    dropInterval = 1000;
-    lastTime = performance.now();
-    comboCount = 0;
-    lastClearTime = 0;
-    hasHeld = false;
-    heldPiece = null;
-    isPaused = false;
-    
-    // Clear arena
-    arena.forEach(row => row.fill(0));
-    
-    // Initialize pieces queue
-    nextPieces = [];
-    for (let i = 0; i < PREVIEW_COUNT; i++) {
-        const pieces = 'ILJOTSZ';
-        const type = pieces[Math.floor(Math.random() * pieces.length)];
-        nextPieces.push({
-            matrix: createPiece(type),
-            type: type
-        });
-    }
-    
-    // Reset piece
-    pieceReset();
-    
-    // Start game
-    gameStarted = true;
-    update();
-}
+// Game state variables (at the top of the file)
+const keys = {
+    ArrowLeft: { pressed: false, heldTime: 0, lastMove: 0 },
+    ArrowRight: { pressed: false, heldTime: 0, lastMove: 0 },
+    ArrowDown: { pressed: false, heldTime: 0, lastMove: 0 }
+};
 
-// Game state
 let dropCounter = 0;
-let dropInterval = 1000;
 let lastTime = 0;
+let lastMoveSound = 0;  // Add this line
 let gameStarted = false;
 let isPaused = false;
 let hasHeld = false;
 let score = 0;
 let lines = 0;
 let level = 1;
+const MOVE_SPEED = 100;       // Classic speed (100ms between moves)
+const INITIAL_DELAY = 300;     // Classic initial delay (300ms)
+const SOFT_DROP_SPEED = 50;    // Consistent soft drop speed
+let dropInterval = 1000;
 
 // Initialize arena
 const arena = createMatrix(10, 20);  // Standard Tetris dimensions: 10x20
@@ -209,43 +175,151 @@ const arena = createMatrix(10, 20);  // Standard Tetris dimensions: 10x20
 // Initialize pieces
 let piece = null;
 let heldPiece = null;
-let nextPieces = [];
 
 // Initialize particles
 let particles = [];
 
-// Load high scores
-let highScores = JSON.parse(localStorage.getItem('tetrisHighScores')) || [];
+// Sound management system
+const AudioSystem = {
+    context: new (window.AudioContext || window.webkitAudioContext)(),
+    muted: false,
+    volume: 0.5,
+    
+    init() {
+        this.context.resume();
+    },
+    
+    setVolume(value) {
+        this.volume = value;
+    },
+    
+    toggleMute() {
+        this.muted = !this.muted;
+    },
+    
+    playMove() {
+        if (this.muted) return;
+        this.playTone(400, 0.1, 'square', 0.2);
+    },
+    
+    playRotate() {
+        if (this.muted) return;
+        this.playTone(600, 0.1, 'square', 0.2);
+    },
+    
+    playDrop() {
+        if (this.muted) return;
+        this.playTone(200, 0.2, 'square', 0.3);
+    },
+    
+    playClear() {
+        if (this.muted) return;
+        this.playTone(800, 0.3, 'sine', 0.4);
+    },
+    
+    playTetris() {
+        if (this.muted) return;
+        // Play a little melody for Tetris
+        setTimeout(() => this.playTone(400, 0.1, 'square', 0.3), 0);
+        setTimeout(() => this.playTone(600, 0.1, 'square', 0.3), 100);
+        setTimeout(() => this.playTone(800, 0.2, 'square', 0.3), 200);
+    },
+    
+    playGameOver() {
+        if (this.muted) return;
+        // Play a descending melody for game over
+        setTimeout(() => this.playTone(400, 0.2, 'square', 0.3), 0);
+        setTimeout(() => this.playTone(300, 0.2, 'square', 0.3), 200);
+        setTimeout(() => this.playTone(200, 0.3, 'square', 0.3), 400);
+    },
+    
+    playZone() {
+        if (this.muted) return;
+        // Play an ascending melody for zone activation
+        setTimeout(() => this.playTone(400, 0.1, 'sine', 0.3), 0);
+        setTimeout(() => this.playTone(600, 0.1, 'sine', 0.3), 100);
+        setTimeout(() => this.playTone(800, 0.1, 'sine', 0.3), 200);
+    },
+    
+    playTone(frequency, duration, type = 'sine', baseVolume = 0.3) {
+        const oscillator = this.context.createOscillator();
+        const gainNode = this.context.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.context.destination);
+        
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, this.context.currentTime);
+        
+        const adjustedVolume = baseVolume * this.volume;
+        gainNode.gain.setValueAtTime(adjustedVolume, this.context.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + duration);
+        
+        oscillator.start();
+        oscillator.stop(this.context.currentTime + duration);
+    }
+};
 
-// Rest of the code...
-// ... existing code ...
+// Replace SoundManager.play calls with AudioSystem
+function playerMove(dir) {
+    piece.pos.x += dir;
+    if (collide(arena, piece)) {
+        piece.pos.x -= dir;
+        return false;
+    }
+    
+    // Play sound without affecting movement timing
+    requestAnimationFrame(() => {
+        currentTime = performance.now();
+        if (!lastMoveSound || currentTime - lastMoveSound > 100) {
+            AudioSystem.playMove();
+            lastMoveSound = currentTime;
+        }
+    });
+    
+    return true;
+}
 
 // Event Listeners
 document.addEventListener('keydown', event => {
     if (!gameStarted) {
         if (event.key === 'Enter') {
-            startGame('normal');
+            startGame();
         }
         return;
     }
     
-    if (event.key === 'p' || event.key === 'P') {
+    // Add Escape key for pause
+    if (event.key === 'Escape' || event.key === 'p' || event.key === 'P') {
         togglePause();
         return;
     }
     
     if (isPaused) return;
     
+    if (keys.hasOwnProperty(event.key)) {
+        event.preventDefault();
+        if (!keys[event.key].pressed) {
+            keys[event.key].pressed = true;
+            keys[event.key].heldTime = 0;
+            keys[event.key].lastMove = performance.now();
+            
+            // Immediate movement on first press
+            switch (event.key) {
+                case 'ArrowLeft':
+                    playerMove(-1);
+                    break;
+                case 'ArrowRight':
+                    playerMove(1);
+                    break;
+                case 'ArrowDown':
+                    playerDrop();
+                    break;
+            }
+        }
+    }
+    
     switch (event.key) {
-        case 'ArrowLeft':
-            playerMove(-1);
-            break;
-        case 'ArrowRight':
-            playerMove(1);
-            break;
-        case 'ArrowDown':
-            playerDrop();
-            break;
         case 'ArrowUp':
             playerRotate(1);
             break;
@@ -264,6 +338,13 @@ document.addEventListener('keydown', event => {
     }
 });
 
+document.addEventListener('keyup', event => {
+    if (keys.hasOwnProperty(event.key)) {
+        keys[event.key].pressed = false;
+        keys[event.key].delayTimer = 0;  // Reset the delay timer
+    }
+});
+
 // Gamepad support
 window.addEventListener("gamepadconnected", (e) => {
     console.log("Gamepad connected:", e.gamepad);
@@ -275,70 +356,150 @@ window.addEventListener("gamepaddisconnected", (e) => {
     gamepadIndex = null;
 });
 
+// Adjust these constants for gamepad
+const GAMEPAD_MOVE_SPEED = 100;     // Match keyboard timing
+const GAMEPAD_INITIAL_DELAY = 300;  // Match keyboard timing
+const GAMEPAD_POLL_RATE = 16;       // Poll every frame (60fps)
+
+// Add this with the other game state variables at the top
+let lastGamepadState = {
+    buttons: Array(16).fill({ pressed: false }),
+    axes: [0, 0, 0, 0]
+};
+
+// Update the pollGamepad function
 function pollGamepad() {
-    if (gamepadIndex !== null) {
-        const gamepad = navigator.getGamepads()[gamepadIndex];
-        if (!gamepad) return;
+    if (gamepadIndex === null) return;
+    
+    const gamepad = navigator.getGamepads()[gamepadIndex];
+    if (!gamepad) return;
+    
+    const now = performance.now();
+    
+    // Handle directional inputs with same timing as keyboard
+    const directions = [
+        { name: 'left', button: controllerConfig.left, move: -1 },
+        { name: 'right', button: controllerConfig.right, move: 1 },
+        { name: 'down', button: controllerConfig.down }
+    ];
+
+    directions.forEach(({ name, button, move }) => {
+        const isPressed = gamepad.buttons[button].pressed;
+        const state = gamepadState[name];
         
-        const currentState = {
-            left: gamepad.buttons[controllerConfig.left].pressed,
-            right: gamepad.buttons[controllerConfig.right].pressed,
-            down: gamepad.buttons[controllerConfig.down].pressed,
-            rotate: gamepad.buttons[controllerConfig.rotate].pressed,
-            hardDrop: gamepad.buttons[controllerConfig.hardDrop].pressed,
-            hold: gamepad.buttons[controllerConfig.hold].pressed,
-            zone: gamepad.buttons[controllerConfig.zone].pressed
-        };
-        
-        if (!lastGamepadState) {
-            lastGamepadState = currentState;
-            return;
+        if (isPressed) {
+            if (!state.pressed) {
+                // Initial press - immediate movement
+                state.pressed = true;
+                state.heldTime = 0;
+                state.lastMove = now;
+                
+                // Immediate action
+                if (name === 'down') {
+                    playerDrop();
+                } else {
+                    playerMove(move);
+                }
+            } else {
+                // Handle held buttons with same timing as keyboard
+                state.heldTime += 16.67; // Approximate frame time
+                
+                if (state.heldTime >= INITIAL_DELAY) {
+                    const timeSinceLastMove = now - state.lastMove;
+                    if (timeSinceLastMove >= MOVE_SPEED) {
+                        if (name === 'down') {
+                            playerDrop();
+                        } else {
+                            playerMove(move);
+                        }
+                        state.lastMove = now;
+                    }
+                }
+            }
+        } else if (state.pressed) {
+            state.pressed = false;
+            state.heldTime = 0;
         }
-        
-        if (currentState.left && !lastGamepadState.left) playerMove(-1);
-        if (currentState.right && !lastGamepadState.right) playerMove(1);
-        if (currentState.down && !lastGamepadState.down) playerDrop();
-        if (currentState.rotate && !lastGamepadState.rotate) playerRotate(1);
-        if (currentState.hardDrop && !lastGamepadState.hardDrop) playerHardDrop();
-        if (currentState.hold && !lastGamepadState.hold) holdPiece();
-        if (currentState.zone && !lastGamepadState.zone && zoneEnergy >= MAX_ZONE_ENERGY) activateZone();
-        
-        lastGamepadState = currentState;
+    });
+    
+    // Handle other buttons
+    if (gamepad.buttons[controllerConfig.rotate].pressed && 
+        !lastGamepadState.buttons[controllerConfig.rotate].pressed) {
+        playerRotate(1);
     }
+    
+    if (gamepad.buttons[controllerConfig.hardDrop].pressed && 
+        !lastGamepadState.buttons[controllerConfig.hardDrop].pressed) {
+        playerHardDrop();
+    }
+    
+    if (gamepad.buttons[controllerConfig.hold].pressed && 
+        !lastGamepadState.buttons[controllerConfig.hold].pressed) {
+        holdPiece();
+    }
+    
+    if (gamepad.buttons[controllerConfig.zone].pressed && 
+        !lastGamepadState.buttons[controllerConfig.zone].pressed) {
+        if (zoneEnergy >= MAX_ZONE_ENERGY) {
+            activateZone();
+        }
+    }
+    
+    if (gamepad.buttons[controllerConfig.pause].pressed && 
+        !lastGamepadState.buttons[controllerConfig.pause].pressed) {
+        togglePause();
+    }
+    
+    // Update last gamepad state
+    lastGamepadState = {
+        buttons: gamepad.buttons.map(b => ({ pressed: b.pressed })),
+        axes: [...gamepad.axes]
+    };
 }
 
 function holdPiece() {
-    if (hasHeld) return;
-    
+    if (!canHold) return;
+
     if (heldPiece === null) {
-        // Store current piece type and create a fresh matrix for held piece
-        heldPiece = createPiece(piece.type);
+        // First hold - store current piece
+        heldPiece = {
+            type: piece.type,
+            matrix: JSON.parse(JSON.stringify(tetrominoes[piece.type])) // Deep copy the piece matrix
+        };
         pieceReset();
     } else {
-        // Swap with held piece
-        const currentType = piece.type;
-        const heldType = Object.keys(tetrominoes).find(key => 
-            JSON.stringify(tetrominoes[key]) === JSON.stringify(heldPiece));
-        
-        // Create fresh matrices for both pieces
-        heldPiece = createPiece(currentType);
-        piece.matrix = createPiece(heldType);
-        piece.type = heldType;
-        piece.pos.y = 0;
-        piece.pos.x = Math.floor(arena[0].length / 2) - 1;
+        // Swap current and held pieces
+        const tempType = piece.type;
+        piece = {
+            type: heldPiece.type,
+            matrix: JSON.parse(JSON.stringify(tetrominoes[heldPiece.type])), // Deep copy
+            pos: {
+                x: Math.floor(arena[0].length / 2) - Math.floor(tetrominoes[heldPiece.type][0].length / 2),
+                y: 0
+            }
+        };
+        heldPiece = {
+            type: tempType,
+            matrix: JSON.parse(JSON.stringify(tetrominoes[tempType])) // Deep copy
+        };
     }
-    
-    hasHeld = true;
+
+    canHold = false;
+    AudioSystem.playRotate();
 }
 
 function activateZone() {
-    if (inZone) return;
+    if (inZone || zoneEnergy < MAX_ZONE_ENERGY) return;
     
     inZone = true;
-    zoneTimeLeft = ZONE_TIME;
-    zoneLines = [];  // Store lines as arrays of row indices
     normalDropInterval = dropInterval;
-    dropInterval = dropInterval * 2; // Slow down during zone
+    dropInterval = Math.max(dropInterval / 2, 50);  // Speed up during Zone
+    
+    // Play zone activation sound
+    AudioSystem.playZone();  // Changed from SoundManager.play('zone')
+    
+    // Reset zone lines array
+    zoneLines = [];
     
     // Create zone activation particles
     for (let i = 0; i < 50; i++) {
@@ -349,20 +510,19 @@ function activateZone() {
         ));
     }
     
-    // Show zone is active
-    const zoneIndicator = document.getElementById('zone-indicator');
-    if (zoneIndicator) {
-        zoneIndicator.classList.add('active');
-    }
+    // Start zone timer
+    setTimeout(endZone, ZONE_TIME);
 }
 
 function togglePause() {
-    isPaused = !isPaused;
-    const pauseText = document.getElementById('pause-text');
-    const settingsPanel = document.getElementById('settings-panel');
+    if (!gameStarted) return;
     
-    if (pauseText) pauseText.style.display = isPaused ? 'flex' : 'none';
-    if (settingsPanel) settingsPanel.style.display = isPaused ? 'flex' : 'none';
+    isPaused = !isPaused;
+    const pauseMenu = document.getElementById('pause-menu');  // Updated ID
+    
+    if (pauseMenu) {
+        pauseMenu.style.display = isPaused ? 'block' : 'none';
+    }
     
     if (!isPaused) {
         lastTime = performance.now();
@@ -371,10 +531,17 @@ function togglePause() {
 }
 
 function updateScore() {
-    document.getElementById('score').textContent = score;
-    document.getElementById('lines').textContent = lines;
-    document.getElementById('level').textContent = level;
-    document.getElementById('combo').textContent = comboCount;
+    // Remove UI updates since we removed the elements
+    // Just keep score calculation if needed
+    if (dropScore > 0) {
+        score += dropScore;
+        dropScore = 0;
+    }
+    
+    // Remove these lines that try to update UI elements
+    // document.getElementById('score').textContent = score;
+    // document.getElementById('lines').textContent = lines;
+    // document.getElementById('level').textContent = level;
 }
 
 function hideControls() {
@@ -412,76 +579,42 @@ setInterval(pollGamepad, 16);
 document.getElementById('start-menu').style.display = 'flex'; 
 
 function update(time = 0) {
-    if (!gameStarted) return;
+    if (!gameStarted || isPaused) return;
     
     const deltaTime = time - lastTime;
-    lastTime = time;
     
-    // Update game time
-    gameTime += deltaTime;
-    
-    // Update zone meter UI
-    const zoneMeter = document.getElementById('zone-meter');
-    if (zoneMeter) {
-        if (inZone) {
-            // During zone, show remaining time
-            zoneMeter.style.width = (zoneTimeLeft / ZONE_TIME * 100) + '%';
-        } else {
-            // Outside zone, show energy
-            zoneMeter.style.width = (zoneEnergy / MAX_ZONE_ENERGY * 100) + '%';
-        }
-    }
-    
-    // Handle piece locking
-    if (piece) {
-        const testPos = { ...piece.pos, y: piece.pos.y + 1 };
-        if (collide(arena, { ...piece, pos: testPos })) {
-            if (!isLocking) {
-                isLocking = true;
-                lockDelay = LOCK_DELAY;
-                lockMoves = 0;
-            } else {
-                lockDelay -= deltaTime;
-                if (lockDelay <= 0 || lockMoves >= MAX_LOCK_MOVES) {
-                    piece.pos.y--;
-                    merge(arena, piece);
-                    pieceReset();
-                    arenaSweep();
-                    updateScore();
-                    isLocking = false;
-                }
-            }
-        } else {
-            isLocking = false;
-        }
-    }
-    
-    // Handle piece dropping
+    // Update drop counter
     dropCounter += deltaTime;
     if (dropCounter > dropInterval) {
         playerDrop();
         dropCounter = 0;
     }
     
-    // Update zone time if active
-    if (inZone) {
-        zoneTimeLeft -= deltaTime;
-        if (zoneTimeLeft <= 0) {
-            endZone();
+    // Handle held movement keys
+    Object.keys(keys).forEach(key => {
+        if (keys[key].pressed) {
+            keys[key].heldTime += deltaTime;
+            if (keys[key].heldTime >= INITIAL_DELAY) {
+                const timeSinceLastMove = time - keys[key].lastMove;
+                if (timeSinceLastMove >= MOVE_SPEED) {
+                    switch (key) {
+                        case 'ArrowLeft':
+                            playerMove(-1);
+                            break;
+                        case 'ArrowRight':
+                            playerMove(1);
+                            break;
+                        case 'ArrowDown':
+                            playerDrop();
+                            break;
+                    }
+                    keys[key].lastMove = time;
+                }
+            }
         }
-    }
+    });
     
-    // Update UI elements
-    const scoreElement = document.getElementById('score');
-    const linesElement = document.getElementById('lines');
-    const levelElement = document.getElementById('level');
-    const comboElement = document.getElementById('combo');
-    
-    if (scoreElement) scoreElement.textContent = score;
-    if (linesElement) linesElement.textContent = lines;
-    if (levelElement) levelElement.textContent = level;
-    if (comboElement) comboElement.textContent = comboCount;
-    
+    lastTime = time;
     draw();
     requestAnimationFrame(update);
 }
@@ -505,40 +638,20 @@ document.addEventListener('DOMContentLoaded', () => {
 }); 
 
 function pieceReset() {
-    // Get next piece from queue
-    if (nextPieces.length === 0) {
-        // Initialize queue if empty
-        const pieces = 'ILJOTSZ';
-        const type = pieces[Math.floor(Math.random() * pieces.length)];
-        const matrix = createPiece(type);
-        nextPieces.push({
-            matrix: matrix.map(row => [...row]), // Create deep copy
-            type: type
-        });
-    }
-
-    // Create deep copy of the next piece
-    const nextPiece = nextPieces[0];
+    // Instead of taking from queue, just generate a new random piece
+    const pieces = 'ILJOTSZ';
+    const type = pieces[Math.floor(Math.random() * pieces.length)];
     piece = {
-        pos: {x: Math.floor(arena[0].length / 2) - 1, y: 0},
-        matrix: nextPiece.matrix.map(row => [...row]), // Create deep copy
-        type: nextPiece.type
+        matrix: createPiece(type),
+        type: type,
+        pos: {
+            x: Math.floor(arena[0].length / 2) - Math.floor(tetrominoes[type][0].length / 2),
+            y: 0
+        }
     };
-    nextPieces.shift();
     
-    // Add new piece to queue if needed
-    while (nextPieces.length < PREVIEW_COUNT) {
-        const pieces = 'ILJOTSZ';
-        const type = pieces[Math.floor(Math.random() * pieces.length)];
-        const matrix = createPiece(type);
-        nextPieces.push({
-            matrix: matrix.map(row => [...row]), // Create deep copy
-            type: type
-        });
-    }
-    
-    // Reset hold ability
-    hasHeld = false;
+    // Reset hold ability with each new piece
+    canHold = true;
     
     // Check for game over
     if (collide(arena, piece)) {
@@ -547,43 +660,30 @@ function pieceReset() {
 }
 
 function gameOver() {
-    // Update high scores
-    if (score > 0) {
-        highScores.push({
-            score,
-            lines,
-            level,
-            date: new Date().toISOString()
-        });
-        highScores.sort((a, b) => b.score - a.score);
-        highScores = highScores.slice(0, 5); // Keep top 5
-        localStorage.setItem('tetrisHighScores', JSON.stringify(highScores));
-    }
+    AudioSystem.playGameOver();
+    gameStarted = false;
     
     // Show game over screen
     const gameOverScreen = document.getElementById('game-over');
-    const finalScore = document.getElementById('final-score');
-    const finalLines = document.getElementById('final-lines');
-    const finalLevel = document.getElementById('final-level');
-    const finalTime = document.getElementById('final-time');
-    
-    if (gameOverScreen) gameOverScreen.style.display = 'flex';
-    if (finalScore) finalScore.textContent = score;
-    if (finalLines) finalLines.textContent = lines;
-    if (finalLevel) finalLevel.textContent = level;
-    if (finalTime) finalTime.textContent = new Date(gameTime).toISOString().substr(14, 5);
-    
-    // Stop the game
-    gameStarted = false;
-    
-    // Create game over particles
-    for (let i = 0; i < 100; i++) {
-        particles.push(createParticle(
-            Math.random() * canvas.width,
-            Math.random() * canvas.height,
-            'gameOver'
-        ));
+    if (gameOverScreen) {
+        gameOverScreen.style.display = 'flex';
     }
+}
+
+function restartGame() {
+    // Hide game over screen
+    const gameOverScreen = document.getElementById('game-over');
+    if (gameOverScreen) {
+        gameOverScreen.style.display = 'none';
+    }
+    
+    // Reset game state
+    gameStarted = false;
+    piece = null;
+    particles = [];
+    
+    // Start a new game
+    startGame();  // Or whatever mode they were playing
 }
 
 function collide(arena, piece) {
@@ -611,8 +711,6 @@ function draw() {
     
     context.fillStyle = gradient;
     context.fillRect(0, 0, canvas.width, canvas.height);
-    
-    drawParticles();
     
     // Draw game board outline
     const boardWidth = arena[0].length * grid;
@@ -662,7 +760,7 @@ function draw() {
     // Restore context
     context.restore();
     
-    drawNextPieces();
+    drawParticles();
     drawHeldPiece();
 }
 
@@ -746,91 +844,40 @@ function drawGhost() {
     });
 }
 
-function drawNextPieces() {
-    if (!nextPieces.length) return;
-
-    const boardWidth = arena[0].length * grid;
-    const boardX = (canvas.width - boardWidth) / 2;
-    const boardY = (canvas.height - arena.length * grid) / 2;
-
-    // Draw "NEXT" text at the top
-    context.save();
-    context.translate(boardX + boardWidth + 20, boardY + 20);
-    context.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    context.font = '16px Arial';
-    context.textAlign = 'left';
-    context.fillText('NEXT', 0, 0);
-    context.restore();
-
-    // Draw each piece in the preview
-    nextPieces.forEach((piece, index) => {
-        context.save();
-        context.translate(boardX + boardWidth + 20, boardY + 80 + (index * 100));
-        context.scale(0.8, 0.8);
-
-        piece.matrix.forEach((row, y) => {
-            row.forEach((value, x) => {
-                if (value !== 0) {
-                    context.fillStyle = colors[piece.type];
-                    context.shadowBlur = 15;
-                    context.shadowColor = colors[piece.type];
-                    context.beginPath();
-                    context.roundRect(x * grid, y * grid, grid - 1, grid - 1, 5);
-                    context.fill();
-                    context.shadowBlur = 0;
-                }
-            });
-        });
-        context.restore();
-    });
-}
-
 function drawHeldPiece() {
-    if (!heldPiece) return;
+    const holdCanvas = document.getElementById('hold-piece');
+    if (!holdCanvas || !heldPiece || !heldPiece.matrix) return;
 
-    const boardWidth = arena[0].length * grid;
-    const boardX = (canvas.width - boardWidth) / 2;
-    const boardY = (canvas.height - arena.length * grid) / 2;
-
-    // Calculate piece dimensions
-    const pieceWidth = heldPiece[0].length * grid;
-    const pieceHeight = heldPiece.length * grid;
-
-    // Draw held piece centered above HOLD text
-    context.save();
-    context.translate(
-        boardX - boardWidth/2 - 60,  // Move further left of the board
-        boardY + 60  // Move down from top
-    );
-    context.scale(0.8, 0.8);
-
-    // Center the piece
-    const xOffset = (120 - pieceWidth) / 2;  // 120 is hold box width
-    const yOffset = (120 - pieceHeight) / 2;  // Center in hold box
-
-    heldPiece.forEach((row, y) => {
+    const holdCtx = holdCanvas.getContext('2d');
+    holdCtx.clearRect(0, 0, holdCanvas.width, holdCanvas.height);
+    
+    const blockSize = Math.floor(holdCanvas.width / 4);
+    const xOffset = Math.floor((holdCanvas.width - (heldPiece.matrix[0].length * blockSize)) / 2);
+    const yOffset = Math.floor((holdCanvas.height - (heldPiece.matrix.length * blockSize)) / 2);
+    
+    // Draw with same glow effect as queue pieces
+    heldPiece.matrix.forEach((row, y) => {
         row.forEach((value, x) => {
             if (value !== 0) {
-                const pieceType = Object.keys(tetrominoes).find(key => 
-                    tetrominoes[key] === heldPiece) || 'I';
+                const color = colors[heldPiece.type];
                 
-                context.fillStyle = colors[pieceType];
-                context.shadowBlur = 15;
-                context.shadowColor = colors[pieceType];
-                context.beginPath();
-                context.roundRect(
-                    x * grid + xOffset,
-                    y * grid + yOffset,
-                    grid - 1,
-                    grid - 1,
-                    5
+                // Add glow effect
+                holdCtx.shadowBlur = 15;
+                holdCtx.shadowColor = color;
+                
+                // Draw block
+                holdCtx.fillStyle = color;
+                holdCtx.fillRect(
+                    xOffset + x * blockSize,
+                    yOffset + y * blockSize,
+                    blockSize - 1,
+                    blockSize - 1
                 );
-                context.fill();
-                context.shadowBlur = 0;
+                
+                holdCtx.shadowBlur = 0;
             }
         });
     });
-    context.restore();
 }
 
 function drawParticles() {
@@ -867,15 +914,6 @@ function drawParticles() {
     }
 } 
 
-function playerMove(dir) {
-    piece.pos.x += dir;
-    if (collide(arena, piece)) {
-        piece.pos.x -= dir;
-        return false;
-    }
-    return true;
-}
-
 function playerDrop() {
     piece.pos.y++;
     if (collide(arena, piece)) {
@@ -883,7 +921,8 @@ function playerDrop() {
         merge(arena, piece);
         pieceReset();
         arenaSweep();
-        updateScore();
+        updateScore();  // This will now just handle score calculation
+        AudioSystem.playDrop();
         return false;
     }
     dropScore += 1;
@@ -904,6 +943,7 @@ function playerRotate(dir) {
             return;
         }
     }
+    AudioSystem.playRotate();  // Changed from SoundManager.play('rotate')
 }
 
 function rotate(matrix, dir) {
@@ -940,55 +980,28 @@ function arenaSweep() {
     let rowCount = 0;
     let combo = 0;
     
-    if (inZone) {
-        // During Zone, just identify complete lines but don't clear them
-        // We scan from top to bottom to maintain correct indices
-        for (let y = 0; y < arena.length; y++) {
-            let complete = true;
-            for (let x = 0; x < arena[y].length; ++x) {
-                if (arena[y][x] === 0) {
-                    complete = false;
-                    break;
-                }
-            }
-            if (complete && !zoneLines.includes(y)) {
-                zoneLines.push(y);
-                rowCount++;
-                
-                // Add outline effect particles
-                for (let x = 0; x < arena[0].length; x++) {
-                    particles.push(createParticle(
-                        (x * grid) + (canvas.width - arena[0].length * grid) / 2,
-                        (y * grid) + (canvas.height - arena.length * grid) / 2,
-                        'zone'
-                    ));
-                }
+    outer: for (let y = arena.length - 1; y >= 0; --y) {
+        for (let x = 0; x < arena[y].length; ++x) {
+            if (arena[y][x] === 0) {
+                continue outer;
             }
         }
-    } else {
-        // Normal line clearing (scan from bottom to top)
-        outer: for (let y = arena.length - 1; y > 0; --y) {
-            for (let x = 0; x < arena[y].length; ++x) {
-                if (arena[y][x] === 0) {
-                    continue outer;
-                }
-            }
-            
-            const row = arena.splice(y, 1)[0].fill(0);
-            arena.unshift(row);
-            ++y;
-            
-            rowCount++;
-            combo++;
-            
-            // Create line clear particles
-            for (let x = 0; x < arena[0].length; x++) {
-                particles.push(createParticle(
-                    (x * grid) + (canvas.width - arena[0].length * grid) / 2,
-                    (y * grid) + (canvas.height - arena.length * grid) / 2,
-                    'clear'
-                ));
-            }
+        
+        // Remove the row and add a new one at the top
+        const row = arena.splice(y, 1)[0].fill(0);
+        arena.unshift(row);
+        ++y;
+        
+        rowCount++;
+        combo++;
+        
+        // Create line clear particles
+        for (let x = 0; x < arena[0].length; x++) {
+            particles.push(createParticle(
+                (x * grid) + (canvas.width - arena[0].length * grid) / 2,
+                (y * grid) + (canvas.height - arena.length * grid) / 2,
+                'clear'
+            ));
         }
     }
     
@@ -999,17 +1012,8 @@ function arenaSweep() {
         
         // Add zone energy based on combo and lines cleared
         if (!inZone) {
-            const energyGain = (rowCount * 20) * (1 + (comboCount * 0.1)); // Base energy + combo bonus
+            const energyGain = (rowCount * 20) * (1 + (comboCount * 0.1));
             zoneEnergy = Math.min(MAX_ZONE_ENERGY, zoneEnergy + energyGain);
-        }
-        
-        // Add combo particles
-        for (let i = 0; i < combo * 5; i++) {
-            particles.push(createParticle(
-                piece.pos.x * grid + (canvas.width - arena[0].length * grid) / 2,
-                piece.pos.y * grid + (canvas.height - arena.length * grid) / 2,
-                'combo'
-            ));
         }
     } else if (Date.now() - lastClearTime > COMBO_WINDOW) {
         comboCount = 0;
@@ -1024,8 +1028,15 @@ function arenaSweep() {
             // Level up every 10 lines
             if (Math.floor(lines / 10) > level - 1) {
                 level = Math.floor(lines / 10) + 1;
-                dropInterval = Math.max(50, 1000 - (level * 50)); // Speed up drop rate
+                dropInterval = Math.max(50, 1000 - (level * 50));
             }
+        }
+        
+        // Play appropriate sound based on number of lines cleared
+        if (rowCount >= 4) {
+            AudioSystem.playTetris();
+        } else {
+            AudioSystem.playClear();
         }
     }
 }
@@ -1035,25 +1046,6 @@ function playerHardDrop() {
         dropScore += 2;
     }
 }
-
-function restartGame() {
-    // Hide game over screen
-    const gameOverScreen = document.getElementById('game-over');
-    if (gameOverScreen) {
-        gameOverScreen.style.display = 'none';
-    }
-    
-    // Show start menu
-    const startMenu = document.getElementById('start-menu');
-    if (startMenu) {
-        startMenu.style.display = 'flex';
-    }
-    
-    // Reset game state
-    gameStarted = false;
-    piece = null;
-    particles = [];
-} 
 
 function showControls() {
     // Hide start menu
@@ -1199,16 +1191,61 @@ function endZone() {
     // Reset zone energy and lines
     zoneEnergy = 0;
     zoneLines = [];
+} 
+
+// Add this function at the end of your script
+function startGame() {
+    // Hide start menu
+    document.getElementById('start-menu').style.display = 'none';
     
-    // Update zone UI
-    const zoneIndicator = document.getElementById('zone-indicator');
-    if (zoneIndicator) {
-        zoneIndicator.classList.remove('active');
+    // Reset game state
+    score = 0;
+    lines = 0;
+    level = 1;
+    dropCounter = 0;
+    dropInterval = 1000;
+    lastTime = performance.now();
+    gameStarted = true;
+    isPaused = false;
+    
+    // Clear arena
+    arena.forEach(row => row.fill(0));
+    
+    // Reset piece
+    pieceReset();
+    
+    // Initialize audio
+    AudioSystem.init();
+    
+    // Start game loop with requestAnimationFrame
+    requestAnimationFrame(update);
+}
+
+// Show start menu when page loads
+window.addEventListener('load', () => {
+    document.getElementById('start-menu').style.display = 'block';
+}); 
+
+// Add these menu control functions
+function showSettings() {
+    // Hide other menus
+    document.getElementById('start-menu').style.display = 'none';
+    document.getElementById('pause-menu').style.display = 'none';
+    
+    // Show settings
+    document.getElementById('settings').style.display = 'block';
+}
+
+function closeSettings() {
+    // Hide settings
+    document.getElementById('settings').style.display = 'none';
+    
+    // If game is paused, show pause menu
+    if (isPaused) {
+        document.getElementById('pause-menu').style.display = 'block';
     }
-    
-    // Update zone meter UI
-    const zoneMeter = document.getElementById('zone-meter');
-    if (zoneMeter) {
-        zoneMeter.style.width = '0%';
+    // If game hasn't started, show start menu
+    else if (!gameStarted) {
+        document.getElementById('start-menu').style.display = 'block';
     }
 } 
