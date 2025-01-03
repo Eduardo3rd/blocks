@@ -914,6 +914,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
     }
+    initializeTouchControls();
 });
 
 // Handle window resize
@@ -971,4 +972,43 @@ function initializeFeatureToggles() {
         gameFeatures.previewPieces = e.target.checked;
         updatePreviewDisplay();
     });
+}
+
+// Add this to your initialization code
+function initializeTouchControls() {
+    const touchButtons = {
+        'touch-left': () => playerMove(-1),
+        'touch-right': () => playerMove(1),
+        'touch-down': () => playerDrop(),
+        'touch-rotate': () => playerRotate(1),
+        'touch-drop': () => hardDrop(),
+        'touch-hold': () => holdPiece()
+    };
+
+    // Handle both touch and mouse events for each button
+    Object.keys(touchButtons).forEach(id => {
+        const button = document.getElementById(id);
+        if (button) {
+            // Touch events
+            button.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (!gameStarted || isPaused) return;
+                touchButtons[id]();
+            });
+
+            // Mouse events
+            button.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                if (!gameStarted || isPaused) return;
+                touchButtons[id]();
+            });
+        }
+    });
+
+    // Prevent default touch behaviors
+    document.addEventListener('touchmove', (e) => {
+        if (e.target.closest('#mobile-controls')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
 }

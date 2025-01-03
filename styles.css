@@ -591,3 +591,59 @@ input[type="range"] {
     justify-content: center;
     align-items: center;
 }
+
+/* Mobile touch controls */
+.mobile-only {
+    display: none;  /* Hidden by default */
+}
+
+@media (max-width: 768px) {
+    .mobile-only {
+        display: block;
+    }
+}
+
+#mobile-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 150px;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    z-index: 100;
+}
+
+.touch-area {
+    display: flex;
+    gap: 20px;
+}
+
+.left-controls {
+    align-items: center;
+}
+
+.right-controls {
+    align-items: center;
+}
+
+.touch-button {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.8);
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.touch-button:active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.95);
+}
