@@ -48,13 +48,13 @@ const tetrominoes = {
 
 // Piece colors
 const colors = {
-    'I': '#60d8ef',  // Soft cyan
-    'O': '#f7d794',  // Soft yellow
-    'T': '#c197d2',  // Soft purple
-    'S': '#7bed9f',  // Soft green
-    'Z': '#ff7675',  // Soft red
-    'J': '#74b9ff',  // Soft blue
-    'L': '#ffa45c'   // Soft orange
+    'I': 'rgba(96, 216, 239, 0.8)',   // Light blue
+    'O': 'rgba(247, 215, 148, 0.8)',  // Light yellow
+    'T': 'rgba(193, 151, 210, 0.8)',  // Light purple
+    'S': 'rgba(123, 237, 159, 0.8)',  // Light green
+    'Z': 'rgba(255, 118, 117, 0.8)',  // Light red
+    'J': 'rgba(116, 185, 255, 0.8)',  // Light blue
+    'L': 'rgba(255, 164, 92, 0.8)'    // Light orange
 };
 
 // Game timing constants
@@ -263,7 +263,7 @@ function merge(arena, player) {
     player.matrix.forEach((row, y) => {
         row.forEach((value, x) => {
             if (value !== 0) {
-                arena[y + player.pos.y][x + player.pos.x] = value;
+                arena[y + player.pos.y][x + player.pos.x] = player.type;
             }
         });
     });
@@ -453,8 +453,13 @@ function draw() {
     context.fillStyle = 'rgba(0, 0, 0, 0.5)';
     context.fillRect(boardX - 2, boardY - 2, boardWidth + 4, boardHeight + 4);
     
+    // Draw board outline
+    context.strokeStyle = 'rgba(255, 255, 255, 0.8)';  // Brighter white outline
+    context.lineWidth = 2;
+    context.strokeRect(boardX - 2, boardY - 2, boardWidth + 4, boardHeight + 4);
+    
     // Draw grid
-    context.strokeStyle = 'rgba(255, 255, 255, 0.05)';  // Very subtle white
+    context.strokeStyle = 'rgba(255, 255, 255, 0.2)';  // Stronger grid lines
     context.lineWidth = 1;
     
     // Draw vertical lines
@@ -492,16 +497,15 @@ function drawMatrix(matrix, offset) {
     matrix.forEach((row, y) => {
         row.forEach((value, x) => {
             if (value !== 0) {
-                const color = colors[value] || colors[matrix.type];
                 const xPos = x * grid + offset.x * grid;
                 const yPos = y * grid + offset.y * grid;
                 
-                // Draw white block background
-                context.fillStyle = 'rgba(255, 255, 255, 0.9)';  // Slightly transparent white
+                const pieceType = typeof value === 'string' ? value : matrix.type;
+                context.fillStyle = colors[pieceType];
                 context.fillRect(xPos, yPos, grid - 1, grid - 1);
                 
                 // Draw black outline
-                context.strokeStyle = 'rgba(0, 0, 0, 0.5)';  // Semi-transparent black
+                context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
                 context.lineWidth = 1;
                 context.strokeRect(xPos, yPos, grid - 1, grid - 1);
             }
@@ -526,12 +530,10 @@ function drawGhost() {
                 const xPos = x * grid + ghost.pos.x * grid;
                 const yPos = y * grid + ghost.pos.y * grid;
                 
-                // Draw ghost with transparent white fill
-                context.fillStyle = 'rgba(255, 255, 255, 0.2)';  // Very transparent white
+                // Draw ghost with piece color but very transparent
+                context.fillStyle = colors[piece.type].replace('0.8', '0.2');
                 context.fillRect(xPos, yPos, grid - 1, grid - 1);
-                
-                // Draw ghost outline
-                context.strokeStyle = 'rgba(0, 0, 0, 0.3)';  // Subtle black outline
+                context.strokeStyle = colors[piece.type].replace('0.8', '0.3');
                 context.strokeRect(xPos, yPos, grid - 1, grid - 1);
             }
         });
@@ -654,8 +656,9 @@ function drawPieceInContainer(piece, container) {
                     height: `${blockSize}px`,
                     left: `${xCenter + (relativeX * blockSize)}px`,
                     top: `${yCenter + (relativeY * blockSize)}px`,
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',  // White fill
-                    border: '1px solid rgba(0, 0, 0, 0.5)'       // Black outline
+                    backgroundColor: colors[piece.type],
+                    border: '1px solid rgba(0, 0, 0, 0.5)',
+                    boxShadow: 'none'  // Remove glow effect
                 });
                 
                 container.appendChild(block);
