@@ -7,8 +7,66 @@
 <body>
     <canvas id="tetris"></canvas>
 
+    <!-- Score Display -->
+    <div id="score-display" class="game-overlay">
+        <div class="score-label">SCORE</div>
+        <div class="score-value">0</div>
+    </div>
+
+    <!-- Level Display -->
+    <div id="level-display" class="game-overlay">
+        <div class="score-label">LEVEL</div>
+        <div class="score-value">1</div>
+    </div>
+
+    <!-- Lines Display -->
+    <div id="lines-display" class="game-overlay">
+        <div class="score-label">LINES</div>
+        <div class="score-value">0</div>
+    </div>
+
+    <!-- Add hold piece display container -->
+    <div id="hold-display" class="game-overlay">
+        <div class="hold-label">HOLD</div>
+        <div class="hold-piece-container"></div>
+    </div>
+
+    <!-- Add next to the hold piece display -->
+    <div id="preview-display" class="game-overlay">
+        <div class="preview-label">NEXT</div>
+        <div class="preview-container">
+            <div class="preview-piece-container"></div>
+            <div class="preview-piece-container"></div>
+            <div class="preview-piece-container"></div>
+        </div>
+    </div>
+
     <!-- Start Menu -->
-    <div class="menu" id="start-menu">
+    <div id="start-menu" class="menu">
+        <h1>TETRIS</h1>
+        <!-- Feature toggles -->
+        <div class="feature-toggles">
+            <div class="toggle-item">
+                <label for="toggle-score">Score Display</label>
+                <input type="checkbox" id="toggle-score" checked>
+            </div>
+            <div class="toggle-item">
+                <label for="toggle-level">Level Display</label>
+                <input type="checkbox" id="toggle-level" checked>
+            </div>
+            <div class="toggle-item">
+                <label for="toggle-lines">Lines Display</label>
+                <input type="checkbox" id="toggle-lines" checked>
+            </div>
+            <div class="toggle-item">
+                <label for="toggle-hold">Hold Piece</label>
+                <input type="checkbox" id="toggle-hold" checked>
+            </div>
+            <div class="toggle-item">
+                <label for="toggle-preview">Preview Pieces</label>
+                <input type="checkbox" id="toggle-preview" checked>
+            </div>
+        </div>
         <button class="menu-btn" onclick="startGame()">Play</button>
     </div>
 
