@@ -102,6 +102,16 @@ const COMBO_WINDOW = 3000;   // Time window for combos
 const LOCK_DELAY = 500;  // 500ms to move piece after landing
 const MAX_LOCK_RESETS = 15;  // Maximum number of moves/rotates before forcing lock
 
+// Add this near the top with other constants
+const GAMEPAD_CONFIG = {
+    movementSensitivity: 1,
+    actionSensitivity: 1,
+    baseDelay: 150,
+    lastMove: {},
+    buttonStates: {},  // Track button states for debouncing
+    repeatDelay: 100    // Time between repeated moves when holding
+};
+
 /************************
  * 2. Game State Variables
  ************************/
@@ -936,18 +946,27 @@ function togglePause() {
 // Add these gamepad functions
 let gamepadIndex = null;
 
+function logGamepadState(gamepad) {
+    console.log('Gamepad buttons state:');
+    gamepad.buttons.forEach((button, index) => {
+        if (button.pressed) {
+            console.log(`Button ${index} is pressed`);
+        }
+    });
+}
+
 function pollGamepad() {
     const gamepads = navigator.getGamepads();
     
-    // Find first connected gamepad
     if (gamepadIndex === null) {
         for (let i = 0; i < gamepads.length; i++) {
             if (gamepads[i] && gamepads[i].connected) {
                 gamepadIndex = i;
+                console.log('Gamepad connected:', gamepads[i].id);
                 break;
             }
         }
-        return;  // No gamepad found
+        return;
     }
     
     const gamepad = gamepads[gamepadIndex];
@@ -955,34 +974,63 @@ function pollGamepad() {
         gamepadIndex = null;
         return;
     }
+
+    const now = Date.now();
     
-    // D-pad
-    if (gamepad.buttons[12].pressed) {  // Up
-        playerRotate(1);
-    }
-    if (gamepad.buttons[13].pressed) {  // Down
-        playerDrop();
-    }
-    if (gamepad.buttons[14].pressed) {  // Left
-        playerMove(-1);
-    }
-    if (gamepad.buttons[15].pressed) {  // Right
-        playerMove(1);
+    // Helper function to handle repeating buttons (for movement)
+    const handleRepeatingButton = (index, callback) => {
+        const button = gamepad.buttons[index];
+        const state = GAMEPAD_CONFIG.buttonStates;
+        
+        if (!state[index]) {
+            state[index] = { pressed: false, lastTime: 0 };
+        }
+        
+        if (button.pressed) {
+            const timeSinceLastAction = now - state[index].lastTime;
+            if (!state[index].pressed || timeSinceLastAction >= GAMEPAD_CONFIG.repeatDelay) {
+                callback();
+                state[index].lastTime = now;
+            }
+            state[index].pressed = true;
+        } else {
+            state[index].pressed = false;
+        }
+    };
+
+    // Helper function for non-repeating buttons
+    const handleButton = (index, callback) => {
+        const button = gamepad.buttons[index];
+        const state = GAMEPAD_CONFIG.buttonStates;
+        
+        if (!state[index]) {
+            state[index] = { pressed: false };
+        }
+        
+        if (button.pressed && !state[index].pressed) {
+            callback();
+            state[index].pressed = true;
+        } else if (!button.pressed && state[index].pressed) {
+            state[index].pressed = false;
+        }
+    };
+    
+    if (gameStarted) {
+        // Movement controls (with repeat)
+        handleRepeatingButton(14, () => playerMove(-1));    // D-pad Left
+        handleRepeatingButton(15, () => playerMove(1));     // D-pad Right
+        handleRepeatingButton(13, () => playerDrop());      // D-pad Down
+        
+        // Action buttons (without repeat)
+        handleButton(12, () => playerRotate(1));           // D-pad Up
+        handleButton(0, () => hardDrop());                 // Cross (X)
+        handleButton(1, () => playerRotate(1));            // Circle (O)
+        handleButton(2, () => holdPiece());                // Square (□)
+        handleButton(3, () => playerRotate(-1));           // Triangle (△)
     }
     
-    // Action buttons
-    if (gamepad.buttons[0].pressed) {  // A - Rotate
-        playerRotate(1);
-    }
-    if (gamepad.buttons[1].pressed) {  // B - Hard Drop
-        hardDrop();
-    }
-    if (gamepad.buttons[2].pressed) {  // X - Hold
-        holdPiece();
-    }
-    if (gamepad.buttons[9].pressed) {  // Start - Pause
-        togglePause();
-    }
+    // Always process pause button
+    handleButton(9, () => togglePause());                  // Options button
 }
 
 // Add gamepad connection handlers
@@ -1064,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeFeatureToggles();
     
     // Initialize gamepad polling
-    setInterval(pollGamepad, 16);
+    setInterval(pollGamepad, 32);
     
     // Show start menu
     const startMenu = document.getElementById('start-menu');
@@ -1154,32 +1202,89 @@ function initializeTouchControls() {
         'touch-hold': () => holdPiece()
     };
 
+    // Track button states
+    const buttonStates = {
+        'touch-left': { pressed: false, lastMove: 0, heldTime: 0 },
+        'touch-right': { pressed: false, lastMove: 0, heldTime: 0 },
+        'touch-down': { pressed: false, lastMove: 0, heldTime: 0 },
+        'touch-rotate': { lastPress: 0 },
+        'touch-drop': { lastPress: 0 },
+        'touch-hold': { lastPress: 0 }
+    };
+
+    const INITIAL_DELAY = 300;  // Wait 300ms before starting repeats
+    const REPEAT_DELAY = 200;   // 200ms between repeated moves
+    const ACTION_COOLDOWN = 250; // 250ms between action button presses (rotate, drop, hold)
+
     // Handle both touch and mouse events for each button
     Object.keys(touchButtons).forEach(id => {
         const button = document.getElementById(id);
-        if (button) {
-            // Touch events
-            button.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                if (!gameStarted || isPaused) return;
-                touchButtons[id]();
-            });
+        if (!button) return;
 
-            // Mouse events
-            button.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                if (!gameStarted || isPaused) return;
+        const startPress = (e) => {
+            e.preventDefault();
+            if (!gameStarted || isPaused) return;
+
+            const currentTime = Date.now();
+
+            // Handle movement buttons (left, right, down)
+            if (['touch-left', 'touch-right', 'touch-down'].includes(id)) {
+                buttonStates[id].pressed = true;
+                buttonStates[id].heldTime = 0;
+                buttonStates[id].lastMove = currentTime;
                 touchButtons[id]();
-            });
-        }
+            } 
+            // Handle action buttons (rotate, drop, hold)
+            else if (currentTime - buttonStates[id].lastPress >= ACTION_COOLDOWN) {
+                buttonStates[id].lastPress = currentTime;
+                touchButtons[id]();
+            }
+        };
+
+        const endPress = (e) => {
+            e.preventDefault();
+            if (['touch-left', 'touch-right', 'touch-down'].includes(id)) {
+                buttonStates[id].pressed = false;
+                buttonStates[id].heldTime = 0;
+            }
+        };
+
+        // Touch events
+        button.addEventListener('touchstart', startPress);
+        button.addEventListener('touchend', endPress);
+
+        // Mouse events
+        button.addEventListener('mousedown', startPress);
+        button.addEventListener('mouseup', endPress);
+        button.addEventListener('mouseleave', endPress);
     });
 
-    // Prevent default touch behaviors
-    document.addEventListener('touchmove', (e) => {
-        if (e.target.closest('#mobile-controls')) {
-            e.preventDefault();
-        }
-    }, { passive: false });
+    // Add to the game update loop
+    function updateTouchControls(deltaTime) {
+        if (!gameStarted || isPaused) return;
+
+        Object.keys(buttonStates).forEach(id => {
+            const state = buttonStates[id];
+            if (state.pressed) {
+                state.heldTime += deltaTime;
+                if (state.heldTime >= INITIAL_DELAY) {
+                    const currentTime = Date.now();
+                    if (currentTime - state.lastMove >= REPEAT_DELAY) {
+                        touchButtons[id]();
+                        state.lastMove = currentTime;
+                    }
+                }
+            }
+        });
+    }
+
+    // Add the update function to the game loop
+    const originalUpdate = window.update;
+    window.update = function(time = 0) {
+        const deltaTime = time - lastTime;
+        updateTouchControls(deltaTime);
+        originalUpdate(time);
+    };
 }
 
 // Add this to your initialization code where you set up the start menu
