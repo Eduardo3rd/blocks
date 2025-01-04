@@ -59,19 +59,39 @@ const colors = {
 
 // Game timing constants
 const SPEED = {
-    START: 1000,  // Initial speed
+    START: 1000,
     LEVELS: {
-        0: 1000,
-        1: 900,
-        2: 800,
-        3: 700,
-        4: 600,
-        5: 500,
-        6: 400,
-        7: 300,
-        8: 200,
-        9: 100,
-        10: 80
+        // Early game (gradual increase)
+        0: 1000,    // 1.0 tiles/sec
+        1: 833,     // 1.2 tiles/sec
+        2: 714,     // 1.4 tiles/sec
+        3: 625,     // 1.6 tiles/sec
+        4: 556,     // 1.8 tiles/sec
+        5: 500,     // 2.0 tiles/sec
+        6: 454,     // 2.2 tiles/sec
+        7: 417,     // 2.4 tiles/sec
+        8: 385,     // 2.6 tiles/sec
+        
+        // Mid game (faster increase)
+        9: 357,     // 2.8 tiles/sec
+        10: 333,    // 3.0 tiles/sec
+        11: 312,    // 3.2 tiles/sec
+        12: 294,    // 3.4 tiles/sec
+        13: 278,    // 3.6 tiles/sec
+        
+        // Late game plateau
+        15: 200,    // 5.0 tiles/sec
+        16: 167,    // 6.0 tiles/sec
+        17: 143,    // 7.0 tiles/sec
+        18: 125,    // 8.0 tiles/sec
+        19: 100,    // 10.0 tiles/sec
+        20: 83,     // 12.0 tiles/sec
+        21: 69,     // 14.5 tiles/sec
+        22: 50,     // 20.0 tiles/sec
+        23: 33,     // ~30 tiles/sec (plateau)
+        
+        // "Kill screen" speed
+        29: 17      // ~60 tiles/sec
     }
 };
 
@@ -123,6 +143,12 @@ const arena = createMatrix(10, 20);  // Standard Tetris dimensions: 10x20
 
 // Visual effects
 let particles = [];
+
+// Add high scores object at the top with other game state variables
+const highScores = {
+    marathon: 0,
+    flow: 0
+};
 
 /************************
  * 3. Utility Functions
@@ -269,9 +295,36 @@ function merge(arena, player) {
     });
 }
 
+function getLevelSpeed(level) {
+    // If the level is directly defined, use that speed
+    if (SPEED.LEVELS[level] !== undefined) {
+        return SPEED.LEVELS[level];
+    }
+    
+    // Find the nearest defined levels
+    const definedLevels = Object.keys(SPEED.LEVELS)
+        .map(Number)
+        .sort((a, b) => a - b);
+    
+    // If beyond max defined level, use the highest speed
+    if (level >= definedLevels[definedLevels.length - 1]) {
+        return SPEED.LEVELS[definedLevels[definedLevels.length - 1]];
+    }
+    
+    // Find surrounding levels and interpolate
+    let lowerLevel = definedLevels.filter(l => l <= level).pop();
+    let upperLevel = definedLevels.filter(l => l > level)[0];
+    
+    // Linear interpolation between speeds
+    let ratio = (level - lowerLevel) / (upperLevel - lowerLevel);
+    return Math.round(
+        SPEED.LEVELS[lowerLevel] + 
+        (SPEED.LEVELS[upperLevel] - SPEED.LEVELS[lowerLevel]) * ratio
+    );
+}
+
 function arenaSweep() {
     let rowCount = 0;
-    let combo = 0;
     
     outer: for (let y = arena.length - 1; y >= 0; --y) {
         for (let x = 0; x < arena[y].length; ++x) {
@@ -280,32 +333,41 @@ function arenaSweep() {
             }
         }
         
-        // Remove the row and create a new one at top
         const row = arena.splice(y, 1)[0].fill(0);
         arena.unshift(row);
         ++y;
         
         rowCount++;
-        combo++;
     }
     
     if (rowCount > 0) {
-        // Update score based on number of lines cleared
-        score += rowCount * 100 * level * (combo > 1 ? combo : 1);
+        // Scoring system:
+        // Single line: 100 * level
+        // Double lines: 300 * level
+        // Triple lines: 500 * level
+        // Tetris (4 lines): 800 * level
+        const lineScores = [0, 100, 300, 500, 800];
+        const baseScore = lineScores[rowCount] || 0;
+        score += baseScore * level;  // Apply level multiplier
+        
         lines += rowCount;
         
-        // Play appropriate sound
+        // Update level - account for starting level
+        const startingLevel = parseInt(document.getElementById('starting-level').value) || 0;
+        level = Math.max(startingLevel, Math.floor(lines / 10) + startingLevel);
+        dropInterval = getLevelSpeed(level);
+        
         if (rowCount === 4) {
             AudioSystem.playTetris();
         } else {
             AudioSystem.playClear();
         }
         
-        // Update level
-        level = Math.floor(lines / 10) + 1;
-        dropInterval = SPEED.LEVELS[Math.min(level, Object.keys(SPEED.LEVELS).length - 1)];
-        
+        // Update all displays
         updateScoreDisplay();
+        
+        // Log scoring for debugging
+        console.log(`Cleared ${rowCount} lines at level ${level}. Score added: ${baseScore * level}`);
     }
     
     return rowCount;
@@ -319,6 +381,10 @@ function playerDrop() {
         pieceReset();
         arenaSweep();
         AudioSystem.playDrop();
+    } else {
+        // Add points for soft drop
+        score += 1;
+        updateScoreDisplay();
     }
     dropCounter = 0;
 }
@@ -386,8 +452,23 @@ function fillQueue() {
 
 function gameOver() {
     gameStarted = false;
-    AudioSystem.playGameOver();
-    document.getElementById('game-over').style.display = 'block';
+    
+    // Check for new high score
+    if (score > highScores.marathon) {
+        highScores.marathon = score;
+        localStorage.setItem('tetrisHighScore', score.toString());
+    }
+    
+    // Show game over screen with final score and high score
+    const gameOverScreen = document.createElement('div');
+    gameOverScreen.className = 'game-over';
+    gameOverScreen.innerHTML = `
+        <h1>GAME OVER</h1>
+        <p>Score: ${score}</p>
+        <p>High Score: ${highScores.marathon}</p>
+        <button onclick="startGame()">Play Again</button>
+    `;
+    document.body.appendChild(gameOverScreen);
 }
 
 function startGame() {
@@ -401,9 +482,13 @@ function startGame() {
         // Reset game state
         score = 0;
         lines = 0;
-        level = 1;
+        
+        // Get starting level from selector
+        const levelSelector = document.getElementById('starting-level');
+        level = levelSelector ? parseInt(levelSelector.value) : 1;
+        
         dropCounter = 0;
-        dropInterval = SPEED.START;
+        dropInterval = getLevelSpeed(level);
         lastTime = performance.now();
         gameStarted = true;
         isPaused = false;
@@ -420,7 +505,19 @@ function startGame() {
         // Reset piece
         pieceReset();
         
-        // Force initial display updates
+        // Load high score first
+        loadHighScore();
+        
+        // Force initial display updates and ensure visibility
+        const displays = ['score-display', 'high-score-display', 'level-display', 'lines-display'];
+        displays.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.classList.add('visible');
+                element.style.opacity = '1';
+            }
+        });
+        
         updateScoreDisplay();
         updatePreviewDisplay();
         drawHeldPiece();
@@ -429,8 +526,63 @@ function startGame() {
         lastTime = performance.now();
         requestAnimationFrame(update);
         
-    } catch (error) {
-        console.error('Error starting game:', error);
+        // Force an initial draw
+        draw();
+        
+    } catch (e) {
+        console.error('Error starting game:', e);
+    }
+}
+
+// Add function to load high score
+function loadHighScore() {
+    const savedHighScore = localStorage.getItem('tetrisHighScore');
+    if (savedHighScore) {
+        highScores.marathon = parseInt(savedHighScore);
+        document.querySelector('#high-score-display .score-value').textContent = highScores.marathon.toLocaleString();
+    }
+}
+
+// Update the updateScoreDisplay function
+function updateScoreDisplay() {
+    if (!gameFeatures.scoreDisplay) return;
+    
+    // Update score display
+    const scoreDisplay = document.getElementById('score-display');
+    if (scoreDisplay) {
+        scoreDisplay.classList.add('visible');
+        scoreDisplay.style.opacity = '1';
+        scoreDisplay.querySelector('.score-value').textContent = score.toLocaleString();
+    }
+    
+    // Update high score display
+    const highScoreDisplay = document.getElementById('high-score-display');
+    if (highScoreDisplay) {
+        highScoreDisplay.classList.add('visible');
+        highScoreDisplay.style.opacity = '1';
+        
+        // Update high score if current score is higher
+        if (score > highScores.marathon) {
+            highScores.marathon = score;
+            localStorage.setItem('tetrisHighScore', score.toString());
+        }
+        highScoreDisplay.querySelector('.score-value').textContent = highScores.marathon.toLocaleString();
+    }
+    
+    // Update level display
+    const levelDisplay = document.getElementById('level-display');
+    if (levelDisplay) {
+        levelDisplay.classList.add('visible');
+        levelDisplay.style.opacity = '1';
+        levelDisplay.querySelector('.score-value').textContent = level.toString();
+    }
+    
+    // Update lines display
+    const linesDisplay = document.getElementById('lines-display');
+    if (linesDisplay) {
+        linesDisplay.classList.add('visible');
+        linesDisplay.style.opacity = '1';
+        linesDisplay.querySelector('.score-value').textContent = lines.toString();
     }
 }
 
@@ -538,34 +690,6 @@ function drawGhost() {
             }
         });
     });
-}
-
-function updateScoreDisplay() {
-    console.log('Updating score display:', { score, level, lines }); // Debug log
-    
-    const displays = {
-        score: document.getElementById('score-display'),
-        level: document.getElementById('level-display'),
-        lines: document.getElementById('lines-display')
-    };
-    
-    if (displays.score) {
-        displays.score.querySelector('.score-value').textContent = score;
-        displays.score.classList.add('visible');  // Add visible class
-        displays.score.style.opacity = '1';  // Force opacity
-    }
-    
-    if (displays.level) {
-        displays.level.querySelector('.score-value').textContent = level;
-        displays.level.classList.add('visible');
-        displays.level.style.opacity = '1';
-    }
-    
-    if (displays.lines) {
-        displays.lines.querySelector('.score-value').textContent = lines;
-        displays.lines.classList.add('visible');
-        displays.lines.style.opacity = '1';
-    }
 }
 
 function drawHeldPiece() {
@@ -722,14 +846,21 @@ function handleKeyUp(event) {
 }
 
 function hardDrop() {
+    let dropDistance = 0;
     while (!collide(arena, piece)) {
         piece.pos.y++;
+        dropDistance++;
     }
     piece.pos.y--;
+    
+    // Add points for hard drop (2 points per cell dropped)
+    score += dropDistance * 2;
+    
     merge(arena, piece);
     pieceReset();
     arenaSweep();
     AudioSystem.playDrop();
+    updateScoreDisplay();
 }
 
 function holdPiece() {
@@ -915,6 +1046,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     initializeTouchControls();
+    
+    initializeLevelSelector();
 });
 
 // Handle window resize
@@ -1011,4 +1144,36 @@ function initializeTouchControls() {
             e.preventDefault();
         }
     }, { passive: false });
+}
+
+// Add this to your initialization code where you set up the start menu
+function initializeLevelSelector() {
+    const levelSelector = document.getElementById('starting-level');
+    if (!levelSelector) return;
+
+    // Clear existing options
+    levelSelector.innerHTML = '';
+    
+    // Add levels 0-29
+    for (let i = 0; i <= 29; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        levelSelector.appendChild(option);
+    }
+}
+
+// Add reset high score function
+function resetHighScore() {
+    // Reset high score in memory
+    highScores.marathon = 0;
+    
+    // Clear from localStorage
+    localStorage.removeItem('tetrisHighScore');
+    
+    // Update display
+    const highScoreDisplay = document.getElementById('high-score-display');
+    if (highScoreDisplay) {
+        highScoreDisplay.querySelector('.score-value').textContent = '0';
+    }
 }

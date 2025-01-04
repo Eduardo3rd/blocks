@@ -13,6 +13,12 @@
         <div class="score-value">0</div>
     </div>
 
+    <!-- High Score Display -->
+    <div id="high-score-display" class="game-overlay">
+        <div class="score-label">HIGH SCORE</div>
+        <div class="score-value">0</div>
+    </div>
+
     <!-- Level Display -->
     <div id="level-display" class="game-overlay">
         <div class="score-label">LEVEL</div>
@@ -81,8 +87,15 @@
                 <label for="toggle-preview">Preview Pieces</label>
                 <input type="checkbox" id="toggle-preview" checked>
             </div>
+            <div class="level-select">
+                <label for="starting-level">Starting Level</label>
+                <select id="starting-level" class="level-selector">
+                    <!-- We'll populate this with JavaScript -->
+                </select>
+            </div>
         </div>
         <button class="menu-btn" onclick="startGame()">Play</button>
+        <button class="menu-btn secondary" onclick="resetHighScore()">Reset High Score</button>
     </div>
 
     <!-- Pause Menu -->

@@ -45,19 +45,33 @@ canvas {
     font-family: Arial, sans-serif;
     text-align: center;
     min-width: 120px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.game-overlay.visible {
     opacity: 1;
 }
 
 #score-display {
     bottom: calc(50% - (32px * 10));
-    right: calc(50% - (32px * 15));
+    right: calc(50% - (32px * 12) - 20px);
     transform: none;
     text-align: left;
+    min-width: 200px;
+}
+
+#high-score-display {
+    bottom: calc(50% - (32px * 7));
+    right: calc(50% - (32px * 12) - 20px);
+    transform: none;
+    text-align: left;
+    min-width: 200px;
 }
 
 #level-display {
     position: fixed;
-    left: calc(50% - (32px * 15));
+    left: calc(50% - (32px * 10));
     bottom: calc(50% - (32px * 10));
     transform: none;
     text-align: right;
@@ -68,7 +82,7 @@ canvas {
 
 #lines-display {
     position: fixed;
-    left: calc(50% - (32px * 15));
+    left: calc(50% - (32px * 10));
     bottom: calc(50% - (32px * 7));
     transform: none;
     text-align: right;
@@ -373,15 +387,28 @@ input[type="range"] {
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: white;
     padding: 15px 30px;
-    border-radius: 4px;
-    font-size: 20px;
+    border-radius: 5px;
     cursor: pointer;
-    transition: all 0.2s;
+    font-size: 1.2em;
+    margin: 10px;
+    min-width: 200px;
+    transition: all 0.3s ease;
 }
 
 .menu-btn:hover {
     background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-1px);
+    transform: scale(1.05);
+}
+
+.menu-btn.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #aaa;
+}
+
+.menu-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
 }
 
 /* Shared styles for start and game over menus */
@@ -392,18 +419,6 @@ input[type="range"] {
 #start-menu .menu-btn, #game-over .menu-btn {
     width: 100%;
     margin: 0;
-}
-
-/* Score display */
-#score-display {
-    position: fixed;
-    right: calc(50% - (32px * 10));
-    bottom: calc(50% - (32px * 20/2));
-    transform: none;
-    text-align: left;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    padding: 10px;
 }
 
 #score-display.visible {
@@ -450,32 +465,8 @@ input[type="range"] {
     height: 20px;
 }
 
-/* Add level display styling */
-#level-display {
-    position: fixed;
-    left: calc(50% - (32px * 8));
-    bottom: calc(50% - (32px * 10));
-    transform: none;
-    text-align: left;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    padding: 10px;
-}
-
 #level-display.visible {
     opacity: 1;
-}
-
-/* Add with other game overlay elements */
-#lines-display {
-    position: fixed;
-    left: calc(50% - (32px * 8));
-    bottom: calc(50% - (32px * 10) + 80px);
-    transform: none;
-    text-align: left;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    padding: 10px;
 }
 
 #lines-display.visible {
@@ -593,57 +584,82 @@ input[type="range"] {
 }
 
 /* Mobile touch controls */
-.mobile-only {
-    display: none;  /* Hidden by default */
-}
-
-@media (max-width: 768px) {
-    .mobile-only {
-        display: block;
-    }
-}
-
 #mobile-controls {
+    display: none;  /* Hidden by default */
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 150px;
-    display: flex;
-    justify-content: space-between;
+    height: 200px;  /* Increased from 150px */
     padding: 20px;
     z-index: 100;
 }
 
+/* Only show on mobile devices */
+@media (max-width: 768px) {
+    #mobile-controls {
+        display: flex;
+        justify-content: space-between;
+        background: rgba(0, 0, 0, 0.3);  /* Semi-transparent background */
+    }
+    
+    /* Make canvas shorter on mobile to accommodate controls */
+    canvas {
+        height: calc(100vh - 220px);  /* Adjust for larger controls */
+    }
+}
+
 .touch-area {
     display: flex;
-    gap: 20px;
+    gap: 30px;  /* Increased from 20px */
+    padding: 0 20px;
 }
 
-.left-controls {
-    align-items: center;
-}
-
-.right-controls {
+.left-controls, .right-controls {
     align-items: center;
 }
 
 .touch-button {
-    width: 60px;
-    height: 60px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 120px;  /* Doubled from 60px */
+    height: 120px;  /* Doubled from 60px */
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 48px;  /* Doubled from 24px */
     color: rgba(255, 255, 255, 0.8);
     user-select: none;
     -webkit-user-select: none;
+    transition: all 0.2s ease;
 }
 
 .touch-button:active {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.3);
     transform: scale(0.95);
+}
+
+.level-select {
+    margin: 20px 0;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+}
+
+.level-selector {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 16px;
+    width: 80px;
+}
+
+.level-selector option {
+    background: #000033;
+    color: white;
 }
