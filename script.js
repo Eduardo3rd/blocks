@@ -99,6 +99,8 @@ const MOVE_SPEED = 100;      // Time between moves when holding a direction
 const INITIAL_DELAY = 300;   // Initial delay before moving when holding a direction
 const SOFT_DROP_SPEED = 50;  // Speed of soft drop
 const COMBO_WINDOW = 3000;   // Time window for combos
+const LOCK_DELAY = 500;  // 500ms to move piece after landing
+const MAX_LOCK_RESETS = 15;  // Maximum number of moves/rotates before forcing lock
 
 /************************
  * 2. Game State Variables
@@ -149,6 +151,11 @@ const highScores = {
     marathon: 0,
     flow: 0
 };
+
+// Add lock delay state variables with other game state variables
+let lockDelayTimer = 0;
+let lockResets = 0;
+let isGrounded = false;
 
 /************************
  * 3. Utility Functions
@@ -341,14 +348,9 @@ function arenaSweep() {
     }
     
     if (rowCount > 0) {
-        // Scoring system:
-        // Single line: 100 * level
-        // Double lines: 300 * level
-        // Triple lines: 500 * level
-        // Tetris (4 lines): 800 * level
         const lineScores = [0, 100, 300, 500, 800];
         const baseScore = lineScores[rowCount] || 0;
-        score += baseScore * level;  // Apply level multiplier
+        score += baseScore * (level + 1);  // Add 1 to level to handle level 0
         
         lines += rowCount;
         
@@ -367,7 +369,7 @@ function arenaSweep() {
         updateScoreDisplay();
         
         // Log scoring for debugging
-        console.log(`Cleared ${rowCount} lines at level ${level}. Score added: ${baseScore * level}`);
+        console.log(`Cleared ${rowCount} lines at level ${level}. Score added: ${baseScore * (level + 1)}`);
     }
     
     return rowCount;
@@ -377,11 +379,24 @@ function playerDrop() {
     piece.pos.y++;
     if (collide(arena, piece)) {
         piece.pos.y--;
-        merge(arena, piece);
-        pieceReset();
-        arenaSweep();
-        AudioSystem.playDrop();
+        
+        // Start lock delay when piece first touches ground
+        if (!isGrounded) {
+            isGrounded = true;
+            lockDelayTimer = LOCK_DELAY;
+            lockResets = 0;
+        }
+        
+        // Only merge and reset if lock delay is up or max resets reached
+        if (lockDelayTimer <= 0 || lockResets >= MAX_LOCK_RESETS) {
+            merge(arena, piece);
+            pieceReset();
+            arenaSweep();
+            AudioSystem.playDrop();
+            isGrounded = false;
+        }
     } else {
+        isGrounded = false;
         // Add points for soft drop
         score += 1;
         updateScoreDisplay();
@@ -395,6 +410,13 @@ function playerMove(dir) {
         piece.pos.x -= dir;
         return false;
     }
+    
+    // Reset lock delay if piece is grounded and hasn't exceeded max resets
+    if (isGrounded && lockResets < MAX_LOCK_RESETS) {
+        lockDelayTimer = LOCK_DELAY;
+        lockResets++;
+    }
+    
     AudioSystem.playMove();
     return true;
 }
@@ -412,6 +434,12 @@ function playerRotate(dir) {
             piece.pos.x = pos;
             return;
         }
+    }
+    
+    // Reset lock delay if piece is grounded and hasn't exceeded max resets
+    if (isGrounded && lockResets < MAX_LOCK_RESETS) {
+        lockDelayTimer = LOCK_DELAY;
+        lockResets++;
     }
     
     AudioSystem.playRotate();
@@ -984,6 +1012,14 @@ function update(time = 0) {
     if (dropCounter > dropInterval) {
         playerDrop();
         dropCounter = 0;
+    }
+    
+    // Update lock delay timer if piece is grounded
+    if (isGrounded && lockDelayTimer > 0) {
+        lockDelayTimer -= deltaTime;
+        if (lockDelayTimer <= 0) {
+            playerDrop();  // Force the piece to lock
+        }
     }
     
     // Handle held movement keys
