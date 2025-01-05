@@ -581,6 +581,12 @@ function startGame() {
         // Load high score first
         loadHighScore();
         
+        // Show game overlays
+        const overlays = document.querySelectorAll('.game-overlay');
+        overlays.forEach(overlay => {
+            overlay.classList.add('visible');
+        });
+        
         // Force initial display updates and ensure visibility
         const displays = ['score-display', 'high-score-display', 'level-display', 'lines-display'];
         displays.forEach(id => {

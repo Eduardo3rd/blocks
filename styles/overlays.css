@@ -1,7 +1,7 @@
 /* Base overlay styling */
 .game-overlay {
     position: fixed;
-    padding: 15px;
+    padding: 20px;
     background: transparent;
     pointer-events: none;
     z-index: 2;
@@ -9,125 +9,117 @@
     color: white;
     font-family: Arial, sans-serif;
     text-align: center;
-    min-width: 120px;
+    min-width: 140px;
     opacity: 1;
     transition: opacity 0.3s ease;
+    backdrop-filter: blur(5px);
 }
 
 /* Show overlay when visible class is added */
 .game-overlay.visible {
     display: block;
+    animation: fadeIn 0.3s ease;
 }
 
 /* Score displays */
 #score-display {
-    bottom: calc(50% - (32px * 10));
-    right: calc(50% - (32px * 12) - 20px);
+    bottom: calc(50% - (28px * 12));
+    right: calc(50% - (28px * 16));
     transform: none;
     text-align: left;
     min-width: 200px;
 }
 
 #high-score-display {
-    bottom: calc(50% - (32px * 7));
-    right: calc(50% - (32px * 12) - 20px);
+    bottom: calc(50% - (28px * 9));  /* Changed from 32px to 28px */
+    right: calc(50% - (28px * 16));
     transform: none;
     text-align: left;
     min-width: 200px;
 }
 
 #level-display {
-    position: fixed;
-    left: calc(50% - (32px * 10));
-    bottom: calc(50% - (32px * 10));
+    bottom: calc(50% - (28px * 12));  /* Changed from 32px to 28px */
+    left: calc(50% - (28px * 13) - 20px);
     transform: none;
     text-align: right;
-    padding: 10px;
+    min-width: 200px;
 }
 
 #lines-display {
-    position: fixed;
-    left: calc(50% - (32px * 10));
-    bottom: calc(50% - (32px * 7));
+    bottom: calc(50% - (28px * 9));  /* Changed from 32px to 28px */
+    left: calc(50% - (28px * 13) - 20px);
     transform: none;
     text-align: right;
-    padding: 10px;
+    min-width: 200px;
 }
 
 /* Score text styling */
 .score-label {
-    font-size: 16px;
-    margin-bottom: 5px;
-    color: #888;
-    letter-spacing: 2px;
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: #aaa;
+    letter-spacing: 3px;
 }
 
 .score-value {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: bold;
     color: white;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-    letter-spacing: 1px;
+    letter-spacing: 2px;
 }
 
 /* Hold piece display */
 #hold-display {
-    position: fixed;
-    left: calc(50% - (32px * 9.5));
-    top: calc(50% - (32px * 10));
+    top: calc(50% - (28px * 10));
+    left: calc(50% - (28px * 11) - 20px);
     transform: none;
-    text-align: left;
-    padding: 10px;
-    background: rgba(0, 0, 0, 0.2);
+    text-align: right;
+    background: rgba(0, 0, 0, 0.4);
     border-radius: 8px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .hold-label {
-    font-size: 16px;
+    font-size: 18px;
     margin-bottom: 5px;
-    color: #888;
-    letter-spacing: 2px;
+    color: #aaa;
+    letter-spacing: 3px;
 }
 
-/* Preview display */
+/* Preview display - move to right side */
 #preview-display {
-    position: fixed;
-    right: calc(50% - (32px * 10));
-    top: calc(50% - (32px * 10));
+    top: calc(50% - (28px * 10));
+    right: calc(50% - (28px * 14));
+    left: auto;
     transform: none;
     text-align: left;
-    padding: 10px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 300px;
 }
 
-.preview-label {
-    font-size: 16px;
-    margin-bottom: 5px;
-    color: #888;
-    letter-spacing: 2px;
-}
-
+/* Adjust preview container */
 .preview-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 2px;
+    align-items: center;
+    min-height: 300px;
 }
 
-/* Shared piece container styles */
-.preview-piece-container,
-.hold-piece-container {
-    width: 80px;
-    height: 80px;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 8px;
-    position: relative;
-    padding: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    backdrop-filter: blur(5px);
+/* Adjust preview label */
+.preview-label {
+    font-size: 18px;
+    margin-bottom: 5px;
+    color: #aaa;
+    letter-spacing: 3px;
+    text-align: left;
+    padding-left: 5px;
 }
 
 /* Add these specific styles for hold and preview displays */
@@ -141,4 +133,15 @@
 #hold-display.visible,
 #preview-display.visible {
     opacity: 1;
+}
+
+.hold-queue {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 120px;
+    height: 120px;
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    margin-bottom: 20px;
 }

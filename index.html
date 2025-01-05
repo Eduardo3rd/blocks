@@ -1,47 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern Tetris</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/game-board.css">
-    <link rel="stylesheet" href="styles/mobile.css">
-    <link rel="stylesheet" href="styles/overlays.css">
     <link rel="stylesheet" href="styles/menus.css">
+    <link rel="stylesheet" href="styles/overlays.css">
+    <link rel="stylesheet" href="styles/mobile.css">
+    <link rel="stylesheet" href="styles/piece.css">
 </head>
 <body>
-    <canvas id="tetris"></canvas>
+    <!-- Game Board Container -->
+    <div class="game-board">
+        <canvas id="tetris"></canvas>
+    </div>
 
-    <!-- Score Display -->
+    <!-- Score Displays -->
     <div id="score-display" class="game-overlay">
         <div class="score-label">SCORE</div>
         <div class="score-value">0</div>
     </div>
 
-    <!-- High Score Display -->
     <div id="high-score-display" class="game-overlay">
         <div class="score-label">HIGH SCORE</div>
         <div class="score-value">0</div>
     </div>
 
-    <!-- Level Display -->
     <div id="level-display" class="game-overlay">
         <div class="score-label">LEVEL</div>
         <div class="score-value">1</div>
     </div>
 
-    <!-- Lines Display -->
     <div id="lines-display" class="game-overlay">
         <div class="score-label">LINES</div>
         <div class="score-value">0</div>
     </div>
 
-    <!-- Add hold piece display container -->
-    <div id="hold-display" class="game-overlay">
-        <div class="hold-label">HOLD</div>
-        <div class="hold-piece-container"></div>
-    </div>
-
-    <!-- Add next to the hold piece display -->
+    <!-- Preview Display -->
     <div id="preview-display" class="game-overlay">
         <div class="preview-label">NEXT</div>
         <div class="preview-container">
@@ -51,31 +49,29 @@
         </div>
     </div>
 
-    <!-- Add this after the canvas but before any menus -->
-    <div id="mobile-controls" class="mobile-only">
-        <div class="touch-area left-controls">
-            <div class="touch-button" id="touch-left">←</div>
-            <div class="touch-button" id="touch-right">→</div>
-        </div>
-        
-        <div class="touch-area right-controls">
-            <div class="touch-button" id="touch-rotate">↻</div>
-            <div class="touch-button" id="touch-down">↓</div>
-            <div class="touch-button" id="touch-drop">⤓</div>
-            <div class="touch-button" id="touch-hold">H</div>
-        </div>
+    <!-- Hold Display -->
+    <div id="hold-display" class="game-overlay">
+        <div class="hold-label">HOLD</div>
+        <div class="hold-piece-container"></div>
     </div>
 
     <!-- Start Menu -->
     <div id="start-menu" class="menu">
-        <h1>BLOCKS</h1>
-        <button class="menu-btn" onclick="startGame()">Play</button>
-        <button class="menu-btn" onclick="showDeveloperMenu()">Developer Menu</button>
+        <h1>TETRIS</h1>
+        <button class="menu-btn" id="start-button">Start Game</button>
+        <button class="menu-btn secondary" id="settings-button">Settings</button>
     </div>
 
-    <!-- Add new Developer Menu -->
+    <!-- Pause Menu -->
+    <div id="pause-menu" class="menu">
+        <h1>PAUSED</h1>
+        <button class="menu-btn" id="resume-button">Resume</button>
+        <button class="menu-btn secondary" id="restart-button">Restart</button>
+    </div>
+
+    <!-- Developer Menu -->
     <div id="developer-menu" class="menu">
-        <h1>Developer Menu</h1>
+        <h1>Settings</h1>
         <div class="feature-toggles">
             <div class="toggle-item">
                 <label for="toggle-score">Score Display</label>
@@ -97,23 +93,48 @@
                 <label for="toggle-preview">Preview Pieces</label>
                 <input type="checkbox" id="toggle-preview" checked>
             </div>
-            <div class="level-select">
-                <label for="starting-level">Starting Level</label>
-                <select id="starting-level" class="level-selector">
-                    <!-- Populated by JavaScript -->
-                </select>
+            <div class="toggle-container">
+                <input type="checkbox" id="toggle-ghost" checked>
+                <label for="toggle-ghost">Ghost Piece</label>
             </div>
         </div>
-        <button class="menu-btn secondary" onclick="resetHighScore()">Reset High Score</button>
-        <button class="menu-btn" onclick="showStartMenu()">Back</button>
+        <div class="level-select">
+            <label for="starting-level">Starting Level:</label>
+            <select id="starting-level"></select>
+        </div>
+        <button class="menu-btn" id="settings-close">Close</button>
     </div>
 
-    <!-- Pause Menu -->
-    <div class="menu" id="pause-menu">
-        <h1>Paused</h1>
-        <button class="menu-btn" onclick="togglePause()">Resume</button>
+    <!-- Game Over Screen -->
+    <div class="game-over">
+        <div class="game-over-content">
+            <h1>GAME OVER</h1>
+            <p>Final Score: <span class="final-score">0</span></p>
+            <button class="menu-btn" id="play-again-button">Play Again</button>
+            <button class="menu-btn secondary" id="main-menu-button">Main Menu</button>
+        </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Mobile Controls -->
+    <div id="mobile-controls">
+        <div class="touch-area left-controls">
+            <div class="touch-button" id="move-left">←</div>
+            <div class="touch-button" id="move-right">→</div>
+        </div>
+        <div class="touch-area right-controls">
+            <div class="touch-button" id="rotate">↻</div>
+            <div class="touch-button" id="drop">↓</div>
+        </div>
+    </div>
+
+    <!-- Game Script -->
+    <script type="module" src="scripts/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, checking for start button...');
+            const startButton = document.getElementById('start-button');
+            console.log('Start button:', startButton);
+        });
+    </script>
 </body>
 </html>

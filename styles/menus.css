@@ -9,9 +9,14 @@
     padding: 20px;
     border-radius: 8px;
     text-align: center;
-    display: none;
     z-index: 1000;
     width: 300px;
+    display: none; /* Hidden by default */
+}
+
+/* When menu is shown */
+.menu.visible {
+    display: block;
 }
 
 /* Menu Headers */
