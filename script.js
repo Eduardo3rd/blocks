@@ -490,6 +490,7 @@ function fillQueue() {
 
 function gameOver() {
     gameStarted = false;
+    AudioSystem.playGameOver();
     
     // Check for new high score
     if (score > highScores.marathon) {
@@ -497,16 +498,50 @@ function gameOver() {
         localStorage.setItem('tetrisHighScore', score.toString());
     }
     
-    // Show game over screen with final score and high score
+    // Remove any existing game over screen
+    const existingGameOver = document.querySelector('.game-over');
+    if (existingGameOver) {
+        existingGameOver.remove();
+    }
+    
+    // Create game over screen with updated structure
     const gameOverScreen = document.createElement('div');
     gameOverScreen.className = 'game-over';
-    gameOverScreen.innerHTML = `
+    
+    // Create the content container
+    const content = document.createElement('div');
+    content.className = 'game-over-content';
+    
+    content.innerHTML = `
         <h1>GAME OVER</h1>
-        <p>Score: ${score}</p>
-        <p>High Score: ${highScores.marathon}</p>
-        <button onclick="startGame()">Play Again</button>
+        <p>Final Score: ${score.toLocaleString()}</p>
+        <p>High Score: ${highScores.marathon.toLocaleString()}</p>
+        <button class="menu-button" onclick="restartGame()">Play Again</button>
     `;
+    
+    gameOverScreen.appendChild(content);
     document.body.appendChild(gameOverScreen);
+    
+    // Add active class after a brief delay to ensure transition works
+    requestAnimationFrame(() => {
+        gameOverScreen.classList.add('active');
+    });
+}
+
+// Add a new function to handle game restart
+function restartGame() {
+    // Remove game over screen with transition
+    const gameOverScreen = document.querySelector('.game-over');
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove('active');
+        // Wait for transition before removing
+        setTimeout(() => {
+            gameOverScreen.remove();
+        }, 300); // Match transition duration
+    }
+    
+    // Start new game
+    startGame();
 }
 
 function startGame() {
