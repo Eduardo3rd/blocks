@@ -736,3 +736,25 @@ input[type="range"] {
     transform: translateY(-2px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
+
+/* Developer menu specific styles */
+#developer-menu {
+    width: 300px; /* Wider to accommodate the toggles */
+    display: none; /* Hidden by default */
+}
+
+#developer-menu .feature-toggles {
+    margin: 20px 0;
+    text-align: left;
+}
+
+#developer-menu .menu-btn {
+    margin: 10px 0;
+}
+
+/* Ensure proper spacing between buttons */
+.menu .menu-btn {
+    margin: 10px 0;
+    display: block;
+    width: 100%;
+}

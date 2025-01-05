@@ -64,8 +64,14 @@
 
     <!-- Start Menu -->
     <div id="start-menu" class="menu">
-        <h1>TETRIS</h1>
-        <!-- Feature toggles -->
+        <h1>BLOCKS</h1>
+        <button class="menu-btn" onclick="startGame()">Play</button>
+        <button class="menu-btn" onclick="showDeveloperMenu()">Developer Menu</button>
+    </div>
+
+    <!-- Add new Developer Menu -->
+    <div id="developer-menu" class="menu">
+        <h1>Developer Menu</h1>
         <div class="feature-toggles">
             <div class="toggle-item">
                 <label for="toggle-score">Score Display</label>
@@ -90,12 +96,12 @@
             <div class="level-select">
                 <label for="starting-level">Starting Level</label>
                 <select id="starting-level" class="level-selector">
-                    <!-- We'll populate this with JavaScript -->
+                    <!-- Populated by JavaScript -->
                 </select>
             </div>
         </div>
-        <button class="menu-btn" onclick="startGame()">Play</button>
         <button class="menu-btn secondary" onclick="resetHighScore()">Reset High Score</button>
+        <button class="menu-btn" onclick="showStartMenu()">Back</button>
     </div>
 
     <!-- Pause Menu -->

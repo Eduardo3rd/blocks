@@ -1353,3 +1353,13 @@ function resetHighScore() {
         highScoreDisplay.querySelector('.score-value').textContent = '0';
     }
 }
+
+function showDeveloperMenu() {
+    document.getElementById('start-menu').style.display = 'none';
+    document.getElementById('developer-menu').style.display = 'block';
+}
+
+function showStartMenu() {
+    document.getElementById('developer-menu').style.display = 'none';
+    document.getElementById('start-menu').style.display = 'block';
+}
