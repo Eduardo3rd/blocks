@@ -4,82 +4,29 @@ import audioSystem from '../systems/audio.js';
 
 class MenuSystem {
     constructor() {
-        console.log('MenuSystem constructor called');
         this.menus = {
             start: document.getElementById('start-menu'),
             pause: document.getElementById('pause-menu'),
-            developer: document.getElementById('developer-menu'),
+            settings: document.getElementById('developer-menu'),
             gameOver: document.querySelector('.game-over')
         };
-        console.log('Menus found:', this.menus);
-
-        this.buttons = {
-            start: document.getElementById('start-button'),
-            settings: document.getElementById('settings-button'),
-            resume: document.getElementById('resume-button'),
-            restart: document.getElementById('restart-button'),
-            settingsClose: document.getElementById('settings-close'),
-            playAgain: document.getElementById('play-again-button'),
-            mainMenu: document.getElementById('main-menu-button')
-        };
-        console.log('Buttons found:', this.buttons);
-
-        this.callbacks = {
-            onStart: null,
-            onResume: null,
-            onRestart: null,
-            onSettingsChanged: null
-        };
+        
+        this.callbacks = {};
     }
 
     init() {
-        console.log('MenuSystem init called');
-        this.initializeMenus();
-        this.initializeButtons();
-        this.showMenu('start'); // Show start menu immediately
-    }
-
-    initializeMenus() {
-        // Initialize feature toggles
-        this.initializeFeatureToggles();
-        
-        // Initialize level selector
+        console.log('Initializing menu system');
+        this.hideAllMenus();
+        this.setupEventListeners();
         this.initializeLevelSelector();
         
-        // Set up menu transitions
-        Object.values(this.menus).forEach(menu => {
-            if (menu) {
-                menu.style.transition = 'opacity 0.3s ease';
-            }
-        });
-    }
-
-    initializeFeatureToggles() {
-        const features = storageSystem.getFeatures();
-        
-        // Set up toggle listeners
-        const toggles = {
-            'toggle-score': 'scoreDisplay',
-            'toggle-level': 'levelDisplay',
-            'toggle-lines': 'linesDisplay',
-            'toggle-hold': 'holdPiece',
-            'toggle-preview': 'previewPieces',
-            'toggle-ghost': 'ghostPiece'
-        };
-
-        Object.entries(toggles).forEach(([id, feature]) => {
-            const toggle = document.getElementById(id);
-            if (toggle) {
-                toggle.checked = features[feature];
-                toggle.addEventListener('change', () => {
-                    features[feature] = toggle.checked;
-                    storageSystem.setFeatures(features);
-                    if (this.callbacks.onSettingsChanged) {
-                        this.callbacks.onSettingsChanged(features);
-                    }
-                });
-            }
-        });
+        // Show start menu by default
+        if (this.menus.start) {
+            this.menus.start.style.display = 'block';
+            console.log('Start menu initialized and displayed');
+        } else {
+            console.error('Start menu element not found during initialization');
+        }
     }
 
     initializeLevelSelector() {
@@ -97,101 +44,69 @@ class MenuSystem {
             levelSelector.appendChild(option);
         }
 
-        // Load saved level
-        const settings = storageSystem.getSettings();
-        levelSelector.value = settings.startingLevel || 1;
-
-        // Save level changes
-        levelSelector.addEventListener('change', () => {
-            settings.startingLevel = parseInt(levelSelector.value);
-            storageSystem.setSettings(settings);
-        });
+        // Set default level
+        levelSelector.value = 0;
     }
 
-    initializeButtons() {
-        console.log('Initializing buttons');
-        
-        // Start button
-        if (this.buttons.start) {
-            this.buttons.start.onclick = () => {
+    setupEventListeners() {
+        // Start menu buttons
+        const startButton = document.getElementById('start-button');
+        const settingsButton = document.getElementById('settings-button');
+
+        if (startButton) {
+            startButton.addEventListener('click', () => {
                 console.log('Start button clicked');
                 if (this.callbacks.onStart) {
                     this.callbacks.onStart();
-                } else {
-                    console.error('No onStart callback registered');
                 }
-            };
-        } else {
-            console.error('Start button not found');
+            });
         }
 
-        // Resume button
-        if (this.buttons.resume) {
-            this.buttons.resume.onclick = () => {
-                console.log('Resume button clicked');
-                if (this.callbacks.onResume) {
-                    this.callbacks.onResume();
-                } else {
-                    console.error('No onResume callback registered');
-                }
-            };
-        }
-
-        // Settings button
-        if (this.buttons.settings) {
-            this.buttons.settings.onclick = () => {
-                console.log('Settings button clicked');
-                this.showMenu('developer');
-            };
+        if (settingsButton) {
+            settingsButton.addEventListener('click', () => {
+                this.showMenu('settings');
+            });
         }
 
         // Settings close button
-        if (this.buttons.settingsClose) {
-            this.buttons.settingsClose.onclick = () => {
-                console.log('Settings close button clicked');
+        const settingsCloseButton = document.getElementById('settings-close');
+        if (settingsCloseButton) {
+            settingsCloseButton.addEventListener('click', () => {
                 this.showMenu('start');
-            };
+            });
         }
 
-        // Play Again button
-        if (this.buttons.playAgain) {
-            this.buttons.playAgain.onclick = () => {
-                console.log('Play Again clicked');
+        // Pause menu buttons
+        const resumeButton = document.getElementById('resume-button');
+        const restartButton = document.getElementById('restart-button');
+
+        if (resumeButton) {
+            resumeButton.addEventListener('click', () => {
+                if (this.callbacks.onResume) {
+                    this.callbacks.onResume();
+                }
+            });
+        }
+
+        if (restartButton) {
+            restartButton.addEventListener('click', () => {
                 if (this.callbacks.onRestart) {
                     this.callbacks.onRestart();
                 }
-            };
+            });
         }
+    }
 
-        // Main Menu button
-        if (this.buttons.mainMenu) {
-            this.buttons.mainMenu.onclick = () => {
-                console.log('Main Menu clicked');
-                location.reload();
-            };
-        }
-
-        // ... rest of your button initialization
+    setCallbacks(callbacks) {
+        this.callbacks = callbacks;
     }
 
     showMenu(menuName) {
-        console.log(`Showing menu: ${menuName}`);
-        
-        // Hide all menus
-        Object.values(this.menus).forEach(menu => {
-            if (menu) {
-                menu.style.display = 'none';
-            }
-        });
-
-        // Show requested menu
+        this.hideAllMenus();
         const menu = this.menus[menuName];
         if (menu) {
-            console.log(`Display ${menuName} menu`);
             menu.style.display = 'block';
-            this.currentMenu = menu;
-        } else {
-            console.error(`Menu ${menuName} not found`);
+            console.log(`Showing ${menuName} menu`);
         }
     }
 
@@ -201,57 +116,19 @@ class MenuSystem {
                 menu.style.display = 'none';
             }
         });
-        this.currentMenu = null;
     }
 
     showGameOver(finalScore) {
-        const gameOver = this.menus.gameOver;
-        if (!gameOver) return;
-
-        const scoreElement = gameOver.querySelector('.final-score');
-        if (scoreElement) {
-            scoreElement.textContent = finalScore;
-        }
-
-        gameOver.classList.add('active');
-        this.currentMenu = gameOver;
-    }
-
-    setCallbacks(callbacks) {
-        console.log('Setting callbacks:', callbacks);
-        this.callbacks = { ...this.callbacks, ...callbacks };
-    }
-
-    getCurrentFeatures() {
-        return storageSystem.getFeatures();
-    }
-
-    getStartingLevel() {
-        const settings = storageSystem.getSettings();
-        return settings.startingLevel || 1;
-    }
-
-    reset() {
-        console.log('MenuSystem reset called');
         this.hideAllMenus();
-        this.showMenu('start');
-    }
-
-    onStart() {
-        audioSystem.init(); // Initialize audio on game start
-        if (this.callbacks.onStart) {
-            this.callbacks.onStart();
-        }
-    }
-
-    onResume() {
-        audioSystem.ensureInit(); // Ensure audio is initialized
-        if (this.callbacks.onResume) {
-            this.callbacks.onResume();
+        if (this.menus.gameOver) {
+            const scoreElement = this.menus.gameOver.querySelector('.final-score');
+            if (scoreElement) {
+                scoreElement.textContent = finalScore.toLocaleString();
+            }
+            this.menus.gameOver.classList.add('active');
         }
     }
 }
 
-// Create and export a singleton instance
 const menuSystem = new MenuSystem();
 export default menuSystem;

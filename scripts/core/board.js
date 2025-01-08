@@ -2,75 +2,28 @@ import { BOARD_WIDTH, BOARD_HEIGHT } from '../config/constants.js';
 
 class Board {
     constructor() {
-        console.log('Creating new board');
-        this.grid = this.createMatrix();
-        if (!Array.isArray(this.grid)) {
-            console.error('Failed to create grid, creating fallback');
-            this.grid = Array(BOARD_HEIGHT).fill().map(() => Array(BOARD_WIDTH).fill(0));
-        }
-        this.ensureValidGrid(); // Validate grid after creation
-        console.log('Grid created:', this.grid);
+        this.grid = this.createGrid();
     }
 
-    createMatrix() {
-        try {
-            return Array(BOARD_HEIGHT).fill().map(() => Array(BOARD_WIDTH).fill(0));
-        } catch (error) {
-            console.error('Error creating matrix:', error);
-            return null;
-        }
-    }
-
-    ensureValidGrid() {
-        if (!Array.isArray(this.grid)) {
-            console.warn('Grid is not an array, recreating...');
-            this.grid = Array(BOARD_HEIGHT).fill().map(() => Array(BOARD_WIDTH).fill(0));
-            return;
-        }
-        
-        // Check if grid height is correct
-        if (this.grid.length !== BOARD_HEIGHT) {
-            console.warn('Grid height is incorrect, recreating...');
-            this.grid = Array(BOARD_HEIGHT).fill().map(() => Array(BOARD_WIDTH).fill(0));
-            return;
-        }
-        
-        // Ensure all rows exist and are valid
-        for (let y = 0; y < BOARD_HEIGHT; y++) {
-            if (!Array.isArray(this.grid[y]) || this.grid[y].length !== BOARD_WIDTH) {
-                this.grid[y] = new Array(BOARD_WIDTH).fill(0);
-            }
-            // Ensure all columns in this row exist
-            for (let x = 0; x < BOARD_WIDTH; x++) {
-                if (typeof this.grid[y][x] === 'undefined') {
-                    this.grid[y][x] = 0;
-                }
-            }
-        }
+    createGrid() {
+        return Array(20).fill().map(() => Array(10).fill(0));
     }
 
     reset() {
-        this.ensureValidGrid();
-        for (let y = 0; y < BOARD_HEIGHT; y++) {
-            for (let x = 0; x < BOARD_WIDTH; x++) {
-                this.grid[y][x] = 0;
-            }
-        }
+        this.grid = this.createGrid();
     }
 
-    isColliding(piece) {
+    isColliding(piece, offsetX = 0, offsetY = 0) {
         const matrix = piece.matrix;
         const pos = piece.pos;
-        
+
         for (let y = 0; y < matrix.length; y++) {
             for (let x = 0; x < matrix[y].length; x++) {
                 if (matrix[y][x] !== 0) {
-                    const boardX = x + pos.x + piece.offsetX;
-                    const boardY = y + pos.y + piece.offsetY;
+                    const testX = pos.x + x + offsetX;
+                    const testY = pos.y + y + offsetY;
                     
-                    if (boardX < 0 || boardX >= BOARD_WIDTH || 
-                        boardY >= BOARD_HEIGHT ||
-                        (boardY >= 0 && this.grid[boardY][boardX])) {
+                    if (!this.isInBounds(testX, testY) || this.grid[testY][testX] !== 0) {
                         return true;
                     }
                 }
@@ -79,11 +32,20 @@ class Board {
         return false;
     }
 
+    isInBounds(x, y) {
+        return x >= 0 && x < this.grid[0].length && y >= 0 && y < this.grid.length;
+    }
+
     merge(piece) {
-        piece.matrix.forEach((row, y) => {
+        const matrix = piece.matrix;
+        const pos = piece.pos;
+
+        matrix.forEach((row, y) => {
             row.forEach((value, x) => {
                 if (value !== 0) {
-                    this.grid[y + piece.pos.y][x + piece.pos.x] = piece.type;
+                    if (this.isInBounds(pos.x + x, pos.y + y)) {
+                        this.grid[pos.y + y][pos.x + x] = value;
+                    }
                 }
             });
         });
@@ -92,54 +54,35 @@ class Board {
     sweep() {
         let linesCleared = 0;
         let combo = 0;
-        const newGrid = [];
         
-        // Add new empty lines at top
-        for (let i = 0; i < BOARD_HEIGHT; i++) {
-            newGrid.push(new Array(BOARD_WIDTH).fill(0));
-        }
-        
-        let writeY = BOARD_HEIGHT - 1;
-        for (let readY = BOARD_HEIGHT - 1; readY >= 0; readY--) {
-            if (!this.grid[readY].every(value => value !== 0)) {
-                for (let x = 0; x < BOARD_WIDTH; x++) {
-                    newGrid[writeY][x] = this.grid[readY][x];
-                }
-                writeY--;
-            } else {
+        for (let y = this.grid.length - 1; y >= 0; y--) {
+            if (this.grid[y].every(cell => cell !== 0)) {
+                // Remove the line
+                this.grid.splice(y, 1);
+                // Add new empty line at top
+                this.grid.unshift(new Array(10).fill(0));
                 linesCleared++;
+                y++; // Check the same row again
                 combo++;
             }
         }
-        
-        this.grid = newGrid;
-        return { linesCleared, combo: combo > 1 ? combo : 0 };
+
+        // Check for Perfect Clear
+        const isPerfectClear = this.grid.every(row => row.every(cell => cell === 0));
+
+        return { linesCleared, combo, isPerfectClear };
     }
 
-    isValidPosition(piece, offsetX = 0, offsetY = 0) {
-        const matrix = piece.matrix;
-        const pos = piece.pos;
-
-        for (let y = 0; y < matrix.length; ++y) {
-            for (let x = 0; x < matrix[y].length; ++x) {
-                if (matrix[y][x] !== 0) {
-                    const newX = x + pos.x + offsetX;
-                    const newY = y + pos.y + offsetY;
-
-                    if (newX < 0 || newX >= BOARD_WIDTH || 
-                        newY >= BOARD_HEIGHT ||
-                        (this.grid[newY] && this.grid[newY][newX] !== 0)) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
-    // Check if any part of the top row is filled (game over condition)
     isGameOver() {
+        // Check if any blocks in top row
         return this.grid[0].some(cell => cell !== 0);
+    }
+
+    getCell(x, y) {
+        if (this.isInBounds(x, y)) {
+            return this.grid[y][x];
+        }
+        return null;
     }
 }
 

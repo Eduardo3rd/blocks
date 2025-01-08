@@ -15,6 +15,7 @@ console.log('displaySystem after import:', displaySystem);
 import audioSystem from './systems/audio.js';
 import inputSystem from './systems/input.js';
 import storageSystem from './systems/storage.js';
+import controllerSystem from './systems/controller.js';
 
 // UI imports
 import previewSystem from './ui/preview.js';
@@ -203,13 +204,25 @@ class Game {
         
         if (this.currentPiece) {
             this.handleInput(actions);
-        }
 
-        // Update piece dropping
-        this.dropCounter += deltaTime;
-        if (this.dropCounter > this.scoring.getDropSpeed()) {
-            this.dropPiece();
-            this.dropCounter = 0;
+            // Update drop counter
+            this.dropCounter += deltaTime;
+            if (this.dropCounter > this.scoring.getDropSpeed()) {
+                this.dropPiece();
+                this.dropCounter = 0;
+            }
+
+            // Check for lock delay
+            if (this.isGrounded()) {
+                if (this.currentPiece.lockTimer === null) {
+                    this.currentPiece.startLockDelay();
+                } else {
+                    // Update lock delay timer
+                    if (!this.currentPiece.updateLockDelay(deltaTime)) {
+                        this.lockPiece();
+                    }
+                }
+            }
         }
         
         this.draw();
@@ -303,12 +316,17 @@ class Game {
     movePiece(dir) {
         if (!this.currentPiece) return false;
 
-        this.currentPiece.move(dir);
+        this.currentPiece.pos.x += dir;
         if (this.board.isColliding(this.currentPiece)) {
-            this.currentPiece.move(-dir);
+            this.currentPiece.pos.x -= dir;
             return false;
         }
-        // Only play sound if audio system is ready
+
+        // Reset lock delay if piece is grounded
+        if (this.isGrounded() && this.currentPiece.lockTimer !== null) {
+            this.currentPiece.resetLockDelay();
+        }
+
         try {
             audioSystem.play('move');
         } catch (error) {
@@ -318,15 +336,23 @@ class Game {
     }
 
     rotatePiece(dir) {
-        if (this.currentPiece.rotate(dir, this.board)) {
+        if (!this.currentPiece) return false;
+
+        const result = this.currentPiece.rotate(dir, this.board);
+        
+        // Reset lock delay if rotation is successful and piece is grounded
+        if (result && this.isGrounded() && this.currentPiece.lockTimer !== null) {
+            this.currentPiece.resetLockDelay();
+        }
+
+        if (result) {
             try {
                 audioSystem.play('rotate');
             } catch (error) {
                 console.warn('Audio not available');
             }
-            return true;
         }
-        return false;
+        return result;
     }
 
     dropPiece() {
@@ -335,16 +361,20 @@ class Game {
             return false;
         }
 
-        console.log('Dropping piece from:', this.currentPiece.pos);
-        this.currentPiece.drop();
+        this.currentPiece.pos.y++;
         
         if (this.board.isColliding(this.currentPiece)) {
-            console.log('Collision detected, moving piece back up');
             this.currentPiece.pos.y--;
-            this.lockPiece();
+            
+            // Start lock delay when piece lands
+            if (this.currentPiece.lockTimer === null) {
+                this.currentPiece.startLockDelay();
+            }
             return false;
         }
         
+        // Reset lock delay if piece is moving down
+        this.currentPiece.lockTimer = null;
         return true;
     }
 
@@ -353,6 +383,13 @@ class Game {
         while (this.dropPiece()) {
             dropCount++;
         }
+        
+        // Force immediate lock on hard drop
+        this.currentPiece.lockTimer = 0;
+        this.lockPiece();
+
+        // Add controller feedback for hard drop
+        controllerSystem.vibrate(50, 0.2, 0.2);
         try {
             audioSystem.play('drop');
         } catch (error) {
@@ -387,19 +424,32 @@ class Game {
             return;
         }
 
-        console.log('Locking piece at:', this.currentPiece.pos);
+        // Check for T-spin before merging
+        const isTSpin = this.currentPiece.isTSpin(this.board);
+        const isMini = false; // TODO: Implement mini T-spin detection
+        
         this.board.merge(this.currentPiece);
         
-        const { linesCleared, combo } = this.board.sweep();
-        console.log('Lines cleared:', linesCleared);
+        const { linesCleared, combo, isPerfectClear } = this.board.sweep();
+        console.log('Lines cleared:', linesCleared, 'T-spin:', isTSpin, 'Perfect Clear:', isPerfectClear);
         
         if (linesCleared > 0) {
-            this.scoring.updateScore(linesCleared);
+            this.scoring.updateScore(linesCleared, 0, isTSpin, isMini, isPerfectClear);
             displaySystem.updateAll(this.scoring.getState());
-            try {
-                audioSystem.play(linesCleared === 4 ? 'tetris' : 'clear');
-            } catch (error) {
-                console.warn('Audio not available');
+            
+            // Add controller feedback
+            if (isPerfectClear) {
+                controllerSystem.vibrate(500, 1.0, 1.0);
+                audioSystem.play('perfectClear');
+            } else if (isTSpin) {
+                controllerSystem.vibrate(300, 0.8, 0.8);
+                audioSystem.play('tspin');
+            } else if (linesCleared === 4) {
+                controllerSystem.vibrate(400, 0.7, 0.7);
+                audioSystem.play('tetris');
+            } else {
+                controllerSystem.vibrate(100 * linesCleared, 0.3, 0.3);
+                audioSystem.play('clear');
             }
         }
 
@@ -409,7 +459,6 @@ class Game {
             return;
         }
 
-        console.log('Spawning new piece');
         this.spawnPiece();
         this.canHold = true;
     }
@@ -516,11 +565,58 @@ class Game {
     gameOver() {
         console.log('=== GAME OVER ===');
         console.log('Final score:', this.scoring.score);
+        console.log('High score:', this.scoring.highScore);
         this.isRunning = false;
-        if (this.scoring.updateHighScore()) {
-            displaySystem.updateHighScore(this.scoring.getHighScore());
+        
+        // Strong vibration for game over
+        controllerSystem.vibrate(1000, 1.0, 1.0);
+        
+        // Update display with current high score
+        displaySystem.updateHighScore(this.scoring.highScore);
+        
+        // Show game over screen
+        const gameOverScreen = document.querySelector('.game-over');
+        console.log('Game over screen element:', gameOverScreen);
+        
+        if (gameOverScreen) {
+            // Remove any inline display style
+            gameOverScreen.style.removeProperty('display');
+            
+            // Update final score
+            const finalScoreElement = gameOverScreen.querySelector('.final-score');
+            console.log('Final score element:', finalScoreElement);
+            if (finalScoreElement) {
+                finalScoreElement.textContent = this.scoring.score.toLocaleString();
+            }
+            
+            // Update high score
+            const finalHighScoreElement = gameOverScreen.querySelector('#final-high-score');
+            console.log('Final high score element:', finalHighScoreElement);
+            if (finalHighScoreElement) {
+                finalHighScoreElement.textContent = this.scoring.highScore.toLocaleString();
+            }
+            
+            // Update other stats
+            const finalLinesElement = gameOverScreen.querySelector('#final-lines');
+            if (finalLinesElement) {
+                finalLinesElement.textContent = this.scoring.lines.toString();
+            }
+            
+            const finalLevelElement = gameOverScreen.querySelector('#final-level');
+            if (finalLevelElement) {
+                finalLevelElement.textContent = this.scoring.level.toString();
+            }
+            
+            // Show the screen
+            console.log('Adding active class to game over screen');
+            gameOverScreen.classList.add('active');
+            console.log('Game over screen display style:', gameOverScreen.style.display);
+            console.log('Game over screen classes:', gameOverScreen.classList.toString());
+        } else {
+            console.error('Game over screen element not found');
         }
-        menuSystem.showGameOver(this.scoring.score);
+
+        // Play game over sound
         try {
             audioSystem.play('gameOver');
         } catch (error) {
@@ -555,17 +651,39 @@ class Game {
         console.log('Initial pieces:', initialPieces);
         this.pieceQueue.push(...initialPieces);
     }
+
+    isGrounded() {
+        if (!this.currentPiece) return false;
+        
+        // Check if piece would collide if moved down
+        this.currentPiece.pos.y++;
+        const wouldCollide = this.board.isColliding(this.currentPiece);
+        this.currentPiece.pos.y--;
+        
+        return wouldCollide;
+    }
 }
 
 // Create game instance
 const game = new Game();
 
 // Initialize when document is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOM Content Loaded in main.js');
     try {
-        game.init();
+        await game.init();
+        // Show start menu after initialization
+        const startMenu = document.getElementById('start-menu');
+        if (startMenu) {
+            startMenu.style.display = 'block';
+            console.log('Start menu displayed');
+        } else {
+            console.error('Start menu element not found');
+        }
     } catch (error) {
         console.error('Error initializing game:', error);
     }
 });
+
+// Export game instance for debugging
+window.game = game;

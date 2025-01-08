@@ -106,12 +106,28 @@
     </div>
 
     <!-- Game Over Screen -->
-    <div class="game-over">
+    <div class="game-over" id="game-over">
         <div class="game-over-content">
             <h1>GAME OVER</h1>
-            <p>Final Score: <span class="final-score">0</span></p>
-            <button class="menu-btn" id="play-again-button">Play Again</button>
-            <button class="menu-btn secondary" id="main-menu-button">Main Menu</button>
+            <div class="stats">
+                <div class="stat-item">
+                    <span>High Score:</span>
+                    <span class="value" id="final-high-score">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Final Score:</span>
+                    <span class="value final-score">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Lines Cleared:</span>
+                    <span class="value" id="final-lines">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Level Reached:</span>
+                    <span class="value" id="final-level">0</span>
+                </div>
+            </div>
+            <button class="menu-btn" onclick="game.restart()">Play Again</button>
         </div>
     </div>
 
@@ -129,12 +145,5 @@
 
     <!-- Game Script -->
     <script type="module" src="scripts/main.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM loaded, checking for start button...');
-            const startButton = document.getElementById('start-button');
-            console.log('Start button:', startButton);
-        });
-    </script>
 </body>
 </html>
