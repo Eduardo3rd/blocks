@@ -1,57 +1,52 @@
 # Modern Tetris
 
-A modern implementation of Tetris with additional features like Zone mechanic, particle effects, and combo system.
+A modern implementation of the classic Tetris game using React, TypeScript, and Tailwind CSS.
 
 ## Features
 
 - Classic Tetris gameplay with modern mechanics
-- Zone mechanic for strategic line clearing
-- Particle effects and visual feedback
-- Combo system with multipliers
+- Super Rotation System (SRS)
 - Hold piece functionality
-- Next piece preview (3 pieces)
-- Gamepad support
-- Multiple game modes
-- High score tracking
+- Ghost piece preview
+- Next piece queue
+- T-spin detection
+- Modern scoring system with combos and back-to-back bonuses
 - Responsive design
+
+## Tech Stack
+
+- React 18+
+- TypeScript
+- Tailwind CSS
+- Vite
+
+## Development
+
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Start development server:
+```bash
+npm run dev
+```
+
+3. Build for production:
+```bash
+npm run build
+```
 
 ## Controls
 
-- **Left/Right Arrow**: Move piece
-- **Down Arrow**: Soft drop
-- **Up Arrow**: Rotate piece
-- **Space**: Hard drop
-- **C**: Hold piece
-- **Shift**: Activate Zone (when meter is full)
-- **P**: Pause game
-
-## Game Mechanics
-
-### Zone Mechanic
-The Zone mechanic allows you to enter a special state where:
-- Time slows down
-- Lines aren't cleared immediately
-- All lines are cleared at once when Zone ends
-- Bonus points awarded based on lines cleared
-
-### Scoring System
-- Single line: 100 points
-- Multiple lines: Points increase exponentially
-- Combo multiplier for consecutive line clears
-- Zone bonus based on number of lines stored
-
-## Installation
-
-1. Clone the repository
-2. Open `index.html` in a modern web browser
-3. Start playing!
-
-## Technologies Used
-
-- HTML5 Canvas
-- Vanilla JavaScript
-- CSS3
+- Left/Right Arrow: Move piece
+- Up Arrow: Rotate clockwise
+- Z: Rotate counterclockwise
+- Down Arrow: Soft drop
+- Space: Hard drop
+- C: Hold piece
+- P: Pause game
 
 ## License
 
-MIT License - feel free to use this code for your own projects! 
+MIT License 
