@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, TetrominoType, Tetromino } from '../utils/types';
 import { SHAPES, BOARD_WIDTH, BOARD_HEIGHT, LEVEL_SPEEDS, MAX_LOCK_RESETS, COLORS } from '../utils/constants';
-import { moveDown, moveHorizontal, rotate, hardDrop, holdPiece } from '../utils/gameLogic';
+import { moveDown, moveHorizontal, rotate, hardDrop, holdPiece, rotate180 } from '../utils/gameLogic';
 import { Board } from './game/Board/Board';
 import { HoldArea } from './game/HoldArea/HoldArea';
 import { NextPiece } from './game/NextPiece/NextPiece';
@@ -11,6 +11,10 @@ import { BoardErrorBoundary } from './game/Board/BoardErrorBoundary';
 import { HoldAreaErrorBoundary } from './game/HoldArea/HoldAreaErrorBoundary';
 import { NextPieceErrorBoundary } from './game/NextPiece/NextPieceErrorBoundary';
 import { StatsErrorBoundary } from './game/Stats/StatsErrorBoundary';
+
+// Add DAS and ARR constants
+const DAS_DELAY = 167; // 167ms before auto-repeat starts
+const ARR_RATE = 33;  // 33ms between moves during auto-repeat
 
 const createEmptyBoard = (): TetrominoType[][] => {
   return Array(BOARD_HEIGHT).fill(null).map(() => Array(BOARD_WIDTH).fill(null));
@@ -62,14 +66,19 @@ const createInitialGameState = (): GameState => ({
 const Game: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>(createInitialGameState);
   const gameLoopRef = useRef<number | null>(null);
+  const [keyState, setKeyState] = useState<{ [key: string]: boolean }>({});
+  const dasTimerRef = useRef<number | null>(null);
+  const arrIntervalRef = useRef<number | null>(null);
+  const softDropIntervalRef = useRef<number | null>(null);
+  const lastMoveTimeRef = useRef<number>(0);
 
   const restartGame = useCallback(() => {
     setGameState(createInitialGameState());
   }, []);
 
-  const handleKeyPress = useCallback((event: KeyboardEvent) => {
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.repeat) return; // Prevent key repeat from affecting game state
-
+    
     if (gameState.isGameOver) {
       if (event.code === 'Enter') {
         restartGame();
@@ -86,27 +95,51 @@ const Game: React.FC = () => {
     // Block other keys when paused
     if (gameState.isPaused) return;
 
+    setKeyState(prev => ({ ...prev, [event.code]: true }));
+
     switch (event.code) {
       case 'ArrowLeft':
-        setGameState(prev => moveHorizontal(prev, -1));
-        break;
       case 'ArrowRight':
-        setGameState(prev => moveHorizontal(prev, 1));
+        // Start DAS timer
+        if (dasTimerRef.current === null) {
+          const direction = event.code === 'ArrowLeft' ? -1 : 1;
+          setGameState(prev => moveHorizontal(prev, direction));
+          
+          dasTimerRef.current = window.setTimeout(() => {
+            // After DAS delay, start ARR interval
+            arrIntervalRef.current = window.setInterval(() => {
+              setGameState(prev => moveHorizontal(prev, direction));
+            }, ARR_RATE);
+          }, DAS_DELAY);
+        }
         break;
       case 'ArrowDown':
-        setGameState(prev => moveDown(prev));
+        // Initial soft drop
+        setGameState(prev => moveDown(prev, true));
+        // Start soft drop interval immediately (no DAS delay for down)
+        if (softDropIntervalRef.current === null) {
+          softDropIntervalRef.current = window.setInterval(() => {
+            setGameState(prev => moveDown(prev, true));
+          }, ARR_RATE); // Use same rate as ARR for consistency
+        }
         break;
       case 'ArrowUp':
+      case 'KeyX':
         setGameState(prev => rotate(prev, true));
         break;
       case 'KeyZ':
         setGameState(prev => rotate(prev, false));
+        break;
+      case 'KeyA':
+        setGameState(prev => rotate180(prev));
         break;
       case 'Space':
         event.preventDefault();
         setGameState(prev => hardDrop(prev));
         break;
       case 'KeyC':
+      case 'ShiftLeft':
+      case 'ShiftRight':
         setGameState(prev => holdPiece(prev));
         break;
       case 'KeyP':
@@ -117,12 +150,48 @@ const Game: React.FC = () => {
     }
   }, [gameState.isGameOver, gameState.isPaused, restartGame]);
 
+  const handleKeyUp = useCallback((event: KeyboardEvent) => {
+    setKeyState(prev => ({ ...prev, [event.code]: false }));
+
+    // Clear DAS and ARR timers on key up
+    if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
+      if (dasTimerRef.current !== null) {
+        clearTimeout(dasTimerRef.current);
+        dasTimerRef.current = null;
+      }
+      if (arrIntervalRef.current !== null) {
+        clearInterval(arrIntervalRef.current);
+        arrIntervalRef.current = null;
+      }
+    }
+
+    // Clear soft drop interval
+    if (event.code === 'ArrowDown') {
+      if (softDropIntervalRef.current !== null) {
+        clearInterval(softDropIntervalRef.current);
+        softDropIntervalRef.current = null;
+      }
+    }
+  }, []);
+
   useEffect(() => {
-    window.addEventListener('keydown', handleKeyPress);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
     return () => {
-      window.removeEventListener('keydown', handleKeyPress);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      // Clean up any remaining timers
+      if (dasTimerRef.current !== null) {
+        clearTimeout(dasTimerRef.current);
+      }
+      if (arrIntervalRef.current !== null) {
+        clearInterval(arrIntervalRef.current);
+      }
+      if (softDropIntervalRef.current !== null) {
+        clearInterval(softDropIntervalRef.current);
+      }
     };
-  }, [handleKeyPress]);
+  }, [handleKeyDown, handleKeyUp]);
 
   useEffect(() => {
     if (gameState.isGameOver || gameState.isPaused) {
@@ -135,7 +204,7 @@ const Game: React.FC = () => {
 
     const speed = LEVEL_SPEEDS[gameState.level as keyof typeof LEVEL_SPEEDS] ?? LEVEL_SPEEDS[10];
     gameLoopRef.current = window.setInterval(() => {
-      setGameState(prev => moveDown(prev));
+      setGameState(prev => moveDown(prev, false));
     }, speed);
 
     return () => {

@@ -216,7 +216,7 @@ const canResetLockDelay = (gameState: GameState, previousY: number): boolean => 
   );
 };
 
-export const moveDown = (gameState: GameState): GameState => {
+export const moveDown = (gameState: GameState, isSoftDrop: boolean = false): GameState => {
   if (!isValidGameState(gameState)) {
     throw new Error('Invalid game state provided to moveDown');
   }
@@ -232,7 +232,7 @@ export const moveDown = (gameState: GameState): GameState => {
         ...gameState.currentPiece,
         position: newPosition
       },
-      score: gameState.score + 1,  // Soft drop point
+      score: gameState.score + (isSoftDrop ? 1 : 0),  // Only add point if it's a soft drop
       lastMoveWasRotation: false,
       lockDelay: 0,  // Reset lock delay when moving down
       lastLockResetTime: 0
@@ -656,4 +656,14 @@ export const findDropPosition = (piece: Tetromino, board: TetrominoType[][]): nu
 
 export const generateInitialPieces = (): Tetromino[] => {
   return Array(3).fill(null).map(() => generateRandomPiece());
+};
+
+export const rotate180 = (gameState: GameState): GameState => {
+  if (!isValidGameState(gameState)) {
+    throw new Error('Invalid game state provided to rotate180');
+  }
+
+  // Rotate twice using existing rotate function
+  const firstRotation = rotate(gameState, true);
+  return rotate(firstRotation, true);
 }; 
