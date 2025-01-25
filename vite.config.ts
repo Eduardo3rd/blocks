@@ -12,10 +12,11 @@ export default defineConfig({
   },
   base: '/blocks/',
   build: {
+    outDir: 'dist',
     assetsDir: 'assets',
     rollupOptions: {
-      output: {
-        assetFileNames: 'assets/[name].[ext]'
+      input: {
+        main: path.resolve(__dirname, 'index.html')
       }
     }
   }
