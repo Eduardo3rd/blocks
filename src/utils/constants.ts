@@ -1,4 +1,4 @@
-import { TetrominoType, Position } from './types';
+import { TetrominoType } from './types';
 
 export const SHAPES = {
   [TetrominoType.I]: [

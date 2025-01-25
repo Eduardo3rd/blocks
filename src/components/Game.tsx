@@ -67,19 +67,6 @@ const PiecePreview: React.FC<PiecePreviewProps> = ({ piece, title }) => {
   );
 };
 
-const getCellColor = (value: number): string => {
-  const colors = {
-    1: '#00f0f0', // I piece (cyan)
-    2: '#f0f000', // O piece (yellow)
-    3: '#a000f0', // T piece (purple)
-    4: '#00f000', // S piece (green)
-    5: '#f00000', // Z piece (red)
-    6: '#0000f0', // J piece (blue)
-    7: '#f0a000', // L piece (orange)
-  };
-  return colors[value as keyof typeof colors] || '#000';
-};
-
 const Game: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>(initialGameState);
 
