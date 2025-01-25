@@ -8,7 +8,8 @@ class Scoring {
         this.combo = 0;
         this.backToBack = false;  // Track back-to-back difficult clears
         this.lastClearWasDifficult = false;  // Track if last clear was Tetris or T-spin
-        this.highScore = this.loadHighScore();
+        this.highScores = this.loadHighScores();
+        this.currentHighScore = this.highScores[0]?.score || 0;
     }
 
     updateScore(linesCleared, dropPoints = 0, isTSpin = false, isMini = false) {
@@ -85,9 +86,8 @@ class Scoring {
         this.level = Math.floor(this.lines / 10);
 
         // Update high score if necessary
-        if (this.score > this.highScore) {
-            this.highScore = this.score;
-            this.saveHighScore();
+        if (this.score > this.currentHighScore) {
+            this.currentHighScore = this.score;
         }
     }
 
@@ -132,13 +132,63 @@ class Scoring {
         return speed;
     }
 
-    loadHighScore() {
-        const saved = localStorage.getItem('tetrisHighScore');
-        return saved ? parseInt(saved) : 0;
+    loadHighScores() {
+        const saved = localStorage.getItem('tetrisHighScores');
+        if (!saved) return [];
+        try {
+            return JSON.parse(saved);
+        } catch (e) {
+            console.error('Error loading high scores:', e);
+            return [];
+        }
     }
 
-    saveHighScore() {
-        localStorage.setItem('tetrisHighScore', this.highScore.toString());
+    saveHighScore(playerName = 'AAA') {
+        const newScore = {
+            score: this.score,
+            name: playerName,
+            lines: this.lines,
+            level: this.level,
+            date: new Date().toISOString(),
+            tetrisRate: this.getTetrisRate()
+        };
+
+        // Add to high scores array
+        this.highScores.push(newScore);
+
+        // Sort by score (highest first)
+        this.highScores.sort((a, b) => b.score - a.score);
+
+        // Keep only top 10
+        this.highScores = this.highScores.slice(0, 10);
+
+        // Save to localStorage
+        try {
+            localStorage.setItem('tetrisHighScores', JSON.stringify(this.highScores));
+        } catch (e) {
+            console.error('Error saving high scores:', e);
+        }
+
+        // Return position in high score list (1-based)
+        return this.highScores.findIndex(score => score.score === this.score) + 1;
+    }
+
+    getTetrisRate() {
+        const tetrisLines = this.tetrisCount * 4;
+        return this.lines > 0 ? (tetrisLines / this.lines * 100).toFixed(1) : '0.0';
+    }
+
+    isHighScore() {
+        return this.highScores.length < 10 || this.score > this.highScores[9].score;
+    }
+
+    getHighScores() {
+        return this.highScores;
+    }
+
+    clearHighScores() {
+        this.highScores = [];
+        localStorage.removeItem('tetrisHighScores');
     }
 
     reset() {
@@ -155,7 +205,7 @@ class Scoring {
             score: this.score,
             lines: this.lines,
             level: this.level,
-            highScore: this.highScore,
+            highScore: this.highScores[0]?.score || 0,
             backToBack: this.backToBack
         };
     }

@@ -109,11 +109,19 @@
     <div class="game-over" id="game-over">
         <div class="game-over-content">
             <h1>GAME OVER</h1>
-            <div class="stats">
-                <div class="stat-item">
-                    <span>High Score:</span>
-                    <span class="value" id="final-high-score">0</span>
+            
+            <!-- High Score Name Input (shown only for new high scores) -->
+            <div id="high-score-input" style="display: none;">
+                <h2>NEW HIGH SCORE!</h2>
+                <div class="name-input">
+                    <label>Enter your initials:</label>
+                    <input type="text" id="player-name" maxlength="3" placeholder="AAA">
+                    <button class="menu-btn" id="save-score">Save Score</button>
                 </div>
+            </div>
+
+            <!-- Current Game Stats -->
+            <div class="stats">
                 <div class="stat-item">
                     <span>Final Score:</span>
                     <span class="value final-score">0</span>
@@ -126,7 +134,31 @@
                     <span>Level Reached:</span>
                     <span class="value" id="final-level">0</span>
                 </div>
+                <div class="stat-item">
+                    <span>Tetris Rate:</span>
+                    <span class="value" id="final-tetris-rate">0%</span>
+                </div>
             </div>
+
+            <!-- High Scores Table -->
+            <div class="high-scores">
+                <h2>HIGH SCORES</h2>
+                <table id="high-scores-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Name</th>
+                            <th>Score</th>
+                            <th>Level</th>
+                            <th>Lines</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- High scores will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
             <button class="menu-btn" onclick="game.restart()">Play Again</button>
         </div>
     </div>

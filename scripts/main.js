@@ -565,38 +565,23 @@ class Game {
     gameOver() {
         console.log('=== GAME OVER ===');
         console.log('Final score:', this.scoring.score);
-        console.log('High score:', this.scoring.highScore);
         this.isRunning = false;
         
         // Strong vibration for game over
         controllerSystem.vibrate(1000, 1.0, 1.0);
         
-        // Update display with current high score
-        displaySystem.updateHighScore(this.scoring.highScore);
-        
         // Show game over screen
         const gameOverScreen = document.querySelector('.game-over');
-        console.log('Game over screen element:', gameOverScreen);
-        
         if (gameOverScreen) {
             // Remove any inline display style
             gameOverScreen.style.removeProperty('display');
             
-            // Update final score
+            // Update final stats
             const finalScoreElement = gameOverScreen.querySelector('.final-score');
-            console.log('Final score element:', finalScoreElement);
             if (finalScoreElement) {
                 finalScoreElement.textContent = this.scoring.score.toLocaleString();
             }
             
-            // Update high score
-            const finalHighScoreElement = gameOverScreen.querySelector('#final-high-score');
-            console.log('Final high score element:', finalHighScoreElement);
-            if (finalHighScoreElement) {
-                finalHighScoreElement.textContent = this.scoring.highScore.toLocaleString();
-            }
-            
-            // Update other stats
             const finalLinesElement = gameOverScreen.querySelector('#final-lines');
             if (finalLinesElement) {
                 finalLinesElement.textContent = this.scoring.lines.toString();
@@ -606,14 +591,43 @@ class Game {
             if (finalLevelElement) {
                 finalLevelElement.textContent = this.scoring.level.toString();
             }
+
+            const tetrisRateElement = gameOverScreen.querySelector('#final-tetris-rate');
+            if (tetrisRateElement) {
+                tetrisRateElement.textContent = this.scoring.getTetrisRate() + '%';
+            }
+
+            // Check for high score
+            const isHighScore = this.scoring.isHighScore();
+            const highScoreInput = gameOverScreen.querySelector('#high-score-input');
+            const playerNameInput = gameOverScreen.querySelector('#player-name');
+            
+            if (isHighScore && highScoreInput && playerNameInput) {
+                highScoreInput.style.display = 'block';
+                playerNameInput.value = '';
+                playerNameInput.focus();
+                
+                // Handle save score button
+                const saveScoreButton = gameOverScreen.querySelector('#save-score');
+                if (saveScoreButton) {
+                    saveScoreButton.onclick = () => {
+                        const playerName = playerNameInput.value.toUpperCase() || 'AAA';
+                        const position = this.scoring.saveHighScore(playerName);
+                        this.updateHighScoresTable(position);
+                        highScoreInput.style.display = 'none';
+                    };
+                }
+            } else {
+                if (highScoreInput) {
+                    highScoreInput.style.display = 'none';
+                }
+            }
+
+            // Update high scores table
+            this.updateHighScoresTable();
             
             // Show the screen
-            console.log('Adding active class to game over screen');
             gameOverScreen.classList.add('active');
-            console.log('Game over screen display style:', gameOverScreen.style.display);
-            console.log('Game over screen classes:', gameOverScreen.classList.toString());
-        } else {
-            console.error('Game over screen element not found');
         }
 
         // Play game over sound
@@ -622,6 +636,31 @@ class Game {
         } catch (error) {
             console.warn('Audio not available');
         }
+    }
+
+    updateHighScoresTable(highlightPosition = -1) {
+        const table = document.querySelector('#high-scores-table tbody');
+        if (!table) return;
+
+        const highScores = this.scoring.getHighScores();
+        table.innerHTML = '';
+
+        highScores.forEach((score, index) => {
+            const row = document.createElement('tr');
+            if (index + 1 === highlightPosition) {
+                row.classList.add('new-score');
+            }
+
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${score.name}</td>
+                <td>${score.score.toLocaleString()}</td>
+                <td>${score.level}</td>
+                <td>${score.lines}</td>
+            `;
+
+            table.appendChild(row);
+        });
     }
 
     restart() {
