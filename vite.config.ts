@@ -10,5 +10,13 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src')
     }
   },
-  base: '/blocks/'
+  base: '/blocks/',
+  build: {
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        assetFileNames: 'assets/[name].[ext]'
+      }
+    }
+  }
 }) 
