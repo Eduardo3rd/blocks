@@ -2,7 +2,7 @@ import React from 'react';
 import { GameState } from '../utils/types';
 import { CELL_SIZE, BOARD_WIDTH, BOARD_HEIGHT } from '../utils/constants';
 import { getGhostPiecePosition } from '../utils/gameLogic';
-import PieceRenderer from './PieceRenderer';
+import { PieceRenderer } from './game/Board/PieceRenderer';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -58,25 +58,24 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState }) => {
           {/* Draw placed pieces */}
           {gameState.board.map((row, y) =>
             row.map((cell, x) => (
-              cell !== 0 && (
+              cell && (
                 <div
                   key={`${x}-${y}`}
                   style={{
                     position: 'absolute',
                     left: x * CELL_SIZE,
                     top: y * CELL_SIZE,
-                    width: CELL_SIZE,
-                    height: CELL_SIZE,
                   }}
                 >
                   <PieceRenderer
                     piece={{
-                      shape: [[cell]],
+                      shape: [[1]],
                       position: { x, y },
-                      type: 'I' as any,
-                      rotationState: 0
+                      type: cell,
+                      rotationState: 0,
+                      color: cell
                     }}
-                    cellSize={CELL_SIZE}
+                    scale={CELL_SIZE / 30}
                   />
                 </div>
               )
@@ -94,7 +93,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState }) => {
             >
               <PieceRenderer
                 piece={gameState.currentPiece}
-                cellSize={CELL_SIZE}
+                scale={CELL_SIZE / 30}
                 ghost={true}
               />
             </div>
@@ -111,7 +110,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState }) => {
             >
               <PieceRenderer
                 piece={gameState.currentPiece}
-                cellSize={CELL_SIZE}
+                scale={CELL_SIZE / 30}
               />
             </div>
           )}

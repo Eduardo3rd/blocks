@@ -5,9 +5,13 @@ import { isValidGameState, isValidTetromino } from './typeGuards';
 const generateRandomPiece = (): Tetromino => {
   const types = Object.values(TetrominoType);
   const randomType = types[Math.floor(Math.random() * types.length)] as TetrominoType;
+  const shape = SHAPES[randomType];
+  if (!shape || !Array.isArray(shape) || !shape[0]) {
+    throw new Error(`Invalid shape for piece type: ${randomType}`);
+  }
   return {
-    shape: SHAPES[randomType],
-    position: { x: Math.floor((BOARD_WIDTH - SHAPES[randomType][0].length) / 2), y: 0 },
+    shape,
+    position: { x: Math.floor((BOARD_WIDTH - shape[0].length) / 2), y: 0 },
     type: randomType,
     rotationState: 0,
     color: COLORS[randomType]
@@ -19,9 +23,16 @@ export const isCollision = (
   piece: Tetromino,
   position: Position = piece.position
 ): boolean => {
+  if (!Array.isArray(board) || !Array.isArray(piece.shape)) {
+    throw new Error('Invalid board or piece shape');
+  }
+
   for (let y = 0; y < piece.shape.length; y++) {
-    for (let x = 0; x < piece.shape[y].length; x++) {
-      if (piece.shape[y][x] !== 0) {
+    const row = piece.shape[y];
+    if (!row) continue;
+
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] !== 0) {
         const newX = position.x + x;
         const newY = position.y + y;
 
@@ -29,7 +40,7 @@ export const isCollision = (
           newX < 0 || // Left wall
           newX >= BOARD_WIDTH || // Right wall
           newY >= BOARD_HEIGHT || // Floor
-          (newY >= 0 && board[newY][newX] !== null) // Other pieces
+          (newY >= 0 && board[newY]?.[newX] !== null) // Other pieces
         ) {
           return true;
         }
@@ -40,13 +51,21 @@ export const isCollision = (
 };
 
 export const rotatePiece = (piece: Tetromino): number[][] => {
+  if (!Array.isArray(piece.shape) || !piece.shape[0]) {
+    throw new Error('Invalid piece shape');
+  }
+
   const newShape = piece.shape[0].map((_, index) =>
-    piece.shape.map(row => row[index]).reverse()
+    piece.shape.map(row => row?.[index] ?? 0).reverse()
   );
   return newShape;
 };
 
 const checkGameOver = (board: TetrominoType[][], piece: Tetromino): boolean => {
+  if (!Array.isArray(board) || !Array.isArray(piece.shape) || !piece.shape[0]) {
+    throw new Error('Invalid board or piece shape');
+  }
+
   // Check if any part of the piece would collide at its spawn position
   const spawnPosition = {
     x: Math.floor((BOARD_WIDTH - piece.shape[0].length) / 2),
@@ -55,11 +74,14 @@ const checkGameOver = (board: TetrominoType[][], piece: Tetromino): boolean => {
 
   // Check if there's a collision at the spawn point
   for (let y = 0; y < piece.shape.length; y++) {
-    for (let x = 0; x < piece.shape[y].length; x++) {
-      if (piece.shape[y][x] !== 0) {
+    const row = piece.shape[y];
+    if (!row) continue;
+
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] !== 0) {
         const boardX = spawnPosition.x + x;
         const boardY = spawnPosition.y + y;
-        if (boardY >= 0 && board[boardY][boardX] !== null) {
+        if (boardY >= 0 && board[boardY]?.[boardX] !== null) {
           return true;
         }
       }
@@ -130,10 +152,14 @@ const calculateScore = (clearedLines: number[], level: number, tSpinType: 'none'
 };
 
 const clearLines = (board: TetrominoType[][]): number[] => {
+  if (!Array.isArray(board)) {
+    throw new Error('Invalid board');
+  }
+
   const clearedLines: number[] = [];
   
   board.forEach((row, index) => {
-    if (row.every(cell => cell !== null)) {
+    if (row?.every(cell => cell !== null)) {
       clearedLines.push(index);
     }
   });
@@ -142,18 +168,40 @@ const clearLines = (board: TetrominoType[][]): number[] => {
 };
 
 const removeClearedLines = (board: TetrominoType[][], linesToClear: number[]): TetrominoType[][] => {
-  const newBoard = board.map(row => [...row]);
-  
-  // Remove lines from bottom to top to maintain correct indices
-  [...linesToClear].sort((a, b) => b - a).forEach(lineIndex => {
-    newBoard.splice(lineIndex, 1);
-    newBoard.unshift(Array(BOARD_WIDTH).fill(null));
-  });
+  if (!Array.isArray(board)) {
+    throw new Error('Invalid board');
+  }
+
+  // Create a new board
+  const newBoard = Array(board.length).fill(null).map(() => Array(BOARD_WIDTH).fill(null));
+  let currentRow = board.length - 1;  // Start from bottom of new board
+
+  // Copy non-cleared lines from bottom to top
+  for (let row = board.length - 1; row >= 0; row--) {
+    if (!linesToClear.includes(row)) {
+      // Ensure we have a valid row to copy
+      const sourceRow = board[row];
+      if (sourceRow) {
+        newBoard[currentRow] = [...sourceRow];
+        currentRow--;
+      }
+    }
+  }
+
+  // Fill remaining rows at top with empty rows
+  while (currentRow >= 0) {
+    newBoard[currentRow] = Array(BOARD_WIDTH).fill(null);
+    currentRow--;
+  }
 
   return newBoard;
 };
 
 const shouldStartLockDelay = (gameState: GameState): boolean => {
+  if (!isValidGameState(gameState)) {
+    throw new Error('Invalid game state');
+  }
+
   const nextPosition = {
     ...gameState.currentPiece.position,
     y: gameState.currentPiece.position.y + 1
@@ -214,6 +262,10 @@ export const moveDown = (gameState: GameState): GameState => {
   const tSpinType = detectTSpin(gameState, gameState.lastMoveWasRotation);
   const nextPiece = gameState.nextPieces[0];
   
+  if (!nextPiece) {
+    throw new Error('No next piece available');
+  }
+
   // Calculate new state values
   const newCombo = clearedLines.length > 0 ? (gameState.combo + 1) : 0;
   const isCurrentClearDifficult = isDifficultClear(clearedLines, tSpinType);
@@ -258,6 +310,10 @@ export const moveDown = (gameState: GameState): GameState => {
 };
 
 export const moveHorizontal = (gameState: GameState, direction: -1 | 1): GameState => {
+  if (!isValidGameState(gameState)) {
+    throw new Error('Invalid game state provided to moveHorizontal');
+  }
+
   const newPosition = {
     ...gameState.currentPiece.position,
     x: gameState.currentPiece.position.x + direction
@@ -294,6 +350,10 @@ export const moveHorizontal = (gameState: GameState, direction: -1 | 1): GameSta
 };
 
 const getWallKickData = (piece: Tetromino, newRotationState: number): Position[] => {
+  if (!isValidTetromino(piece)) {
+    throw new Error('Invalid piece provided to getWallKickData');
+  }
+
   if (piece.type === TetrominoType.O) {
     return WALL_KICK_DATA_O;
   }
@@ -302,6 +362,10 @@ const getWallKickData = (piece: Tetromino, newRotationState: number): Position[]
   const rotationIndex = ((piece.rotationState % 4) + 4) % 4;
   const kickData = tests[rotationIndex];
   
+  if (!kickData) {
+    throw new Error(`No wall kick data found for rotation ${rotationIndex}`);
+  }
+
   // Return the kick data with inverted tests if rotating counterclockwise
   if (newRotationState < piece.rotationState || 
       (piece.rotationState === 0 && newRotationState === 3)) {
@@ -317,9 +381,13 @@ export const rotate = (gameState: GameState, clockwise: boolean = true): GameSta
   }
 
   const piece = gameState.currentPiece;
+  if (!Array.isArray(piece.shape) || !piece.shape[0]) {
+    throw new Error('Invalid piece shape');
+  }
+
   const newShape = clockwise ? 
-    piece.shape[0].map((_, i) => piece.shape.map(row => row[i]).reverse()) :
-    piece.shape[0].map((_, i) => piece.shape.map(row => row[i])).reverse();
+    piece.shape[0].map((_, i) => piece.shape.map(row => row?.[i] ?? 0).reverse()) :
+    piece.shape[0].map((_, i) => piece.shape.map(row => row?.[i] ?? 0)).reverse();
 
   const newRotationState = clockwise ?
     ((piece.rotationState + 1) % 4) :
@@ -378,16 +446,27 @@ export const rotate = (gameState: GameState, clockwise: boolean = true): GameSta
 };
 
 const lockPiece = (gameState: GameState): TetrominoType[][] => {
-  const newBoard = gameState.board.map(row => [...row]);
+  if (!isValidGameState(gameState)) {
+    throw new Error('Invalid game state provided to lockPiece');
+  }
+
+  const newBoard = gameState.board.map(row => [...(row ?? [])]);
   const piece = gameState.currentPiece;
 
+  if (!Array.isArray(piece.shape)) {
+    throw new Error('Invalid piece shape');
+  }
+
   piece.shape.forEach((row, y) => {
+    if (!row) return;
     row.forEach((value, x) => {
       if (value !== 0) {
         const boardY = y + piece.position.y;
         const boardX = x + piece.position.x;
         if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
-          newBoard[boardY][boardX] = piece.type;
+          if (newBoard[boardY]) {
+            newBoard[boardY][boardX] = piece.type;
+          }
         }
       }
     });
@@ -397,10 +476,18 @@ const lockPiece = (gameState: GameState): TetrominoType[][] => {
 };
 
 const checkCorner = (board: TetrominoType[][], x: number, y: number): boolean => {
-  return x >= 0 && x < BOARD_WIDTH && y >= 0 && y < BOARD_HEIGHT && board[y][x] !== null;
+  if (!Array.isArray(board)) {
+    throw new Error('Invalid board');
+  }
+
+  return x >= 0 && x < BOARD_WIDTH && y >= 0 && y < BOARD_HEIGHT && board[y]?.[x] !== null;
 };
 
 const detectTSpin = (gameState: GameState, lastRotation: boolean): 'none' | 'mini' | 'full' => {
+  if (!isValidGameState(gameState)) {
+    throw new Error('Invalid game state provided to detectTSpin');
+  }
+
   const piece = gameState.currentPiece;
   if (piece.type !== TetrominoType.T || !lastRotation) {
     return 'none';
@@ -497,12 +584,20 @@ export const holdPiece = (gameState: GameState): GameState => {
 
   if (gameState.holdPiece === null) {
     // If no piece is held, use the next piece
-    newCurrentPiece = gameState.nextPieces[0];
+    const nextPiece = gameState.nextPieces[0];
+    if (!nextPiece) {
+      throw new Error('No next piece available');
+    }
+    newCurrentPiece = nextPiece;
   } else {
     // Swap current piece with held piece
+    const shape = gameState.holdPiece.shape;
+    if (!Array.isArray(shape) || !shape[0]) {
+      throw new Error('Invalid held piece shape');
+    }
     newCurrentPiece = {
       ...gameState.holdPiece,
-      position: { x: Math.floor((BOARD_WIDTH - gameState.holdPiece.shape[0].length) / 2), y: 0 }
+      position: { x: Math.floor((BOARD_WIDTH - shape[0].length) / 2), y: 0 }
     };
   }
 
@@ -524,6 +619,10 @@ export const holdPiece = (gameState: GameState): GameState => {
 };
 
 export const getGhostPiecePosition = (gameState: GameState): Position => {
+  if (!isValidGameState(gameState)) {
+    throw new Error('Invalid game state provided to getGhostPiecePosition');
+  }
+
   let ghostPosition = { ...gameState.currentPiece.position };
   
   // Keep moving down until collision

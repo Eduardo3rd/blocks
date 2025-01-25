@@ -1,24 +1,4 @@
-import styled, { keyframes, css } from 'styled-components';
-
-const appear = keyframes`
-  from {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-`;
-
-const glow = keyframes`
-  0%, 100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.2);
-  }
-`;
+import styled from 'styled-components';
 
 export const BoardContainer = styled.div`
   position: relative;
@@ -38,46 +18,38 @@ export const BoardContainer = styled.div`
 `;
 
 export const Grid = styled.div`
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(10, ${({ theme }) => theme.spacing.block});
-  gap: ${({ theme }) => theme.spacing.grid};
+  grid-template-columns: repeat(10, 30px);
+  gap: 1px;
   background: ${({ theme }) => theme.colors.game.background};
   padding: ${({ theme }) => theme.spacing.sm};
   border-radius: ${({ theme }) => theme.spacing.xs};
+  overflow: hidden; /* Ensure pieces don't overflow */
 `;
 
-export const Cell = styled.div<{ $color?: string; $isGhost?: boolean }>`
-  width: ${({ theme }) => theme.spacing.block};
-  height: ${({ theme }) => theme.spacing.block};
+export const Cell = styled.div<{ $color?: string | undefined }>`
+  width: 30px;
+  height: 30px;
   background: ${({ $color }) => $color || 'transparent'};
-  border: ${({ theme, $color, $isGhost }) => 
-    $color 
-      ? $isGhost 
-        ? `2px dashed ${$color}`
-        : 'none'
-      : `1px solid ${theme.colors.game.border}`};
+  border: 1px solid ${({ theme, $color }) => 
+    $color ? 'rgba(0,0,0,0.2)' : theme.colors.game.border};
   position: relative;
-  transition: all ${({ theme }) => theme.effects.animations.duration.fast} ease-in-out;
-  ${({ theme }) => css`
-    animation: ${appear} ${theme.effects.animations.duration.normal} 
-      ${theme.effects.animations.easing.bounce};
-  `}
+  transition: all 0.15s ease-in-out;
   
-  ${({ $color, theme, $isGhost }) => $color && !$isGhost && css`
+  ${({ $color }) => $color && `
     &::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: ${theme.effects.gradients.piece};
-      opacity: 0.5;
-      animation: ${glow} 2s ease-in-out infinite;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.1) 100%);
     }
-
+    
     &::after {
       content: '';
       position: absolute;
       inset: 2px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255,255,255,0.1);
       border-radius: 2px;
     }
   `}

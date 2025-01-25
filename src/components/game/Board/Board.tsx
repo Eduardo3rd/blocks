@@ -1,88 +1,102 @@
 import { GameState, TetrominoType } from '../../../utils/types';
-import { BoardContainer, Grid, Cell } from './styles';
 import { COLORS } from '../../../utils/constants';
-import { findDropPosition } from '../../../utils/gameLogic';
-import { assertValidGameState } from '../../../utils/typeAssertions';
+import { findDropPosition, isCollision } from '../../../utils/gameLogic';
+import { isValidGameState } from '../../../utils/typeGuards';
+import { BoardContainer, Grid, Cell } from './styles';
+import { PieceRenderer } from './PieceRenderer';
+import { useMemo } from 'react';
 
 interface BoardProps {
   gameState: GameState;
 }
 
-type DisplayCell = TetrominoType | 'ghost' | null;
+const CELL_SIZE = 30;
+const GRID_PADDING = 8; // Matches the padding in styles.ts
+const GRID_GAP = 1;    // Matches the gap in styles.ts
 
 export const Board: React.FC<BoardProps> = ({ gameState }) => {
   // Runtime type checking in development
-  if (process.env.NODE_ENV === 'development') {
-    assertValidGameState(gameState);
+  if (import.meta.env.DEV) {
+    if (!isValidGameState(gameState)) {
+      throw new Error('Invalid game state provided to Board component');
+    }
   }
 
   const { board, currentPiece } = gameState;
 
-  // Create a display board that includes the current piece and ghost piece
-  const displayBoard: DisplayCell[][] = board.map(row => [...row]);
-  
-  // Add ghost piece
-  if (currentPiece) {
-    const ghostPieceY = findDropPosition(currentPiece, board);
+  // Calculate ghost piece position
+  const ghostPiecePosition = useMemo(() => {
+    if (!currentPiece) return null;
+
+    let testY = currentPiece.position.y;
     
-    // Only show ghost piece if it's different from current piece position
-    if (ghostPieceY !== currentPiece.position.y) {
-      const ghostPiece = {
-        ...currentPiece,
-        position: { ...currentPiece.position, y: ghostPieceY }
-      };
-
-      ghostPiece.shape.forEach((row, y) => {
-        row.forEach((cell, x) => {
-          if (cell) {
-            const boardY = y + ghostPiece.position.y;
-            const boardX = x + ghostPiece.position.x;
-            if (boardY >= 0 && boardY < board.length && boardX >= 0 && boardX < board[0].length) {
-              if (!displayBoard[boardY][boardX]) {
-                displayBoard[boardY][boardX] = 'ghost';
-              }
-            }
-          }
-        });
-      });
+    // Keep moving down until we hit something
+    while (testY < board.length) {
+      if (isCollision(board, currentPiece, { ...currentPiece.position, y: testY + 1 })) {
+        break;
+      }
+      testY++;
     }
-  }
 
-  // Add current piece
-  if (currentPiece) {
-    currentPiece.shape.forEach((row, y) => {
-      row.forEach((cell, x) => {
-        if (cell) {
-          const boardY = y + currentPiece.position.y;
-          const boardX = x + currentPiece.position.x;
-          if (boardY >= 0 && boardY < board.length && boardX >= 0 && boardX < board[0].length) {
-            displayBoard[boardY][boardX] = currentPiece.type;
-          }
-        }
-      });
-    });
-  }
+    return testY;
+  }, [currentPiece, board]);
 
-  const getCellColor = (cell: DisplayCell) => {
-    if (!cell) return undefined;
-    if (cell === 'ghost' && currentPiece) {
-      return `${COLORS[currentPiece.type]}40`;
-    }
-    return COLORS[cell];
-  };
+  // Calculate piece position including grid padding and gaps
+  const calculatePosition = (x: number, y: number) => ({
+    left: `${GRID_PADDING + (x * (CELL_SIZE + GRID_GAP))}px`,
+    top: `${GRID_PADDING + (y * (CELL_SIZE + GRID_GAP))}px`
+  });
 
   return (
     <BoardContainer>
       <Grid>
-        {displayBoard.map((row, y) => 
+        {/* Render placed pieces */}
+        {board.map((row, y) => 
           row.map((cell, x) => (
             <Cell 
               key={`${x}-${y}`}
-              $color={getCellColor(cell)}
-              $isGhost={cell === 'ghost'}
+              $color={cell ? COLORS[cell] : undefined}
               data-testid={`cell-${x}-${y}`}
             />
           ))
+        )}
+
+        {/* Render ghost piece */}
+        {currentPiece && ghostPiecePosition !== null && ghostPiecePosition !== currentPiece.position.y && (
+          <div
+            style={{
+              position: 'absolute',
+              ...calculatePosition(currentPiece.position.x, ghostPiecePosition),
+              pointerEvents: 'none',
+              zIndex: 1
+            }}
+          >
+            <PieceRenderer
+              piece={{
+                ...currentPiece,
+                position: { ...currentPiece.position, y: ghostPiecePosition }
+              }}
+              ghost={true}
+              scale={1}
+            />
+          </div>
+        )}
+
+        {/* Render active piece */}
+        {currentPiece && (
+          <div
+            style={{
+              position: 'absolute',
+              ...calculatePosition(currentPiece.position.x, currentPiece.position.y),
+              pointerEvents: 'none',
+              zIndex: 2
+            }}
+          >
+            <PieceRenderer
+              piece={currentPiece}
+              scale={1}
+            />
+          </div>
         )}
       </Grid>
     </BoardContainer>

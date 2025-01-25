@@ -1,6 +1,6 @@
 import { Tetromino } from '../../../utils/types';
 import { HoldContainer, HoldTitle, PieceWrapper } from './styles';
-import { PieceRenderer } from '../NextPiece/PieceRenderer';
+import { PieceRenderer } from '../Board/PieceRenderer';
 
 interface HoldAreaProps {
   piece: Tetromino | null;

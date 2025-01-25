@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, TetrominoType, Tetromino } from '../utils/types';
 import { SHAPES, BOARD_WIDTH, BOARD_HEIGHT, LEVEL_SPEEDS, MAX_LOCK_RESETS, COLORS } from '../utils/constants';
 import { moveDown, moveHorizontal, rotate, hardDrop, holdPiece } from '../utils/gameLogic';
@@ -18,13 +18,19 @@ const createEmptyBoard = (): TetrominoType[][] => {
 
 const generateRandomPiece = (): Tetromino => {
   const types = Object.values(TetrominoType);
-  const randomType = types[Math.floor(Math.random() * types.length)];
+  const randomType = types[Math.floor(Math.random() * types.length)] as TetrominoType;
+  const shape = SHAPES[randomType];
+  
+  if (!shape || !Array.isArray(shape) || !shape[0]) {
+    throw new Error(`Invalid shape for piece type: ${randomType}`);
+  }
+
   return {
-    shape: SHAPES[randomType],
-    position: { x: Math.floor((BOARD_WIDTH - SHAPES[randomType][0].length) / 2), y: 0 },
+    shape,
+    position: { x: Math.floor((BOARD_WIDTH - shape[0].length) / 2), y: 0 },
     type: randomType,
     rotationState: 0,
-    color: COLORS[randomType]  // Add color from constants
+    color: COLORS[randomType]
   };
 };
 
@@ -32,7 +38,7 @@ const generateInitialPieces = (): Tetromino[] => {
   return Array(3).fill(null).map(() => generateRandomPiece());
 };
 
-const initialGameState: GameState = {
+const createInitialGameState = (): GameState => ({
   board: createEmptyBoard(),
   currentPiece: generateRandomPiece(),
   nextPieces: generateInitialPieces(),
@@ -51,16 +57,19 @@ const initialGameState: GameState = {
   lockDelay: 0,
   maxLockResets: MAX_LOCK_RESETS,
   lastLockResetTime: 0
-};
+});
 
 const Game: React.FC = () => {
-  const [gameState, setGameState] = useState<GameState>(initialGameState);
+  const [gameState, setGameState] = useState<GameState>(createInitialGameState);
+  const gameLoopRef = useRef<number | null>(null);
 
   const restartGame = useCallback(() => {
-    setGameState(initialGameState);
+    setGameState(createInitialGameState());
   }, []);
 
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
+    if (event.repeat) return; // Prevent key repeat from affecting game state
+
     if (gameState.isGameOver) {
       if (event.code === 'Enter') {
         restartGame();
@@ -68,7 +77,14 @@ const Game: React.FC = () => {
       return;
     }
 
-    if (gameState.isPaused && event.code !== 'KeyP') return;
+    // Allow Escape key even when paused
+    if (event.code === 'Escape') {
+      setGameState(prev => ({ ...prev, isPaused: !prev.isPaused }));
+      return;
+    }
+
+    // Block other keys when paused
+    if (gameState.isPaused) return;
 
     switch (event.code) {
       case 'ArrowLeft':
@@ -109,15 +125,24 @@ const Game: React.FC = () => {
   }, [handleKeyPress]);
 
   useEffect(() => {
-    if (gameState.isGameOver || gameState.isPaused) return;
+    if (gameState.isGameOver || gameState.isPaused) {
+      if (gameLoopRef.current !== null) {
+        clearInterval(gameLoopRef.current);
+        gameLoopRef.current = null;
+      }
+      return;
+    }
 
-    const speed = LEVEL_SPEEDS[gameState.level as keyof typeof LEVEL_SPEEDS] || LEVEL_SPEEDS[10];
-    const gameLoop = setInterval(() => {
+    const speed = LEVEL_SPEEDS[gameState.level as keyof typeof LEVEL_SPEEDS] ?? LEVEL_SPEEDS[10];
+    gameLoopRef.current = window.setInterval(() => {
       setGameState(prev => moveDown(prev));
     }, speed);
 
     return () => {
-      clearInterval(gameLoop);
+      if (gameLoopRef.current !== null) {
+        clearInterval(gameLoopRef.current);
+        gameLoopRef.current = null;
+      }
     };
   }, [gameState.level, gameState.isGameOver, gameState.isPaused]);
 
