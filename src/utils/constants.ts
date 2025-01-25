@@ -135,3 +135,13 @@ export const LEVEL_SPEEDS = {
 export const LOCK_DELAY = 500;        // 500ms standard lock delay
 export const MAX_LOCK_RESETS = 15;    // Maximum number of lock delay resets
 export const LOCK_RESET_THRESHOLD = 0; // Reset lock delay when piece moves up 
+
+export const COLORS: Record<TetrominoType, string> = {
+  [TetrominoType.I]: '#00F0F0',
+  [TetrominoType.O]: '#F0F000',
+  [TetrominoType.T]: '#A000F0',
+  [TetrominoType.S]: '#00F000',
+  [TetrominoType.Z]: '#F00000',
+  [TetrominoType.J]: '#0000F0',
+  [TetrominoType.L]: '#F0A000'
+}; 

@@ -14,14 +14,15 @@ export interface Position {
 }
 
 export interface Tetromino {
-  shape: number[][];
+  shape: number[][];  // Should this be boolean[][] instead?
   position: Position;
   type: TetrominoType;
   rotationState: number; // 0: spawn, 1: right, 2: 180, 3: left
+  color: string;
 }
 
 export interface GameState {
-  board: number[][];
+  board: TetrominoType[][];
   currentPiece: Tetromino;
   nextPieces: Tetromino[];
   holdPiece: Tetromino | null;
@@ -39,4 +40,7 @@ export interface GameState {
   lockDelay: number;        // Time left before piece locks (in ms)
   maxLockResets: number;    // Number of moves allowed before forced lock
   lastLockResetTime: number; // Last time the lock was reset
-} 
+}
+
+// Add a helper type for board cells
+export type BoardCell = TetrominoType | null; 
