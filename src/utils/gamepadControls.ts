@@ -1,3 +1,14 @@
+import { GameState } from './types';
+import { moveHorizontal } from './gameLogic';
+import React from 'react';
+
+declare global {
+  interface WindowEventMap {
+    gamepadconnected: GamepadEvent;
+    gamepaddisconnected: GamepadEvent;
+  }
+}
+
 // Map PS5 button indices to their common names
 const PS5_BUTTONS = {
   CROSS: 0,      // A/Cross
@@ -17,7 +28,7 @@ const PS5_BUTTONS = {
   DPAD_LEFT: 14,
   DPAD_RIGHT: 15,
   PS: 16         // PS Button
-};
+} as const;
 
 // Map PS5 axes indices
 const PS5_AXES = {
@@ -42,84 +53,96 @@ export interface GamepadState {
 }
 
 export const getGamepadState = (): GamepadState | null => {
-  const gamepads = navigator.getGamepads();
-  const gamepad = gamepads[0];
+  try {
+    const gamepads = navigator.getGamepads();
+    const gamepad = gamepads[0];
 
-  if (!gamepad) return null;
+    if (!gamepad) return null;
 
-  // Add safety check for buttons array
-  if (!gamepad.buttons || gamepad.buttons.length < 17) {
-    console.warn('Gamepad does not have expected button layout');
+    if (!gamepad.buttons || gamepad.buttons.length < 17) {
+      console.warn('Gamepad does not have expected button layout');
+      return null;
+    }
+
+    return {
+      dpadLeft: gamepad.buttons[PS5_BUTTONS.DPAD_LEFT]?.pressed ?? false,
+      dpadRight: gamepad.buttons[PS5_BUTTONS.DPAD_RIGHT]?.pressed ?? false,
+      dpadUp: gamepad.buttons[PS5_BUTTONS.DPAD_UP]?.pressed ?? false,
+      dpadDown: gamepad.buttons[PS5_BUTTONS.DPAD_DOWN]?.pressed ?? false,
+      cross: gamepad.buttons[PS5_BUTTONS.CROSS]?.pressed ?? false,
+      circle: gamepad.buttons[PS5_BUTTONS.CIRCLE]?.pressed ?? false,
+      square: gamepad.buttons[PS5_BUTTONS.SQUARE]?.pressed ?? false,
+      triangle: gamepad.buttons[PS5_BUTTONS.TRIANGLE]?.pressed ?? false,
+      l1: gamepad.buttons[PS5_BUTTONS.L1]?.pressed ?? false,
+      r1: gamepad.buttons[PS5_BUTTONS.R1]?.pressed ?? false,
+      options: gamepad.buttons[PS5_BUTTONS.OPTIONS]?.pressed ?? false,
+    };
+  } catch (error) {
+    console.error('Error accessing gamepad:', error);
     return null;
   }
-
-  return {
-    dpadLeft: gamepad.buttons[PS5_BUTTONS.DPAD_LEFT]?.pressed ?? false,
-    dpadRight: gamepad.buttons[PS5_BUTTONS.DPAD_RIGHT]?.pressed ?? false,
-    dpadUp: gamepad.buttons[PS5_BUTTONS.DPAD_UP]?.pressed ?? false,
-    dpadDown: gamepad.buttons[PS5_BUTTONS.DPAD_DOWN]?.pressed ?? false,
-    cross: gamepad.buttons[PS5_BUTTONS.CROSS]?.pressed ?? false,
-    circle: gamepad.buttons[PS5_BUTTONS.CIRCLE]?.pressed ?? false,
-    square: gamepad.buttons[PS5_BUTTONS.SQUARE]?.pressed ?? false,
-    triangle: gamepad.buttons[PS5_BUTTONS.TRIANGLE]?.pressed ?? false,
-    l1: gamepad.buttons[PS5_BUTTONS.L1]?.pressed ?? false,
-    r1: gamepad.buttons[PS5_BUTTONS.R1]?.pressed ?? false,
-    options: gamepad.buttons[PS5_BUTTONS.OPTIONS]?.pressed ?? false,
-  };
 };
 
-let previousState: GamepadState | null = null;
+// Use a class to manage state instead of module-level variables
+class GamepadStateManager {
+  private previousState: GamepadState | null = null;
+  private lastButtonPressTime: number | null = null;
+  private lastMoveTime = 0;
 
-export const getNewPresses = (): GamepadState | null => {
-  const currentState = getGamepadState();
-  if (!currentState) return null;
+  getNewPresses(): GamepadState | null {
+    const currentState = getGamepadState();
+    if (!currentState) return null;
 
-  const newPresses: GamepadState = {
-    dpadLeft: currentState.dpadLeft && (!previousState?.dpadLeft),
-    dpadRight: currentState.dpadRight && (!previousState?.dpadRight),
-    dpadUp: currentState.dpadUp && (!previousState?.dpadUp),
-    dpadDown: currentState.dpadDown && (!previousState?.dpadDown),
-    cross: currentState.cross && (!previousState?.cross),
-    circle: currentState.circle && (!previousState?.circle),
-    square: currentState.square && (!previousState?.square),
-    triangle: currentState.triangle && (!previousState?.triangle),
-    l1: currentState.l1 && (!previousState?.l1),
-    r1: currentState.r1 && (!previousState?.r1),
-    options: currentState.options && (!previousState?.options),
-  };
+    const newPresses: GamepadState = {
+      dpadLeft: currentState.dpadLeft && (!this.previousState?.dpadLeft),
+      dpadRight: currentState.dpadRight && (!this.previousState?.dpadRight),
+      dpadUp: currentState.dpadUp && (!this.previousState?.dpadUp),
+      dpadDown: currentState.dpadDown && (!this.previousState?.dpadDown),
+      cross: currentState.cross && (!this.previousState?.cross),
+      circle: currentState.circle && (!this.previousState?.circle),
+      square: currentState.square && (!this.previousState?.square),
+      triangle: currentState.triangle && (!this.previousState?.triangle),
+      l1: currentState.l1 && (!this.previousState?.l1),
+      r1: currentState.r1 && (!this.previousState?.r1),
+      options: currentState.options && (!this.previousState?.options),
+    };
 
-  previousState = currentState;
-  return newPresses;
-};
-
-export const handleGamepadInput = (
-  gameState: GameState,
-  setGameState: (state: GameState) => void,
-  settings: { das: number; arr: number }
-) => {
-  const gamepad = navigator.getGamepads()?.[0];
-  if (!gamepad) return;
-
-  const now = Date.now();
-  const dpadLeft = gamepad.buttons[PS5_BUTTONS.DPAD_LEFT].pressed;
-  const dpadRight = gamepad.buttons[PS5_BUTTONS.DPAD_RIGHT].pressed;
-
-  if (dpadLeft || dpadRight) {
-    const direction = dpadLeft ? -1 : 1;
-    const keyHoldTime = now - (lastButtonPressTime ?? now);
-
-    if (!lastButtonPressTime) {
-      // Initial press
-      setGameState(prev => moveHorizontal(prev, direction));
-      lastButtonPressTime = now;
-    } else if (keyHoldTime >= settings.das) {
-      // After DAS delay, move at ARR interval
-      if (now - lastMoveTime >= settings.arr) {
-        setGameState(prev => moveHorizontal(prev, direction));
-        lastMoveTime = now;
-      }
-    }
-  } else {
-    lastButtonPressTime = null;
+    this.previousState = currentState;
+    return newPresses;
   }
-}; 
+
+  handleInput(
+    gameState: GameState,
+    setGameState: React.Dispatch<React.SetStateAction<GameState>>,
+    settings: { das: number; arr: number }
+  ): void {
+    const gamepad = navigator.getGamepads()?.[0];
+    if (!gamepad?.buttons) return;
+
+    const now = Date.now();
+    const dpadLeft = gamepad.buttons[PS5_BUTTONS.DPAD_LEFT]?.pressed ?? false;
+    const dpadRight = gamepad.buttons[PS5_BUTTONS.DPAD_RIGHT]?.pressed ?? false;
+
+    if (dpadLeft || dpadRight) {
+      const direction = dpadLeft ? -1 : 1;
+      const keyHoldTime = now - (this.lastButtonPressTime ?? now);
+
+      if (!this.lastButtonPressTime) {
+        setGameState(prev => moveHorizontal(prev, direction));
+        this.lastButtonPressTime = now;
+      } else if (keyHoldTime >= settings.das) {
+        if (now - this.lastMoveTime >= settings.arr) {
+          setGameState(prev => moveHorizontal(prev, direction));
+          this.lastMoveTime = now;
+        }
+      }
+    } else {
+      this.lastButtonPressTime = null;
+    }
+  }
+}
+
+export const gamepadManager = new GamepadStateManager();
+export const getNewPresses = () => gamepadManager.getNewPresses();
+export const handleGamepadInput = (...args: Parameters<GamepadStateManager['handleInput']>) => 
+  gamepadManager.handleInput(...args); 
