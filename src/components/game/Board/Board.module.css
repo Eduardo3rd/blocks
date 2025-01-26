@@ -1,0 +1,4 @@
+.ghostCell {
+  box-shadow: inset 0 0 2px rgba(255, 255, 255, 0.5);
+  border-style: dashed !important;
+} 

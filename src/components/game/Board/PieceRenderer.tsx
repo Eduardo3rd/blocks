@@ -6,12 +6,19 @@ interface PieceRendererProps {
   piece: Tetromino;
   scale?: number;
   ghost?: boolean;
+  position?: { x: number; y: number };
 }
 
-export const PieceRenderer: React.FC<PieceRendererProps> = ({ piece, scale = 1, ghost = false }) => {
+export const PieceRenderer: React.FC<PieceRendererProps> = ({ 
+  piece, 
+  scale = 1, 
+  ghost = false,
+  position
+}) => {
   const cellSize = 30 * scale;
   const width = (piece.shape[0]?.length ?? 0) * cellSize;
   const height = piece.shape.length * cellSize;
+  const piecePosition = position || piece.position;
 
   // Generate unique IDs for gradients
   const gradientId = useMemo(() => 
@@ -30,15 +37,12 @@ export const PieceRenderer: React.FC<PieceRendererProps> = ({ piece, scale = 1, 
           <stop offset="0%" stopColor={COLORS[piece.type]} stopOpacity={1} />
           <stop offset="100%" stopColor={COLORS[piece.type]} stopOpacity={0.8} />
         </linearGradient>
-        <filter id="shadow">
-          <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.3" />
-        </filter>
       </defs>
       {piece.shape.map((row, y) =>
         row?.map((cell, x) => {
           if (cell) {
             return (
-              <g key={`${x}-${y}`} filter={ghost ? undefined : "url(#shadow)"}>
+              <g key={`${x}-${y}`}>
                 <rect
                   x={x * cellSize + 1}
                   y={y * cellSize + 1}
@@ -46,11 +50,10 @@ export const PieceRenderer: React.FC<PieceRendererProps> = ({ piece, scale = 1, 
                   height={cellSize - 2}
                   rx={4}
                   ry={4}
-                  fill={ghost ? 'none' : `url(#${gradientId})`}
-                  stroke={ghost ? COLORS[piece.type] : "rgba(0,0,0,0.2)"}
-                  strokeWidth={ghost ? 2 : 1}
-                  strokeDasharray={ghost ? "4 2" : undefined}
-                  opacity={ghost ? 0.5 : 1}
+                  fill={ghost ? '#ffffff' : `url(#${gradientId})`}
+                  stroke={ghost ? '#ffffff' : "rgba(0,0,0,0.2)"}
+                  strokeWidth={2}
+                  opacity={ghost ? 0.2 : 1}
                 />
                 {!ghost && (
                   <rect

@@ -20,7 +20,7 @@ const generateRandomPiece = (): Tetromino => {
 
 export const isCollision = (
   board: TetrominoType[][],
-  piece: Tetromino,
+  piece: Tetromino | { shape: number[][], position: Position },
   position: Position = piece.position
 ): boolean => {
   if (!Array.isArray(board) || !Array.isArray(piece.shape)) {
@@ -349,30 +349,65 @@ export const moveHorizontal = (gameState: GameState, direction: -1 | 1): GameSta
   return gameState;
 };
 
-const getWallKickData = (piece: Tetromino, newRotationState: number): Position[] => {
-  if (!isValidTetromino(piece)) {
-    throw new Error('Invalid piece provided to getWallKickData');
+// Add wall kick data - these are the standard SRS (Super Rotation System) offsets
+const WALL_KICKS = {
+  // [initial rotation state][new rotation state] = array of possible offsets to try
+  '01': [{x: -1, y: 0}, {x: -1, y: 1}, {x: 0, y: -2}, {x: -1, y: -2}],  // 0->1
+  '10': [{x: 1, y: 0}, {x: 1, y: -1}, {x: 0, y: 2}, {x: 1, y: 2}],      // 1->0
+  '12': [{x: 1, y: 0}, {x: 1, y: -1}, {x: 0, y: 2}, {x: 1, y: 2}],      // 1->2
+  '21': [{x: -1, y: 0}, {x: -1, y: 1}, {x: 0, y: -2}, {x: -1, y: -2}],  // 2->1
+  '23': [{x: 1, y: 0}, {x: 1, y: 1}, {x: 0, y: -2}, {x: 1, y: -2}],     // 2->3
+  '32': [{x: -1, y: 0}, {x: -1, y: -1}, {x: 0, y: 2}, {x: -1, y: 2}],   // 3->2
+  '30': [{x: -1, y: 0}, {x: -1, y: -1}, {x: 0, y: 2}, {x: -1, y: 2}],   // 3->0
+  '03': [{x: 1, y: 0}, {x: 1, y: 1}, {x: 0, y: -2}, {x: 1, y: -2}],     // 0->3
+};
+
+// I-piece has different wall kick data
+const I_WALL_KICKS = {
+  '01': [{x: -2, y: 0}, {x: 1, y: 0}, {x: -2, y: -1}, {x: 1, y: 2}],
+  '10': [{x: 2, y: 0}, {x: -1, y: 0}, {x: 2, y: 1}, {x: -1, y: -2}],
+  '12': [{x: -1, y: 0}, {x: 2, y: 0}, {x: -1, y: 2}, {x: 2, y: -1}],
+  '21': [{x: 1, y: 0}, {x: -2, y: 0}, {x: 1, y: -2}, {x: -2, y: 1}],
+  '23': [{x: 2, y: 0}, {x: -1, y: 0}, {x: 2, y: 1}, {x: -1, y: -2}],
+  '32': [{x: -2, y: 0}, {x: 1, y: 0}, {x: -2, y: -1}, {x: 1, y: 2}],
+  '30': [{x: 1, y: 0}, {x: -2, y: 0}, {x: 1, y: -2}, {x: -2, y: 1}],
+  '03': [{x: -1, y: 0}, {x: 2, y: 0}, {x: -1, y: 2}, {x: 2, y: -1}],
+};
+
+const tryWallKicks = (
+  board: TetrominoType[][],
+  piece: Tetromino,
+  newShape: number[][],
+  oldRotation: number,
+  newRotation: number
+): { x: number; y: number } | null => {
+  const kicks = piece.type === TetrominoType.I ? I_WALL_KICKS : WALL_KICKS;
+  const kickKey = `${oldRotation}${newRotation}` as keyof typeof WALL_KICKS;
+  const kickTests = kicks[kickKey] || [];
+
+  // Try each possible wall kick
+  for (const offset of kickTests) {
+    const newX = piece.position.x + offset.x;
+    const newY = piece.position.y + offset.y;
+    
+    if (!isCollision(board, { ...piece, position: { x: newX, y: newY } })) {
+      return { x: offset.x, y: offset.y };
+    }
   }
 
-  if (piece.type === TetrominoType.O) {
-    return WALL_KICK_DATA_O;
-  }
+  return null;
+};
 
-  const tests = piece.type === TetrominoType.I ? WALL_KICK_DATA.I : WALL_KICK_DATA.JLSTZ;
-  const rotationIndex = ((piece.rotationState % 4) + 4) % 4;
-  const kickData = tests[rotationIndex];
+// Add this function before the rotate function
+const rotateMatrix = (matrix: number[][], clockwise: boolean): number[][] => {
+  if (!matrix || !matrix[0]) return matrix;
   
-  if (!kickData) {
-    throw new Error(`No wall kick data found for rotation ${rotationIndex}`);
-  }
-
-  // Return the kick data with inverted tests if rotating counterclockwise
-  if (newRotationState < piece.rotationState || 
-      (piece.rotationState === 0 && newRotationState === 3)) {
-    return kickData.map(pos => ({ x: -pos.x, y: -pos.y }));
-  }
+  const N = matrix.length;
+  const result = matrix.map((row, i) => 
+    row.map((_, j) => clockwise ? matrix[N - 1 - j][i] : matrix[j][N - 1 - i])
+  );
   
-  return kickData;
+  return result;
 };
 
 export const rotate = (gameState: GameState, clockwise: boolean = true): GameState => {
@@ -380,69 +415,50 @@ export const rotate = (gameState: GameState, clockwise: boolean = true): GameSta
     throw new Error('Invalid game state provided to rotate');
   }
 
-  const piece = gameState.currentPiece;
-  if (!Array.isArray(piece.shape) || !piece.shape[0]) {
-    throw new Error('Invalid piece shape');
+  const { currentPiece, board } = gameState;
+  if (!currentPiece) return gameState;
+
+  const oldRotation = currentPiece.rotationState;
+  const newRotation = (oldRotation + (clockwise ? 1 : 3)) % 4;
+  const newShape = rotateMatrix(currentPiece.shape, clockwise);
+
+  // First try rotating without wall kicks
+  if (!isCollision(board, { shape: newShape, position: currentPiece.position }, currentPiece.position)) {
+    return {
+      ...gameState,
+      currentPiece: {
+        ...currentPiece,
+        shape: newShape,
+        rotationState: newRotation,
+      },
+      lastMoveWasRotation: true,
+    };
   }
 
-  const newShape = clockwise ? 
-    piece.shape[0].map((_, i) => piece.shape.map(row => row?.[i] ?? 0).reverse()) :
-    piece.shape[0].map((_, i) => piece.shape.map(row => row?.[i] ?? 0)).reverse();
-
-  const newRotationState = clockwise ?
-    ((piece.rotationState + 1) % 4) :
-    ((piece.rotationState - 1 + 4) % 4);
-
-  const rotatedPiece = {
-    ...piece,
-    shape: newShape,
-    rotationState: newRotationState
-  };
-
-  // Get wall kick data for this rotation
-  const kickData = getWallKickData(piece, newRotationState);
-
-  // Try each wall kick until we find one that works
-  for (const kick of kickData) {
-    const testPosition = {
-      x: piece.position.x + kick.x,
-      y: piece.position.y - kick.y
+  // If basic rotation fails, try wall kicks
+  const kick = tryWallKicks(board, currentPiece, newShape, oldRotation, newRotation);
+  if (kick) {
+    const kickedPosition = {
+      x: currentPiece.position.x + kick.x,
+      y: currentPiece.position.y + kick.y,
     };
 
-    if (!isCollision(gameState.board, { ...rotatedPiece, position: testPosition })) {
-      const now = Date.now();
-      const oldY = piece.position.y;
-
-      // Reset lock delay if conditions are met
-      if (shouldStartLockDelay(gameState) && canResetLockDelay(gameState, oldY)) {
-        return {
-          ...gameState,
-          currentPiece: {
-            ...rotatedPiece,
-            position: testPosition
-          },
-          lastMoveWasRotation: true,
-          lockDelay: LOCK_DELAY,
-          lastLockResetTime: now,
-          maxLockResets: gameState.maxLockResets - 1
-        };
-      }
-
+    if (!isCollision(board, { shape: newShape, position: kickedPosition }, kickedPosition)) {
       return {
         ...gameState,
         currentPiece: {
-          ...rotatedPiece,
-          position: testPosition
+          ...currentPiece,
+          shape: newShape,
+          position: kickedPosition,
+          rotationState: newRotation,
         },
-        lastMoveWasRotation: true
+        lastMoveWasRotation: true,
       };
     }
   }
 
-  return {
-    ...gameState,
-    lastMoveWasRotation: false
-  };
+  // If all wall kicks fail, return unchanged state
+  return gameState;
 };
 
 const lockPiece = (gameState: GameState): TetrominoType[][] => {

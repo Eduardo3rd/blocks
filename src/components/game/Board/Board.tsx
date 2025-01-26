@@ -5,6 +5,8 @@ import { isValidGameState } from '../../../utils/typeGuards';
 import { BoardContainer, Grid, Cell } from './styles';
 import { PieceRenderer } from './PieceRenderer';
 import { useMemo } from 'react';
+import { BoardPieceRenderer } from './BoardPieceRenderer';
+import styles from './Board.module.css';
 
 interface BoardProps {
   gameState: GameState;
@@ -31,10 +33,7 @@ export const Board: React.FC<BoardProps> = ({ gameState }) => {
     let testY = currentPiece.position.y;
     
     // Keep moving down until we hit something
-    while (testY < board.length) {
-      if (isCollision(board, currentPiece, { ...currentPiece.position, y: testY + 1 })) {
-        break;
-      }
+    while (testY < board.length && !isCollision(board, currentPiece, { ...currentPiece.position, y: testY + 1 })) {
       testY++;
     }
 
@@ -48,57 +47,56 @@ export const Board: React.FC<BoardProps> = ({ gameState }) => {
   });
 
   return (
-    <BoardContainer>
-      <Grid>
-        {/* Render placed pieces */}
-        {board.map((row, y) => 
-          row.map((cell, x) => (
-            <Cell 
-              key={`${x}-${y}`}
-              $color={cell ? COLORS[cell] : undefined}
-              data-testid={`cell-${x}-${y}`}
-            />
-          ))
-        )}
+    <div className={styles.board}>
+      <BoardContainer>
+        <Grid>
+          {/* Render placed pieces */}
+          {board.map((row, y) => 
+            row.map((cell, x) => (
+              <Cell 
+                key={`${x}-${y}`}
+                $color={cell ? COLORS[cell] : undefined}
+                data-testid={`cell-${x}-${y}`}
+              />
+            ))
+          )}
 
-        {/* Render ghost piece */}
-        {currentPiece && ghostPiecePosition !== null && ghostPiecePosition !== currentPiece.position.y && (
-          <div
-            style={{
-              position: 'absolute',
-              ...calculatePosition(currentPiece.position.x, ghostPiecePosition),
-              pointerEvents: 'none',
-              zIndex: 1
-            }}
-          >
-            <PieceRenderer
-              piece={{
-                ...currentPiece,
-                position: { ...currentPiece.position, y: ghostPiecePosition }
+          {/* Render ghost piece */}
+          {currentPiece && ghostPiecePosition !== null && (
+            <div
+              style={{
+                position: 'absolute',
+                ...calculatePosition(currentPiece.position.x, ghostPiecePosition),
+                pointerEvents: 'none',
+                zIndex: 1
               }}
-              ghost={true}
-              scale={1}
-            />
-          </div>
-        )}
+            >
+              <PieceRenderer
+                piece={currentPiece}
+                ghost={true}
+                scale={1}
+              />
+            </div>
+          )}
 
-        {/* Render active piece */}
-        {currentPiece && (
-          <div
-            style={{
-              position: 'absolute',
-              ...calculatePosition(currentPiece.position.x, currentPiece.position.y),
-              pointerEvents: 'none',
-              zIndex: 2
-            }}
-          >
-            <PieceRenderer
-              piece={currentPiece}
-              scale={1}
-            />
-          </div>
-        )}
-      </Grid>
-    </BoardContainer>
+          {/* Render active piece */}
+          {currentPiece && (
+            <div
+              style={{
+                position: 'absolute',
+                ...calculatePosition(currentPiece.position.x, currentPiece.position.y),
+                pointerEvents: 'none',
+                zIndex: 2
+              }}
+            >
+              <PieceRenderer
+                piece={currentPiece}
+                scale={1}
+              />
+            </div>
+          )}
+        </Grid>
+      </BoardContainer>
+    </div>
   );
 }; 

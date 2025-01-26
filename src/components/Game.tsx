@@ -13,6 +13,8 @@ import { NextPieceErrorBoundary } from './game/NextPiece/NextPieceErrorBoundary'
 import { StatsErrorBoundary } from './game/Stats/StatsErrorBoundary';
 import { saveHighScore } from '../utils/highScores'
 import { HighScores } from './game/HighScores/HighScores'
+import { getGamepadState, getNewPresses } from '../utils/gamepadControls';
+import { Settings } from './game/Settings/Settings';
 
 // Add DAS and ARR constants
 const DAS_DELAY = 167; // 167ms before auto-repeat starts
@@ -73,6 +75,11 @@ const Game: React.FC = () => {
   const arrIntervalRef = useRef<number | null>(null);
   const softDropIntervalRef = useRef<number | null>(null);
   const lastMoveTimeRef = useRef<number>(0);
+  const [settings, setSettings] = useState({
+    das: DAS_DELAY,
+    arr: ARR_RATE
+  });
+  const [showSettings, setShowSettings] = useState(false);
 
   const restartGame = useCallback(() => {
     setGameState(createInitialGameState());
@@ -102,17 +109,15 @@ const Game: React.FC = () => {
     switch (event.code) {
       case 'ArrowLeft':
       case 'ArrowRight':
-        // Start DAS timer
         if (dasTimerRef.current === null) {
           const direction = event.code === 'ArrowLeft' ? -1 : 1;
           setGameState(prev => moveHorizontal(prev, direction));
           
           dasTimerRef.current = window.setTimeout(() => {
-            // After DAS delay, start ARR interval
             arrIntervalRef.current = window.setInterval(() => {
               setGameState(prev => moveHorizontal(prev, direction));
-            }, ARR_RATE);
-          }, DAS_DELAY);
+            }, settings.arr);
+          }, settings.das);
         }
         break;
       case 'ArrowDown':
@@ -122,7 +127,7 @@ const Game: React.FC = () => {
         if (softDropIntervalRef.current === null) {
           softDropIntervalRef.current = window.setInterval(() => {
             setGameState(prev => moveDown(prev, true));
-          }, ARR_RATE); // Use same rate as ARR for consistency
+          }, settings.arr); // Use same rate as ARR for consistency
         }
         break;
       case 'ArrowUp':
@@ -150,7 +155,7 @@ const Game: React.FC = () => {
       default:
         break;
     }
-  }, [gameState.isGameOver, gameState.isPaused, restartGame]);
+  }, [gameState.isGameOver, gameState.isPaused, restartGame, settings]);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
     setKeyState(prev => ({ ...prev, [event.code]: false }));
@@ -182,7 +187,6 @@ const Game: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      // Clean up any remaining timers
       if (dasTimerRef.current !== null) {
         clearTimeout(dasTimerRef.current);
       }
@@ -193,7 +197,7 @@ const Game: React.FC = () => {
         clearInterval(softDropIntervalRef.current);
       }
     };
-  }, [handleKeyDown, handleKeyUp]);
+  }, [handleKeyDown, handleKeyUp, settings]);
 
   useEffect(() => {
     if (gameState.isGameOver || gameState.isPaused) {
@@ -231,6 +235,82 @@ const Game: React.FC = () => {
     }
   }
 
+  // Add gamepad polling
+  useEffect(() => {
+    if (gameState.isGameOver) return;
+
+    const handleGamepad = () => {
+      const gamepadState = getGamepadState();
+      const newPresses = getNewPresses();
+      
+      if (!gamepadState) return;
+
+      // Handle pause button even when paused
+      if (newPresses?.options) {
+        setGameState(prev => ({ ...prev, isPaused: !prev.isPaused }));
+        return;
+      }
+
+      // Don't process other inputs when paused
+      if (gameState.isPaused) return;
+
+      // Use settings.arr for movement speed
+      if (gamepadState.dpadLeft) {
+        setGameState(prev => moveHorizontal(prev, -1));
+      }
+      if (gamepadState.dpadRight) {
+        setGameState(prev => moveHorizontal(prev, 1));
+      }
+      if (gamepadState.dpadDown) {
+        setGameState(prev => moveDown(prev, true));
+      }
+
+      // Handle new presses (rotations, hard drop, hold)
+      if (newPresses) {
+        if (newPresses.dpadUp) {
+          setGameState(prev => rotate(prev, true));
+        }
+        if (newPresses.cross) {
+          setGameState(prev => hardDrop(prev));
+        }
+        if (newPresses.circle) {
+          setGameState(prev => rotate(prev, false));
+        }
+        if (newPresses.square) {
+          setGameState(prev => holdPiece(prev));
+        }
+        if (newPresses.triangle) {
+          setGameState(prev => rotate180(prev));
+        }
+      }
+    };
+
+    const gamepadInterval = setInterval(handleGamepad, settings.arr);
+
+    return () => {
+      clearInterval(gamepadInterval);
+    };
+  }, [gameState.isGameOver, gameState.isPaused, settings]);
+
+  // Add gamepad connection listener
+  useEffect(() => {
+    const handleGamepadConnected = (e: GamepadEvent) => {
+      console.log(`Gamepad connected: ${e.gamepad.id}`);
+    };
+
+    const handleGamepadDisconnected = (e: GamepadEvent) => {
+      console.log(`Gamepad disconnected: ${e.gamepad.id}`);
+    };
+
+    window.addEventListener('gamepadconnected', handleGamepadConnected);
+    window.addEventListener('gamepaddisconnected', handleGamepadDisconnected);
+
+    return () => {
+      window.removeEventListener('gamepadconnected', handleGamepadConnected);
+      window.removeEventListener('gamepaddisconnected', handleGamepadDisconnected);
+    };
+  }, []);
+
   return (
     <ErrorBoundary>
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -265,10 +345,25 @@ const Game: React.FC = () => {
                   <div className="text-lg text-gray-400 mt-4">Press ENTER to restart</div>
                 </>
               ) : (
-                <div className="text-4xl text-yellow-500">Paused</div>
+                <>
+                  <div className="text-4xl text-yellow-500 mb-4">Paused</div>
+                  <button 
+                    className="text-lg text-white bg-gray-800 px-4 py-2 rounded mt-4"
+                    onClick={() => setShowSettings(true)}
+                  >
+                    Settings
+                  </button>
+                </>
               )}
             </div>
           </div>
+        )}
+        {showSettings && (
+          <Settings
+            settings={settings}
+            onSave={setSettings}
+            onClose={() => setShowSettings(false)}
+          />
         )}
         <HighScores />
       </div>
