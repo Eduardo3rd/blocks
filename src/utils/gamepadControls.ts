@@ -90,4 +90,36 @@ export const getNewPresses = (): GamepadState | null => {
 
   previousState = currentState;
   return newPresses;
+};
+
+export const handleGamepadInput = (
+  gameState: GameState,
+  setGameState: (state: GameState) => void,
+  settings: { das: number; arr: number }
+) => {
+  const gamepad = navigator.getGamepads()?.[0];
+  if (!gamepad) return;
+
+  const now = Date.now();
+  const dpadLeft = gamepad.buttons[PS5_BUTTONS.DPAD_LEFT].pressed;
+  const dpadRight = gamepad.buttons[PS5_BUTTONS.DPAD_RIGHT].pressed;
+
+  if (dpadLeft || dpadRight) {
+    const direction = dpadLeft ? -1 : 1;
+    const keyHoldTime = now - (lastButtonPressTime ?? now);
+
+    if (!lastButtonPressTime) {
+      // Initial press
+      setGameState(prev => moveHorizontal(prev, direction));
+      lastButtonPressTime = now;
+    } else if (keyHoldTime >= settings.das) {
+      // After DAS delay, move at ARR interval
+      if (now - lastMoveTime >= settings.arr) {
+        setGameState(prev => moveHorizontal(prev, direction));
+        lastMoveTime = now;
+      }
+    }
+  } else {
+    lastButtonPressTime = null;
+  }
 }; 

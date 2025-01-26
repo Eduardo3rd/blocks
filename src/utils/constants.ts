@@ -117,19 +117,30 @@ export const BOARD_WIDTH = 10;
 export const BOARD_HEIGHT = 20;
 export const CELL_SIZE = 30;
 
+// Speed in milliseconds between drops (1000ms = 1 second)
 export const LEVEL_SPEEDS = {
-  1: 800,
-  2: 720,
-  3: 630,
-  4: 550,
-  5: 470,
-  6: 380,
-  7: 300,
-  8: 220,
-  9: 130,
-  10: 100,
-  // Add more levels if needed
-};
+  0: 800,    // 1.25 tiles/sec
+  1: 717,    // 1.4 tiles/sec
+  2: 633,    // 1.6 tiles/sec
+  3: 550,    // 1.8 tiles/sec
+  4: 467,    // 2.1 tiles/sec
+  5: 383,    // 2.6 tiles/sec
+  6: 300,    // 3.3 tiles/sec
+  7: 217,    // 4.6 tiles/sec
+  8: 133,    // 7.5 tiles/sec
+  9: 100,    // 10 tiles/sec
+  10: 83,    // 12 tiles/sec
+  11: 83,    // 12 tiles/sec
+  12: 83,    // 12 tiles/sec
+  13: 67,    // 15 tiles/sec
+  14: 67,    // 15 tiles/sec
+  15: 67,    // 15 tiles/sec
+  16: 50,    // 20 tiles/sec
+  17: 50,    // 20 tiles/sec
+  18: 50,    // 20 tiles/sec
+  19: 33,    // 30 tiles/sec
+  29: 17,    // 60 tiles/sec
+} as const;
 
 // Lock delay constants
 export const LOCK_DELAY = 500;        // 500ms standard lock delay

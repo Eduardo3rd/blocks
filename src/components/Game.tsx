@@ -76,10 +76,13 @@ const Game: React.FC = () => {
   const softDropIntervalRef = useRef<number | null>(null);
   const lastMoveTimeRef = useRef<number>(0);
   const [settings, setSettings] = useState({
-    das: DAS_DELAY,
-    arr: ARR_RATE
+    das: 300,  // Increase from 167ms to 300ms for longer initial delay
+    arr: 50    // Increase from 33ms to 50ms for slower repeat rate
   });
   const [showSettings, setShowSettings] = useState(false);
+  const [keyDownTime, setKeyDownTime] = useState<number | null>(null);
+  const [lastMoveTime, setLastMoveTime] = useState<number>(0);
+  const [isAutoShifting, setIsAutoShifting] = useState(false);
 
   const restartGame = useCallback(() => {
     setGameState(createInitialGameState());
@@ -106,20 +109,17 @@ const Game: React.FC = () => {
 
     setKeyState(prev => ({ ...prev, [event.code]: true }));
 
+    const now = Date.now();
+
+    if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
+      const direction = event.code === 'ArrowLeft' ? -1 : 1;
+      setGameState(prev => moveHorizontal(prev, direction));
+      setKeyDownTime(now);
+      setIsAutoShifting(false);
+      setLastMoveTime(0);
+    }
+
     switch (event.code) {
-      case 'ArrowLeft':
-      case 'ArrowRight':
-        if (dasTimerRef.current === null) {
-          const direction = event.code === 'ArrowLeft' ? -1 : 1;
-          setGameState(prev => moveHorizontal(prev, direction));
-          
-          dasTimerRef.current = window.setTimeout(() => {
-            arrIntervalRef.current = window.setInterval(() => {
-              setGameState(prev => moveHorizontal(prev, direction));
-            }, settings.arr);
-          }, settings.das);
-        }
-        break;
       case 'ArrowDown':
         // Initial soft drop
         setGameState(prev => moveDown(prev, true));
@@ -155,10 +155,16 @@ const Game: React.FC = () => {
       default:
         break;
     }
-  }, [gameState.isGameOver, gameState.isPaused, restartGame, settings]);
+  }, [gameState.isGameOver, gameState.isPaused, restartGame]);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
     setKeyState(prev => ({ ...prev, [event.code]: false }));
+
+    if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
+      setKeyDownTime(null);
+      setIsAutoShifting(false);
+      setLastMoveTime(0);
+    }
 
     // Clear DAS and ARR timers on key up
     if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
@@ -310,6 +316,30 @@ const Game: React.FC = () => {
       window.removeEventListener('gamepaddisconnected', handleGamepadDisconnected);
     };
   }, []);
+
+  // Handle DAS and ARR in game loop
+  useEffect(() => {
+    if (gameState.isGameOver || gameState.isPaused || !keyDownTime) return;
+
+    const handleAutoShift = () => {
+      const now = Date.now();
+      const keyHoldTime = now - keyDownTime;
+
+      if (keyHoldTime >= settings.das) {
+        if (!isAutoShifting) {
+          setIsAutoShifting(true);
+          setLastMoveTime(now);
+        } else if (now - lastMoveTime >= settings.arr) {
+          const direction = keyState.ArrowLeft ? -1 : 1;  // Fix direction detection
+          setGameState(prev => moveHorizontal(prev, direction));
+          setLastMoveTime(now);
+        }
+      }
+    };
+
+    const interval = setInterval(handleAutoShift, 33); // Increase from 16ms to 33ms for smoother control
+    return () => clearInterval(interval);
+  }, [gameState, keyDownTime, lastMoveTime, isAutoShifting, settings, keyState]);
 
   return (
     <ErrorBoundary>
