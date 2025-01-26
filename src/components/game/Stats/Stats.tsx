@@ -1,5 +1,4 @@
 import { GameState } from '../../../utils/types';
-import { StatsContainer, StatItem, StatLabel, StatValue, Highlight } from './styles';
 
 interface StatsProps {
   gameState: GameState;
@@ -7,36 +6,42 @@ interface StatsProps {
 
 export const Stats: React.FC<StatsProps> = ({ gameState }) => {
   return (
-    <StatsContainer>
-      <StatItem>
-        <StatLabel>Lines</StatLabel>
-        <StatValue>{gameState.linesCleared}</StatValue>
-      </StatItem>
-      
-      <StatItem>
-        <StatLabel>Level</StatLabel>
-        <StatValue>{gameState.level}</StatValue>
-      </StatItem>
-      
-      <StatItem>
-        <StatLabel>Score</StatLabel>
-        <StatValue>{gameState.score}</StatValue>
-      </StatItem>
+    <div className="bg-[#000033] border-2 border-blue-500 p-4 rounded">
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between gap-8">
+          <div>
+            <div className="text-blue-500 text-sm pixel-text">LINES</div>
+            <div className="text-white text-xl pixel-text">{gameState.linesCleared}</div>
+          </div>
+          
+          <div>
+            <div className="text-blue-500 text-sm pixel-text">LEVEL</div>
+            <div className="text-white text-xl pixel-text">{gameState.level}</div>
+          </div>
+        </div>
+        
+        <div className="text-center">
+          <div className="text-blue-500 text-sm pixel-text">SCORE</div>
+          <div className="text-white text-xl pixel-text">{gameState.score}</div>
+        </div>
 
-      {gameState.combo > 1 && (
-        <Highlight $type="combo">
-          <StatLabel>Combo</StatLabel>
-          <StatValue>×{gameState.combo}</StatValue>
-        </Highlight>
-      )}
+        <div className="flex flex-col items-center">
+          {gameState.combo > 1 && (
+            <div className="text-yellow-500 pixel-text animate-bounce text-center">
+              <div className="text-sm">COMBO</div>
+              <div className="text-xl">×{gameState.combo}</div>
+            </div>
+          )}
 
-      {gameState.lastTSpin !== 'none' && (
-        <Highlight $type="tspin">
-          <StatValue>
-            {gameState.lastTSpin === 'full' ? 'T-SPIN!' : 'MINI T-SPIN!'}
-          </StatValue>
-        </Highlight>
-      )}
-    </StatsContainer>
+          {gameState.lastTSpin !== 'none' && (
+            <div className="text-purple-500 pixel-text animate-bounce text-center">
+              <div className="text-xl">
+                {gameState.lastTSpin === 'full' ? 'T-SPIN!' : 'MINI T-SPIN!'}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }; 

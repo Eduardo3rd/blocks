@@ -9,9 +9,21 @@
   color: #ffffff;
 }
 
-body {
+html, body {
   margin: 0;
-  min-height: 100vh;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+body {
   font-family: 'Press Start 2P', monospace;
 }
 

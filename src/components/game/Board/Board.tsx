@@ -1,10 +1,10 @@
 import { GameState, TetrominoType } from '../../../utils/types';
-import { COLORS } from '../../../utils/constants';
+import { COLORS, BOARD_WIDTH, BOARD_HEIGHT } from '../../../utils/constants';
 import { findDropPosition, isCollision } from '../../../utils/gameLogic';
 import { isValidGameState } from '../../../utils/typeGuards';
 import { BoardContainer, Grid, Cell } from './styles';
 import { PieceRenderer } from './PieceRenderer';
-import { useMemo } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { BoardPieceRenderer } from './BoardPieceRenderer';
 import styles from './Board.module.css';
 
@@ -25,6 +25,31 @@ export const Board: React.FC<BoardProps> = ({ gameState }) => {
   }
 
   const { board, currentPiece } = gameState;
+
+  // Add a resize observer to scale the board
+  const boardRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const calculateScale = () => {
+      if (!boardRef.current) return;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const boardWidth = BOARD_WIDTH * CELL_SIZE;
+      const boardHeight = BOARD_HEIGHT * CELL_SIZE;
+
+      // Calculate scale based on viewport size
+      const horizontalScale = (viewportWidth * 0.9) / boardWidth;
+      const verticalScale = (viewportHeight * 0.7) / boardHeight;
+      const newScale = Math.min(horizontalScale, verticalScale, 1);
+
+      setScale(newScale);
+    };
+
+    calculateScale();
+    window.addEventListener('resize', calculateScale);
+    return () => window.removeEventListener('resize', calculateScale);
+  }, []);
 
   // Calculate ghost piece position
   const ghostPiecePosition = useMemo(() => {
@@ -47,7 +72,14 @@ export const Board: React.FC<BoardProps> = ({ gameState }) => {
   });
 
   return (
-    <div className={styles.board}>
+    <div 
+      ref={boardRef} 
+      className={styles.board}
+      style={{
+        transform: `scale(${scale})`,
+        transformOrigin: 'center top'
+      }}
+    >
       <BoardContainer>
         <Grid>
           {/* Render placed pieces */}
