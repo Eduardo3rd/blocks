@@ -11,6 +11,8 @@ import { BoardErrorBoundary } from './game/Board/BoardErrorBoundary';
 import { HoldAreaErrorBoundary } from './game/HoldArea/HoldAreaErrorBoundary';
 import { NextPieceErrorBoundary } from './game/NextPiece/NextPieceErrorBoundary';
 import { StatsErrorBoundary } from './game/Stats/StatsErrorBoundary';
+import { saveHighScore } from '../utils/highScores'
+import { HighScores } from './game/HighScores/HighScores'
 
 // Add DAS and ARR constants
 const DAS_DELAY = 167; // 167ms before auto-repeat starts
@@ -215,6 +217,20 @@ const Game: React.FC = () => {
     };
   }, [gameState.level, gameState.isGameOver, gameState.isPaused]);
 
+  // Add useEffect to watch for game over state
+  useEffect(() => {
+    if (gameState.isGameOver) {
+      handleGameOver();
+    }
+  }, [gameState.isGameOver]);
+
+  const handleGameOver = async () => {
+    const playerName = prompt('Game Over! Enter your name for the high score:')
+    if (playerName) {
+      await saveHighScore(playerName, gameState.score)
+    }
+  }
+
   return (
     <ErrorBoundary>
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -254,6 +270,7 @@ const Game: React.FC = () => {
             </div>
           </div>
         )}
+        <HighScores />
       </div>
     </ErrorBoundary>
   );
