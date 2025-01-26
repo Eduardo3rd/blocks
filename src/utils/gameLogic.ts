@@ -351,7 +351,6 @@ export const moveHorizontal = (gameState: GameState, direction: -1 | 1): GameSta
 
 // Add wall kick data - these are the standard SRS (Super Rotation System) offsets
 const WALL_KICKS = {
-  // [initial rotation state][new rotation state] = array of possible offsets to try
   '01': [{x: -1, y: 0}, {x: -1, y: 1}, {x: 0, y: -2}, {x: -1, y: -2}],  // 0->1
   '10': [{x: 1, y: 0}, {x: 1, y: -1}, {x: 0, y: 2}, {x: 1, y: 2}],      // 1->0
   '12': [{x: 1, y: 0}, {x: 1, y: -1}, {x: 0, y: 2}, {x: 1, y: 2}],      // 1->2
@@ -360,7 +359,7 @@ const WALL_KICKS = {
   '32': [{x: -1, y: 0}, {x: -1, y: -1}, {x: 0, y: 2}, {x: -1, y: 2}],   // 3->2
   '30': [{x: -1, y: 0}, {x: -1, y: -1}, {x: 0, y: 2}, {x: -1, y: 2}],   // 3->0
   '03': [{x: 1, y: 0}, {x: 1, y: 1}, {x: 0, y: -2}, {x: 1, y: -2}],     // 0->3
-};
+} as const;
 
 // I-piece has different wall kick data
 const I_WALL_KICKS = {
@@ -372,7 +371,7 @@ const I_WALL_KICKS = {
   '32': [{x: -2, y: 0}, {x: 1, y: 0}, {x: -2, y: -1}, {x: 1, y: 2}],
   '30': [{x: 1, y: 0}, {x: -2, y: 0}, {x: 1, y: -2}, {x: -2, y: 1}],
   '03': [{x: -1, y: 0}, {x: 2, y: 0}, {x: -1, y: 2}, {x: 2, y: -1}],
-};
+} as const;
 
 const tryWallKicks = (
   board: TetrominoType[][],
@@ -382,7 +381,7 @@ const tryWallKicks = (
   newRotation: number
 ): { x: number; y: number } | null => {
   const kicks = piece.type === TetrominoType.I ? I_WALL_KICKS : WALL_KICKS;
-  const kickKey = `${oldRotation}${newRotation}` as keyof typeof WALL_KICKS;
+  const kickKey = `${oldRotation}${newRotation}` as keyof (typeof WALL_KICKS & typeof I_WALL_KICKS);
   const kickTests = kicks[kickKey] || [];
 
   // Try each possible wall kick
@@ -390,8 +389,12 @@ const tryWallKicks = (
     const newX = piece.position.x + offset.x;
     const newY = piece.position.y + offset.y;
     
-    if (!isCollision(board, { ...piece, position: { x: newX, y: newY } })) {
-      return { x: offset.x, y: offset.y };
+    if (!isCollision(board, { 
+      ...piece, 
+      shape: newShape, 
+      position: { x: newX, y: newY } 
+    })) {
+      return offset;
     }
   }
 
@@ -403,11 +406,9 @@ const rotateMatrix = (matrix: number[][], clockwise: boolean): number[][] => {
   if (!matrix || !matrix[0]) return matrix;
   
   const N = matrix.length;
-  const result = matrix.map((row, i) => 
-    row.map((_, j) => clockwise ? matrix[N - 1 - j][i] : matrix[j][N - 1 - i])
+  return matrix.map((row, i) => 
+    row.map((_, j) => matrix[clockwise ? N - 1 - j : j]?.[clockwise ? i : N - 1 - i] ?? 0)
   );
-  
-  return result;
 };
 
 export const rotate = (gameState: GameState, clockwise: boolean = true): GameState => {
@@ -423,7 +424,7 @@ export const rotate = (gameState: GameState, clockwise: boolean = true): GameSta
   const newShape = rotateMatrix(currentPiece.shape, clockwise);
 
   // First try rotating without wall kicks
-  if (!isCollision(board, { shape: newShape, position: currentPiece.position }, currentPiece.position)) {
+  if (!isCollision(board, { ...currentPiece, shape: newShape })) {
     return {
       ...gameState,
       currentPiece: {
@@ -438,23 +439,19 @@ export const rotate = (gameState: GameState, clockwise: boolean = true): GameSta
   // If basic rotation fails, try wall kicks
   const kick = tryWallKicks(board, currentPiece, newShape, oldRotation, newRotation);
   if (kick) {
-    const kickedPosition = {
-      x: currentPiece.position.x + kick.x,
-      y: currentPiece.position.y + kick.y,
-    };
-
-    if (!isCollision(board, { shape: newShape, position: kickedPosition }, kickedPosition)) {
-      return {
-        ...gameState,
-        currentPiece: {
-          ...currentPiece,
-          shape: newShape,
-          position: kickedPosition,
-          rotationState: newRotation,
+    return {
+      ...gameState,
+      currentPiece: {
+        ...currentPiece,
+        shape: newShape,
+        position: {
+          x: currentPiece.position.x + kick.x,
+          y: currentPiece.position.y + kick.y,
         },
-        lastMoveWasRotation: true,
-      };
-    }
+        rotationState: newRotation,
+      },
+      lastMoveWasRotation: true,
+    };
   }
 
   // If all wall kicks fail, return unchanged state
