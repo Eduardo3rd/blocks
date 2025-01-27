@@ -113,10 +113,7 @@ const Game: React.FC = () => {
     if (event.repeat) return;
     
     if (gameState.isGameOver) {
-      if (event.code === 'Enter') {
-        restartGame();
-      }
-      return;
+      return; // No keyboard controls when game is over
     }
 
     // Allow Escape key even when paused
@@ -574,11 +571,14 @@ const Game: React.FC = () => {
               <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                 <div className="text-center pixel-text">
                   {gameState.isGameOver ? (
-                    <>
+                    <div 
+                      className="cursor-pointer"
+                      onClick={restartGame}
+                    >
                       <div className="text-4xl text-red-500 mb-4">Game Over!</div>
                       <div className="text-xl text-white">Final Score: {gameState.score}</div>
-                      <div className="text-lg text-gray-400 mt-4">Press ENTER to restart</div>
-                    </>
+                      <div className="text-lg text-gray-400 mt-4">Tap or Click to Play Again</div>
+                    </div>
                   ) : (
                     <>
                       <div className="text-4xl text-yellow-500 mb-4">Paused</div>
