@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, TouchEvent } from 'rea
 import { GameState, TetrominoType, Tetromino } from '../utils/types';
 import { SHAPES, BOARD_WIDTH, BOARD_HEIGHT, LEVEL_SPEEDS, MAX_LOCK_RESETS, COLORS } from '../utils/constants';
 import { moveDown, moveHorizontal, rotate, hardDrop, holdPiece, rotate180 } from '../utils/gameLogic';
+import './Game.css';
 import { Board } from './game/Board/Board';
 import { HoldArea } from './game/HoldArea/HoldArea';
 import { NextPiece } from './game/NextPiece/NextPiece';
@@ -463,9 +464,10 @@ const Game: React.FC = () => {
     const gameContainer = document.querySelector('.game-container');
     if (!gameContainer) return;
 
-    gameContainer.addEventListener('touchstart', handleTouchStart as any);
-    gameContainer.addEventListener('touchmove', handleTouchMove as any);
-    gameContainer.addEventListener('touchend', handleTouchEnd as any);
+    const touchOptions = { passive: false };
+    gameContainer.addEventListener('touchstart', handleTouchStart as any, touchOptions);
+    gameContainer.addEventListener('touchmove', handleTouchMove as any, touchOptions);
+    gameContainer.addEventListener('touchend', handleTouchEnd as any, touchOptions);
 
     return () => {
       gameContainer.removeEventListener('touchstart', handleTouchStart as any);
@@ -480,7 +482,7 @@ const Game: React.FC = () => {
         {!isGameStarted ? (
           <StartScreen onStart={() => setIsGameStarted(true)} />
         ) : (
-          <div className="game-container flex items-center justify-center w-full overflow-hidden">
+          <div className="game-container touch-control flex items-center justify-center w-full overflow-hidden">
             {/* Game layout - horizontal on desktop, vertical on mobile */}
             <div className="flex flex-col md:flex-row items-center md:items-start gap-4 p-4 max-w-full">
               {/* Hold and Next pieces - side by side on mobile, left side on desktop */}

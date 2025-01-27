@@ -70,4 +70,12 @@
   .hold-piece-container svg {
     transform: scale(0.8);
   }
+}
+
+.touch-control {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 } 
