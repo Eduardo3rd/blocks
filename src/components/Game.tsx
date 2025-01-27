@@ -474,17 +474,24 @@ const Game: React.FC = () => {
   // Add touch event listeners
   useEffect(() => {
     const gameContainer = document.querySelector('.game-container');
-    if (!gameContainer) return;
+    const board = document.querySelector('.board');
+    if (!gameContainer || !board) return;
 
     const touchOptions = { passive: false };
-    gameContainer.addEventListener('touchstart', handleTouchStart as any, touchOptions);
-    gameContainer.addEventListener('touchmove', handleTouchMove as any, touchOptions);
-    gameContainer.addEventListener('touchend', handleTouchEnd as any, touchOptions);
+
+    // Attach to both container and board
+    [gameContainer, board].forEach(element => {
+      element.addEventListener('touchstart', handleTouchStart as any, touchOptions);
+      element.addEventListener('touchmove', handleTouchMove as any, touchOptions);
+      element.addEventListener('touchend', handleTouchEnd as any, touchOptions);
+    });
 
     return () => {
-      gameContainer.removeEventListener('touchstart', handleTouchStart as any);
-      gameContainer.removeEventListener('touchmove', handleTouchMove as any);
-      gameContainer.removeEventListener('touchend', handleTouchEnd as any);
+      [gameContainer, board].forEach(element => {
+        element.removeEventListener('touchstart', handleTouchStart as any);
+        element.removeEventListener('touchmove', handleTouchMove as any);
+        element.removeEventListener('touchend', handleTouchEnd as any);
+      });
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
