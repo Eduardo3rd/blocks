@@ -473,27 +473,32 @@ const Game: React.FC = () => {
 
   // Add touch event listeners
   useEffect(() => {
-    const gameContainer = document.querySelector('.game-container');
-    const board = document.querySelector('.board');
-    if (!gameContainer || !board) return;
+    if (!isGameStarted) return; // Only attach touch handlers after game starts
 
     const touchOptions = { passive: false };
-
-    // Attach to both container and board
-    [gameContainer, board].forEach(element => {
-      element.addEventListener('touchstart', handleTouchStart as any, touchOptions);
-      element.addEventListener('touchmove', handleTouchMove as any, touchOptions);
-      element.addEventListener('touchend', handleTouchEnd as any, touchOptions);
-    });
+    
+    document.body.addEventListener('touchstart', handleTouchStart as any, touchOptions);
+    document.body.addEventListener('touchmove', handleTouchMove as any, touchOptions);
+    document.body.addEventListener('touchend', handleTouchEnd as any, touchOptions);
 
     return () => {
-      [gameContainer, board].forEach(element => {
-        element.removeEventListener('touchstart', handleTouchStart as any);
-        element.removeEventListener('touchmove', handleTouchMove as any);
-        element.removeEventListener('touchend', handleTouchEnd as any);
-      });
+      document.body.removeEventListener('touchstart', handleTouchStart as any);
+      document.body.removeEventListener('touchmove', handleTouchMove as any);
+      document.body.removeEventListener('touchend', handleTouchEnd as any);
     };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd, isGameStarted]);
+
+  // Add body class for touch controls
+  useEffect(() => {
+    if (isGameStarted) {
+      document.body.classList.add('touch-game-active');
+    } else {
+      document.body.classList.remove('touch-game-active');
+    }
+    return () => {
+      document.body.classList.remove('touch-game-active');
+    };
+  }, [isGameStarted]);
 
   return (
     <ErrorBoundary>
