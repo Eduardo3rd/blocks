@@ -24,7 +24,8 @@ const ARR_RATE = 33;  // 33ms between moves during auto-repeat
 
 // Add touch control constants
 const SWIPE_THRESHOLD = 10; // Reduced from 20 to 10 for more responsive controls
-const LONG_PRESS_DURATION = 200; // Duration for long press in ms
+const LONG_PRESS_DURATION = 400; // Increased from 200ms to 400ms for easier triggering
+const LONG_PRESS_MOVEMENT_THRESHOLD = 20; // Allow some movement before canceling long press
 const DOUBLE_TAP_DELAY = 300; // Maximum delay between taps for double tap
 
 const createEmptyBoard = (): TetrominoType[][] => {
@@ -91,7 +92,7 @@ const Game: React.FC = () => {
   const [lastMoveTime, setLastMoveTime] = useState<number>(0);
   const [isAutoShifting, setIsAutoShifting] = useState(false);
   const [isGameStarted, setIsGameStarted] = useState(false);
-  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number; time: number; initialX: number; initialY: number; hasMoved: boolean } | null>(null);
   const lastTapRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const longPressTimeoutRef = useRef<number | null>(null);
 
@@ -370,10 +371,9 @@ const Game: React.FC = () => {
 
     const now = Date.now();
     
-    // If we already have a touch start position, this is a new touch while moving
-    if (touchStartRef.current) {
-      // Treat as a tap for rotation
-      console.log('Tap while moving - Rotate CW');
+    // If this is a second finger touching while first finger is down, rotate
+    if (e.touches.length > 1) {
+      console.log('Second finger tap - Rotate CW');
       setGameState(prev => rotate(prev, true));
       return;
     }
@@ -381,15 +381,20 @@ const Game: React.FC = () => {
     touchStartRef.current = {
       x: touch.clientX,
       y: touch.clientY,
-      time: now
+      time: now,
+      initialX: touch.clientX,
+      initialY: touch.clientY,
+      hasMoved: false // Track if the touch has moved
     };
     console.log('Touch Start Position:', { x: touch.clientX, y: touch.clientY });
 
     // Start long press timer for hard drop
     longPressTimeoutRef.current = window.setTimeout(() => {
-      console.log('Long Press Triggered');
-      setGameState(prev => hardDrop(prev));
-      touchStartRef.current = null;
+      if (touchStartRef.current && !touchStartRef.current.hasMoved) {
+        console.log('Long Press Triggered');
+        setGameState(prev => hardDrop(prev));
+        touchStartRef.current = null;
+      }
     }, LONG_PRESS_DURATION);
   }, [gameState.isPaused, gameState.isGameOver]);
 
@@ -398,18 +403,27 @@ const Game: React.FC = () => {
     if (!touchStartRef.current || gameState.isPaused || gameState.isGameOver) return;
 
     e.preventDefault(); // Prevent default behavior
-    // Clear long press timer on move
-    if (longPressTimeoutRef.current) {
-      clearTimeout(longPressTimeoutRef.current);
-      longPressTimeoutRef.current = null;
-    }
-
     const touch = e.touches[0];
     if (!touch) return;
 
     const deltaX = touch.clientX - touchStartRef.current.x;
     const deltaY = touch.clientY - touchStartRef.current.y;
-    console.log('Touch Move Delta:', { deltaX, deltaY });
+    
+    // Check total movement from initial touch position
+    const totalDeltaX = touch.clientX - touchStartRef.current.initialX;
+    const totalDeltaY = touch.clientY - touchStartRef.current.initialY;
+    const totalMovement = Math.sqrt(totalDeltaX * totalDeltaX + totalDeltaY * totalDeltaY);
+
+    // Mark as moved if we exceed the threshold
+    if (totalMovement > SWIPE_THRESHOLD) {
+      touchStartRef.current.hasMoved = true;
+    }
+
+    // Only cancel long press if movement exceeds threshold
+    if (totalMovement > LONG_PRESS_MOVEMENT_THRESHOLD && longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
 
     // Handle horizontal movement with immediate reset
     if (Math.abs(deltaX) >= SWIPE_THRESHOLD) {
@@ -441,10 +455,17 @@ const Game: React.FC = () => {
     if (gameState.isPaused || gameState.isGameOver) return;
 
     e.preventDefault(); // Prevent default behavior
+    
     // Clear long press timer
     if (longPressTimeoutRef.current) {
       clearTimeout(longPressTimeoutRef.current);
       longPressTimeoutRef.current = null;
+    }
+
+    // If the touch hasn't moved much, treat it as a tap for rotation
+    if (touchStartRef.current && !touchStartRef.current.hasMoved) {
+      console.log('Quick tap - Rotate CW');
+      setGameState(prev => rotate(prev, true));
     }
 
     // Reset touch tracking
