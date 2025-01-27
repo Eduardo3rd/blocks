@@ -1,134 +1,154 @@
+import React, { useState, useEffect } from 'react';
 import { GameState, TetrominoType } from '../../../utils/types';
-import { COLORS, BOARD_WIDTH, BOARD_HEIGHT } from '../../../utils/constants';
-import { findDropPosition, isCollision } from '../../../utils/gameLogic';
-import { isValidGameState } from '../../../utils/typeGuards';
-import { BoardContainer, Grid, Cell } from './styles';
-import { PieceRenderer } from './PieceRenderer';
-import { useMemo, useRef, useState, useEffect } from 'react';
-import { BoardPieceRenderer } from './BoardPieceRenderer';
-import styles from './Board.module.css';
+import { getGhostPiecePosition } from '../../../utils/gameLogic';
+import { COLORS, BOMB_FLASH_INTERVAL } from '../../../utils/constants';
+import './Board.css';
 
 interface BoardProps {
   gameState: GameState;
 }
 
-const CELL_SIZE = 30;
-const GRID_PADDING = 8; // Matches the padding in styles.ts
-const GRID_GAP = 1;    // Matches the gap in styles.ts
-
 export const Board: React.FC<BoardProps> = ({ gameState }) => {
-  // Runtime type checking in development
-  if (import.meta.env.DEV) {
-    if (!isValidGameState(gameState)) {
-      throw new Error('Invalid game state provided to Board component');
-    }
-  }
+  const [bombFlashState, setBombFlashState] = useState(false);
+  const [flashSpeed, setFlashSpeed] = useState(BOMB_FLASH_INTERVAL);
 
-  const { board, currentPiece } = gameState;
-
-  // Add a resize observer to scale the board
-  const boardRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-
+  // Add flashing effect for bomb pieces with increasing intensity
   useEffect(() => {
-    const calculateScale = () => {
-      if (!boardRef.current) return;
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      const boardWidth = BOARD_WIDTH * CELL_SIZE;
-      const boardHeight = BOARD_HEIGHT * CELL_SIZE;
+    if (gameState.currentPiece.type === TetrominoType.BOMB) {
+      // Increase flash speed based on lock delay
+      const speedMultiplier = gameState.lockDelay > 0 ? 2 : 1;
+      const currentFlashSpeed = BOMB_FLASH_INTERVAL / speedMultiplier;
+      
+      setFlashSpeed(currentFlashSpeed);
+      
+      const flashInterval = setInterval(() => {
+        setBombFlashState(prev => !prev);
+      }, currentFlashSpeed);
 
-      // Calculate scale based on viewport size
-      const horizontalScale = (viewportWidth * 0.9) / boardWidth;
-      const verticalScale = (viewportHeight * 0.7) / boardHeight;
-      const newScale = Math.min(horizontalScale, verticalScale, 1);
+      return () => clearInterval(flashInterval);
+    }
+  }, [gameState.currentPiece.type, gameState.lockDelay]);
 
-      setScale(newScale);
-    };
+  const renderCell = (cell: TetrominoType | null, isCurrent: boolean = false, isGhost: boolean = false, isBlastRadius: boolean = false) => {
+    if (!cell && !isBlastRadius) return null;
 
-    calculateScale();
-    window.addEventListener('resize', calculateScale);
-    return () => window.removeEventListener('resize', calculateScale);
-  }, []);
-
-  // Calculate ghost piece position
-  const ghostPiecePosition = useMemo(() => {
-    if (!currentPiece) return null;
-
-    let testY = currentPiece.position.y;
+    let color = cell ? COLORS[cell] : 'transparent';
     
-    // Keep moving down until we hit something
-    while (testY < board.length && !isCollision(board, currentPiece, { ...currentPiece.position, y: testY + 1 })) {
-      testY++;
+    // Handle bomb piece color flashing
+    if (cell === TetrominoType.BOMB && isCurrent) {
+      color = bombFlashState ? '#FFFFFF' : '#000000';
     }
 
-    return testY;
-  }, [currentPiece, board]);
+    // Add ghost piece styling
+    if (isGhost) {
+      return (
+        <div
+          className="cell ghost-piece"
+          style={{
+            backgroundColor: '#808080',
+            opacity: 0.3
+          }}
+        />
+      );
+    }
 
-  // Calculate piece position including grid padding and gaps
-  const calculatePosition = (x: number, y: number) => ({
-    left: `${GRID_PADDING + (x * (CELL_SIZE + GRID_GAP))}px`,
-    top: `${GRID_PADDING + (y * (CELL_SIZE + GRID_GAP))}px`
-  });
+    // Add blast radius indicator
+    if (isBlastRadius && gameState.currentPiece.type === TetrominoType.BOMB) {
+      return (
+        <div
+          className="cell blast-radius"
+          style={{
+            backgroundColor: 'transparent',
+            border: `2px dashed ${bombFlashState ? '#FF0000' : '#800000'}`,
+            opacity: 0.5
+          }}
+        />
+      );
+    }
 
+    return (
+      <div
+        className={`cell ${cell === TetrominoType.BOMB ? 'bomb-cell' : ''}`}
+        style={{
+          backgroundColor: color,
+          transition: cell === TetrominoType.BOMB ? `background-color ${flashSpeed}ms linear` : undefined
+        }}
+      />
+    );
+  };
+
+  // Get ghost piece position
+  const ghostPosition = getGhostPiecePosition(gameState);
+
+  // Calculate blast radius positions for current piece if it's a bomb
+  const getBlastRadiusPositions = () => {
+    if (gameState.currentPiece.type !== TetrominoType.BOMB) return [];
+    
+    const positions = [];
+    const center = gameState.currentPiece.position;
+    
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue; // Skip center position
+        const x = center.x + dx;
+        const y = center.y + dy;
+        if (x >= 0 && x < 10 && y >= 0 && y < 20) { // Check board boundaries
+          positions.push({ x, y });
+        }
+      }
+    }
+    
+    return positions;
+  };
+
+  const blastRadius = getBlastRadiusPositions();
+
+  // Render the board
   return (
-    <div 
-      ref={boardRef} 
-      className={styles.board}
-      style={{
-        transform: `scale(${scale})`,
-        transformOrigin: 'center top'
-      }}
-    >
-      <BoardContainer>
-        <Grid>
-          {/* Render placed pieces */}
-          {board.map((row, y) => 
-            row.map((cell, x) => (
-              <Cell 
-                key={`${x}-${y}`}
-                $color={cell ? COLORS[cell] : undefined}
-                data-testid={`cell-${x}-${y}`}
-              />
-            ))
-          )}
+    <div className="board">
+      {gameState.board.map((row, y) => (
+        <div key={y} className="row">
+          {row.map((cell, x) => {
+            // Check if current piece occupies this cell
+            const pieceCell = gameState.currentPiece.shape
+              .map((row, pieceY) => {
+                const boardY = gameState.currentPiece.position.y + pieceY;
+                return row.map((value, pieceX) => {
+                  const boardX = gameState.currentPiece.position.x + pieceX;
+                  return value !== 0 && boardY === y && boardX === x
+                    ? gameState.currentPiece.type
+                    : null;
+                }).find(Boolean);
+              })
+              .find(Boolean);
 
-          {/* Render ghost piece */}
-          {currentPiece && ghostPiecePosition !== null && (
-            <div
-              style={{
-                position: 'absolute',
-                ...calculatePosition(currentPiece.position.x, ghostPiecePosition),
-                pointerEvents: 'none',
-                zIndex: 1
-              }}
-            >
-              <PieceRenderer
-                piece={currentPiece}
-                ghost={true}
-                scale={1}
-              />
-            </div>
-          )}
+            // Check if ghost piece occupies this cell
+            const ghostCell = gameState.currentPiece.shape
+              .map((row, pieceY) => {
+                const boardY = ghostPosition.y + pieceY;
+                return row.map((value, pieceX) => {
+                  const boardX = ghostPosition.x + pieceX;
+                  return value !== 0 && boardY === y && boardX === x && boardY !== gameState.currentPiece.position.y + pieceY
+                    ? gameState.currentPiece.type
+                    : null;
+                }).find(Boolean);
+              })
+              .find(Boolean);
 
-          {/* Render active piece */}
-          {currentPiece && (
-            <div
-              style={{
-                position: 'absolute',
-                ...calculatePosition(currentPiece.position.x, currentPiece.position.y),
-                pointerEvents: 'none',
-                zIndex: 2
-              }}
-            >
-              <PieceRenderer
-                piece={currentPiece}
-                scale={1}
-              />
-            </div>
-          )}
-        </Grid>
-      </BoardContainer>
+            // Check if cell is in blast radius
+            const isInBlastRadius = blastRadius.some(pos => pos.x === x && pos.y === y);
+
+            return (
+              <div key={x} className="cell-container">
+                {renderCell(pieceCell || cell, true) || 
+                 renderCell(ghostCell, false, true) || 
+                 renderCell(cell) || 
+                 (isInBlastRadius && renderCell(null, false, false, true))}
+              </div>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
-}; 
+};
