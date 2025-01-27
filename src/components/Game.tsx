@@ -369,6 +369,15 @@ const Game: React.FC = () => {
     if (!touch) return;
 
     const now = Date.now();
+    
+    // If we already have a touch start position, this is a new touch while moving
+    if (touchStartRef.current) {
+      // Treat as a tap for rotation
+      console.log('Tap while moving - Rotate CW');
+      setGameState(prev => rotate(prev, true));
+      return;
+    }
+
     touchStartRef.current = {
       x: touch.clientX,
       y: touch.clientY,
@@ -402,25 +411,28 @@ const Game: React.FC = () => {
     const deltaY = touch.clientY - touchStartRef.current.y;
     console.log('Touch Move Delta:', { deltaX, deltaY });
 
-    // Handle horizontal movement
+    // Handle horizontal movement with immediate reset
     if (Math.abs(deltaX) >= SWIPE_THRESHOLD) {
       const direction = deltaX > 0 ? 1 : -1;
       console.log('Horizontal Move:', direction);
       setGameState(prev => moveHorizontal(prev, direction));
+      // Reset X position but keep Y position for continued vertical movement
       touchStartRef.current.x = touch.clientX;
     }
 
-    // Handle vertical movement
-    if (deltaY >= SWIPE_THRESHOLD) {
-      // Swipe down - soft drop
-      console.log('Soft Drop');
-      setGameState(prev => moveDown(prev, true));
+    // Handle vertical movement with immediate reset
+    if (Math.abs(deltaY) >= SWIPE_THRESHOLD) {
+      if (deltaY > 0) {
+        // Swipe down - soft drop
+        console.log('Soft Drop');
+        setGameState(prev => moveDown(prev, true));
+      } else {
+        // Swipe up - hold piece
+        console.log('Hold Piece');
+        setGameState(prev => holdPiece(prev));
+      }
+      // Reset Y position but keep X position for continued horizontal movement
       touchStartRef.current.y = touch.clientY;
-    } else if (deltaY <= -SWIPE_THRESHOLD) {
-      // Swipe up - hold piece
-      console.log('Hold Piece');
-      setGameState(prev => holdPiece(prev));
-      touchStartRef.current = null;
     }
   }, [gameState.isPaused, gameState.isGameOver]);
 
@@ -435,39 +447,7 @@ const Game: React.FC = () => {
       longPressTimeoutRef.current = null;
     }
 
-    if (!touchStartRef.current) return;
-
-    const touch = e.changedTouches[0];
-    if (!touch) return;
-
-    const deltaX = Math.abs(touch.clientX - touchStartRef.current.x);
-    const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
-    const now = Date.now();
-    console.log('Touch End Delta:', { deltaX, deltaY });
-
-    // If minimal movement, treat as a tap
-    if (deltaX < SWIPE_THRESHOLD && deltaY < SWIPE_THRESHOLD) {
-      // Check for double tap
-      if (lastTapRef.current && 
-          (now - lastTapRef.current.time) < DOUBLE_TAP_DELAY &&
-          Math.abs(touch.clientX - lastTapRef.current.x) < SWIPE_THRESHOLD &&
-          Math.abs(touch.clientY - lastTapRef.current.y) < SWIPE_THRESHOLD) {
-        // Double tap - rotate counterclockwise
-        console.log('Double Tap - Rotate CCW');
-        setGameState(prev => rotate(prev, false));
-        lastTapRef.current = null;
-      } else {
-        // Single tap - rotate clockwise
-        console.log('Single Tap - Rotate CW');
-        setGameState(prev => rotate(prev, true));
-        lastTapRef.current = {
-          x: touch.clientX,
-          y: touch.clientY,
-          time: now
-        };
-      }
-    }
-
+    // Reset touch tracking
     touchStartRef.current = null;
   }, [gameState.isPaused, gameState.isGameOver]);
 
