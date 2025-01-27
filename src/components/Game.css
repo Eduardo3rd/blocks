@@ -78,4 +78,19 @@
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+
+.touch-control::after {
+  content: 'Touch Area';
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
 } 

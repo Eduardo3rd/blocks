@@ -361,6 +361,7 @@ const Game: React.FC = () => {
   }, [gameState, keyDownTime, lastMoveTime, isAutoShifting, settings, keyState]);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
+    console.log('Touch Start Event triggered');
     if (gameState.isPaused || gameState.isGameOver) return;
 
     e.preventDefault(); // Prevent default behavior
@@ -373,15 +374,18 @@ const Game: React.FC = () => {
       y: touch.clientY,
       time: now
     };
+    console.log('Touch Start Position:', { x: touch.clientX, y: touch.clientY });
 
     // Start long press timer for hard drop
     longPressTimeoutRef.current = window.setTimeout(() => {
+      console.log('Long Press Triggered');
       setGameState(prev => hardDrop(prev));
       touchStartRef.current = null;
     }, LONG_PRESS_DURATION);
   }, [gameState.isPaused, gameState.isGameOver]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
+    console.log('Touch Move Event triggered');
     if (!touchStartRef.current || gameState.isPaused || gameState.isGameOver) return;
 
     e.preventDefault(); // Prevent default behavior
@@ -396,10 +400,12 @@ const Game: React.FC = () => {
 
     const deltaX = touch.clientX - touchStartRef.current.x;
     const deltaY = touch.clientY - touchStartRef.current.y;
+    console.log('Touch Move Delta:', { deltaX, deltaY });
 
     // Handle horizontal movement
     if (Math.abs(deltaX) >= SWIPE_THRESHOLD) {
       const direction = deltaX > 0 ? 1 : -1;
+      console.log('Horizontal Move:', direction);
       setGameState(prev => moveHorizontal(prev, direction));
       touchStartRef.current.x = touch.clientX;
     }
@@ -407,16 +413,19 @@ const Game: React.FC = () => {
     // Handle vertical movement
     if (deltaY >= SWIPE_THRESHOLD) {
       // Swipe down - soft drop
+      console.log('Soft Drop');
       setGameState(prev => moveDown(prev, true));
       touchStartRef.current.y = touch.clientY;
     } else if (deltaY <= -SWIPE_THRESHOLD) {
       // Swipe up - hold piece
+      console.log('Hold Piece');
       setGameState(prev => holdPiece(prev));
       touchStartRef.current = null;
     }
   }, [gameState.isPaused, gameState.isGameOver]);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
+    console.log('Touch End Event triggered');
     if (gameState.isPaused || gameState.isGameOver) return;
 
     e.preventDefault(); // Prevent default behavior
@@ -434,6 +443,7 @@ const Game: React.FC = () => {
     const deltaX = Math.abs(touch.clientX - touchStartRef.current.x);
     const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
     const now = Date.now();
+    console.log('Touch End Delta:', { deltaX, deltaY });
 
     // If minimal movement, treat as a tap
     if (deltaX < SWIPE_THRESHOLD && deltaY < SWIPE_THRESHOLD) {
@@ -443,10 +453,12 @@ const Game: React.FC = () => {
           Math.abs(touch.clientX - lastTapRef.current.x) < SWIPE_THRESHOLD &&
           Math.abs(touch.clientY - lastTapRef.current.y) < SWIPE_THRESHOLD) {
         // Double tap - rotate counterclockwise
+        console.log('Double Tap - Rotate CCW');
         setGameState(prev => rotate(prev, false));
         lastTapRef.current = null;
       } else {
         // Single tap - rotate clockwise
+        console.log('Single Tap - Rotate CW');
         setGameState(prev => rotate(prev, true));
         lastTapRef.current = {
           x: touch.clientX,
