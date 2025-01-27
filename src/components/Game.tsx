@@ -24,6 +24,7 @@ const ARR_RATE = 33;  // 33ms between moves during auto-repeat
 
 // Add touch control constants
 const SWIPE_THRESHOLD = 10; // Reduced from 20 to 10 for more responsive controls
+const HOLD_SWIPE_THRESHOLD = 30; // Higher threshold for hold piece action
 const LONG_PRESS_DURATION = 400; // Increased from 200ms to 400ms for easier triggering
 const LONG_PRESS_MOVEMENT_THRESHOLD = 20; // Allow some movement before canceling long press
 const DOUBLE_TAP_DELAY = 300; // Maximum delay between taps for double tap
@@ -440,13 +441,13 @@ const Game: React.FC = () => {
         // Swipe down - soft drop
         console.log('Soft Drop');
         setGameState(prev => moveDown(prev, true));
-      } else {
-        // Swipe up - hold piece
+        touchStartRef.current.y = touch.clientY;
+      } else if (Math.abs(deltaY) >= HOLD_SWIPE_THRESHOLD) {
+        // Swipe up - hold piece (requires longer swipe)
         console.log('Hold Piece');
         setGameState(prev => holdPiece(prev));
+        touchStartRef.current.y = touch.clientY;
       }
-      // Reset Y position but keep X position for continued horizontal movement
-      touchStartRef.current.y = touch.clientY;
     }
   }, [gameState.isPaused, gameState.isGameOver]);
 
