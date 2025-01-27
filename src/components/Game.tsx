@@ -22,7 +22,7 @@ const DAS_DELAY = 167; // 167ms before auto-repeat starts
 const ARR_RATE = 33;  // 33ms between moves during auto-repeat
 
 // Add touch control constants
-const SWIPE_THRESHOLD = 20; // Minimum distance for a swipe
+const SWIPE_THRESHOLD = 10; // Reduced from 20 to 10 for more responsive controls
 const LONG_PRESS_DURATION = 200; // Duration for long press in ms
 const DOUBLE_TAP_DELAY = 300; // Maximum delay between taps for double tap
 
@@ -362,6 +362,7 @@ const Game: React.FC = () => {
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (gameState.isPaused || gameState.isGameOver) return;
 
+    e.preventDefault(); // Prevent default behavior
     const touch = e.touches[0];
     if (!touch) return;
 
@@ -382,6 +383,7 @@ const Game: React.FC = () => {
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!touchStartRef.current || gameState.isPaused || gameState.isGameOver) return;
 
+    e.preventDefault(); // Prevent default behavior
     // Clear long press timer on move
     if (longPressTimeoutRef.current) {
       clearTimeout(longPressTimeoutRef.current);
@@ -416,6 +418,7 @@ const Game: React.FC = () => {
   const handleTouchEnd = useCallback((e: TouchEvent) => {
     if (gameState.isPaused || gameState.isGameOver) return;
 
+    e.preventDefault(); // Prevent default behavior
     // Clear long press timer
     if (longPressTimeoutRef.current) {
       clearTimeout(longPressTimeoutRef.current);
@@ -457,17 +460,17 @@ const Game: React.FC = () => {
 
   // Add touch event listeners
   useEffect(() => {
-    const board = document.querySelector('.board');
-    if (!board) return;
+    const gameContainer = document.querySelector('.game-container');
+    if (!gameContainer) return;
 
-    board.addEventListener('touchstart', handleTouchStart as any);
-    board.addEventListener('touchmove', handleTouchMove as any);
-    board.addEventListener('touchend', handleTouchEnd as any);
+    gameContainer.addEventListener('touchstart', handleTouchStart as any);
+    gameContainer.addEventListener('touchmove', handleTouchMove as any);
+    gameContainer.addEventListener('touchend', handleTouchEnd as any);
 
     return () => {
-      board.removeEventListener('touchstart', handleTouchStart as any);
-      board.removeEventListener('touchmove', handleTouchMove as any);
-      board.removeEventListener('touchend', handleTouchEnd as any);
+      gameContainer.removeEventListener('touchstart', handleTouchStart as any);
+      gameContainer.removeEventListener('touchmove', handleTouchMove as any);
+      gameContainer.removeEventListener('touchend', handleTouchEnd as any);
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
@@ -477,68 +480,65 @@ const Game: React.FC = () => {
         {!isGameStarted ? (
           <StartScreen onStart={() => setIsGameStarted(true)} />
         ) : (
-          <>
-            {/* Main game container */}
-            <div className="flex items-center justify-center w-full overflow-hidden">
-              {/* Game layout - horizontal on desktop, vertical on mobile */}
-              <div className="flex flex-col md:flex-row items-center md:items-start gap-4 p-4 max-w-full">
-                {/* Hold and Next pieces - side by side on mobile, left side on desktop */}
-                <div className="hidden md:flex md:flex-col gap-4 md:w-[120px] md:min-w-[120px]">
-                  {/* Hold piece - desktop only */}
-                  <div className="w-[120px]">
+          <div className="game-container flex items-center justify-center w-full overflow-hidden">
+            {/* Game layout - horizontal on desktop, vertical on mobile */}
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-4 p-4 max-w-full">
+              {/* Hold and Next pieces - side by side on mobile, left side on desktop */}
+              <div className="hidden md:flex md:flex-col gap-4 md:w-[120px] md:min-w-[120px]">
+                {/* Hold piece - desktop only */}
+                <div className="w-[120px]">
+                  <HoldAreaErrorBoundary>
+                    <HoldArea piece={gameState.holdPiece} />
+                  </HoldAreaErrorBoundary>
+                </div>
+
+                {/* Next piece - desktop only */}
+                <div>
+                  <NextPieceErrorBoundary>
+                    <NextPiece pieces={gameState.nextPieces} />
+                  </NextPieceErrorBoundary>
+                </div>
+              </div>
+
+              {/* Center column with board and mobile-specific elements */}
+              <div className="flex flex-col items-center gap-4">
+                {/* Hold and Next pieces - mobile only, side by side */}
+                <div className="flex md:hidden justify-between w-full max-w-[300px] gap-4">
+                  {/* Hold piece - mobile */}
+                  <div className="w-[90px]">
                     <HoldAreaErrorBoundary>
                       <HoldArea piece={gameState.holdPiece} />
                     </HoldAreaErrorBoundary>
                   </div>
 
-                  {/* Next piece - desktop only */}
-                  <div>
+                  {/* Next piece - mobile */}
+                  <div className="w-[90px]">
                     <NextPieceErrorBoundary>
-                      <NextPiece pieces={gameState.nextPieces} />
+                      <NextPiece pieces={gameState.nextPieces} isMobile={true} />
                     </NextPieceErrorBoundary>
                   </div>
                 </div>
 
-                {/* Center column with board and mobile-specific elements */}
-                <div className="flex flex-col items-center gap-4">
-                  {/* Hold and Next pieces - mobile only, side by side */}
-                  <div className="flex md:hidden justify-between w-full max-w-[300px] gap-4">
-                    {/* Hold piece - mobile */}
-                    <div className="w-[90px]">
-                      <HoldAreaErrorBoundary>
-                        <HoldArea piece={gameState.holdPiece} />
-                      </HoldAreaErrorBoundary>
-                    </div>
-
-                    {/* Next piece - mobile */}
-                    <div className="w-[90px]">
-                      <NextPieceErrorBoundary>
-                        <NextPiece pieces={gameState.nextPieces} isMobile={true} />
-                      </NextPieceErrorBoundary>
-                    </div>
-                  </div>
-
-                  {/* Game board */}
-                  <div className="flex-shrink-0">
-                    <BoardErrorBoundary>
-                      <Board gameState={gameState} />
-                    </BoardErrorBoundary>
-                  </div>
-
-                  {/* Stats - only on mobile, below board */}
-                  <div className="block md:hidden w-[300px]">
-                    <StatsErrorBoundary>
-                      <Stats gameState={gameState} />
-                    </StatsErrorBoundary>
-                  </div>
+                {/* Game board */}
+                <div className="flex-shrink-0">
+                  <BoardErrorBoundary>
+                    <Board gameState={gameState} />
+                  </BoardErrorBoundary>
                 </div>
 
-                {/* Stats - only on desktop, right side */}
-                <div className="hidden md:flex w-[120px] min-w-[120px] flex-col gap-4">
+                {/* Stats - only on mobile, below board */}
+                <div className="block md:hidden w-[300px]">
                   <StatsErrorBoundary>
                     <Stats gameState={gameState} />
                   </StatsErrorBoundary>
                 </div>
+              </div>
+
+              {/* Stats - only on desktop, right side */}
+              <div className="hidden md:flex w-[120px] min-w-[120px] flex-col gap-4">
+                <StatsErrorBoundary>
+                  <Stats gameState={gameState} />
+                </StatsErrorBoundary>
               </div>
             </div>
 
@@ -572,7 +572,7 @@ const Game: React.FC = () => {
                 onClose={() => setShowSettings(false)}
               />
             )}
-          </>
+          </div>
         )}
       </div>
     </ErrorBoundary>
