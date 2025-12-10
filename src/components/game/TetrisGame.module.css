@@ -1,0 +1,475 @@
+/* =============================================================================
+   TETRIS GAME STYLES - Classic 90s Aesthetic
+   ============================================================================= */
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #000;
+  padding: 20px;
+  position: relative;
+}
+
+.gameLayout {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  position: relative;
+  z-index: 1;
+}
+
+.leftPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.centerPanel {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Particle Canvas - hidden in classic mode */
+.particleCanvas {
+  display: none;
+}
+
+.rightPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 120px;
+  flex-shrink: 0;
+}
+
+/* Start Screen */
+.startScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  padding: 40px 50px;
+  background: #202020;
+  border: 3px solid;
+  border-top-color: #404040;
+  border-left-color: #353535;
+  border-bottom-color: #101010;
+  border-right-color: #151515;
+  max-width: 450px;
+}
+
+.title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 36px;
+  color: #00f0f0;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.subtitle {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: #808080;
+  margin: -16px 0 0 0;
+  letter-spacing: 4px;
+}
+
+.controls {
+  width: 100%;
+  text-align: left;
+  padding: 16px;
+  background: #181818;
+  border: 2px solid #303030;
+}
+
+.controls h3 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #808080;
+  margin: 0 0 14px 0;
+  letter-spacing: 1px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #303030;
+}
+
+.controls ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+}
+
+.controls li {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
+  color: #a0a0a0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.controls li span {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #00f0f0;
+  background: #0a2020;
+  padding: 3px 6px;
+  border: 1px solid #00808080;
+  min-width: 50px;
+  text-align: center;
+}
+
+.startButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: #fff;
+  background: #006060;
+  border: 3px solid;
+  border-top-color: #00a0a0;
+  border-left-color: #008080;
+  border-bottom-color: #003030;
+  border-right-color: #004040;
+  padding: 14px 32px;
+  cursor: pointer;
+  transition: background 0.1s;
+  letter-spacing: 1px;
+}
+
+.startButton:hover {
+  background: #008080;
+}
+
+.startButton:active {
+  border-top-color: #003030;
+  border-left-color: #004040;
+  border-bottom-color: #00a0a0;
+  border-right-color: #008080;
+}
+
+.hint {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #505050;
+  margin: 0;
+}
+
+/* Game Over Screen */
+.gameOverScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 40px 50px;
+  background: #201010;
+  border: 3px solid;
+  border-top-color: #403030;
+  border-left-color: #352525;
+  border-bottom-color: #100808;
+  border-right-color: #150a0a;
+  max-width: 380px;
+}
+
+.gameOverTitle {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 28px;
+  color: #ff4040;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.finalStats {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: #181010;
+  border: 2px solid #302020;
+}
+
+.finalStat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #282020;
+}
+
+.finalStat:last-child {
+  border-bottom: none;
+}
+
+.finalStat span:first-child {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #806060;
+  letter-spacing: 1px;
+}
+
+.finalStat span:last-child {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 20px;
+  color: #fff;
+  font-weight: 700;
+}
+
+.restartButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: #fff;
+  background: #603030;
+  border: 3px solid;
+  border-top-color: #a05050;
+  border-left-color: #804040;
+  border-bottom-color: #301818;
+  border-right-color: #402020;
+  padding: 12px 28px;
+  cursor: pointer;
+  transition: background 0.1s;
+  letter-spacing: 1px;
+}
+
+.restartButton:hover {
+  background: #804040;
+}
+
+.restartButton:active {
+  border-top-color: #301818;
+  border-left-color: #402020;
+  border-bottom-color: #a05050;
+  border-right-color: #804040;
+}
+
+/* =============================================================================
+   Pause Screen - Classic Style
+   ============================================================================= */
+
+.pauseOverlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 100;
+}
+
+.pauseModal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 28px;
+  min-width: 240px;
+  background: #202020;
+  border: 3px solid;
+  border-top-color: #404040;
+  border-left-color: #353535;
+  border-bottom-color: #101010;
+  border-right-color: #151515;
+}
+
+.pauseTitle {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 18px;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.pauseStats {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: #181818;
+  border: 2px solid #303030;
+}
+
+.pauseStatRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #282828;
+}
+
+.pauseStatRow:last-child {
+  border-bottom: none;
+}
+
+.pauseStatLabel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #606060;
+  letter-spacing: 1px;
+}
+
+.pauseStatValue {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.pauseStatValue.accent {
+  color: #00f0f0;
+}
+
+.pauseStatValue.accentPurple {
+  color: #a060ff;
+}
+
+.pauseStatValue.accentPink {
+  color: #ff60a0;
+}
+
+.pauseStatValue.accentGold {
+  color: #ffcc00;
+}
+
+.pauseDivider {
+  height: 1px;
+  background: #303030;
+  margin: 4px 0;
+}
+
+.resumeButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #fff;
+  background: #404080;
+  border: 3px solid;
+  border-top-color: #6060a0;
+  border-left-color: #505090;
+  border-bottom-color: #202040;
+  border-right-color: #303060;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: background 0.1s;
+  letter-spacing: 1px;
+}
+
+.resumeButton:hover {
+  background: #5050a0;
+}
+
+.resumeButton:active {
+  border-top-color: #202040;
+  border-left-color: #303060;
+  border-bottom-color: #6060a0;
+  border-right-color: #505090;
+}
+
+.pauseHint {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #404040;
+  margin: 0;
+}
+
+/* Sound Toggle Button */
+.soundToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: #181818;
+  border: 2px solid #303030;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.soundToggle:hover {
+  background: #202020;
+}
+
+.soundToggle.soundOn {
+  border-color: #306030;
+}
+
+.soundToggle.soundOff {
+  border-color: #603030;
+}
+
+.soundIcon {
+  font-size: 14px;
+}
+
+.soundLabel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #808080;
+  letter-spacing: 1px;
+}
+
+/* =============================================================================
+   Responsive
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  .gameLayout {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .leftPanel,
+  .rightPanel {
+    flex-direction: row;
+    justify-content: center;
+    width: auto;
+    gap: 12px;
+  }
+  
+  .startScreen,
+  .gameOverScreen {
+    padding: 24px 20px;
+    max-width: 90vw;
+  }
+  
+  .title {
+    font-size: 24px;
+  }
+  
+  .subtitle {
+    font-size: 9px;
+  }
+  
+  .controls ul {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .startButton,
+  .restartButton {
+    font-size: 10px;
+    padding: 12px 24px;
+  }
+  
+  .gameOverTitle {
+    font-size: 20px;
+  }
+  
+  .finalStat span:last-child {
+    font-size: 16px;
+  }
+  
+  .pauseModal {
+    padding: 20px 24px;
+    min-width: 220px;
+  }
+  
+  .pauseTitle {
+    font-size: 16px;
+  }
+  
+  .pauseStatValue {
+    font-size: 12px;
+  }
+}

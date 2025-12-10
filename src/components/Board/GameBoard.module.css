@@ -1,0 +1,128 @@
+/* =============================================================================
+   GAME BOARD STYLES - Classic 90s Tetris Aesthetic
+   Simple borders, clean lines, dark playfield
+   ============================================================================= */
+
+/* Outer wrapper - simple beveled frame */
+.boardWrapper {
+  position: relative;
+  padding: 8px;
+  background: #404040;
+  border: 3px solid;
+  border-top-color: #606060;
+  border-left-color: #505050;
+  border-bottom-color: #202020;
+  border-right-color: #303030;
+  border-radius: 2px;
+}
+
+/* Zone mode - subtle highlight */
+.boardWrapper.zoneActive {
+  border-top-color: #807040;
+  border-left-color: #706030;
+  border-bottom-color: #302010;
+  border-right-color: #403020;
+  background: #484030;
+}
+
+.board {
+  position: relative;
+  background: #000;
+  border: 2px solid;
+  border-top-color: #202020;
+  border-left-color: #202020;
+  border-bottom-color: #404040;
+  border-right-color: #404040;
+  padding: 1px;
+}
+
+.board.zoneActive {
+  background: #0a0800;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: #1a1a1a;
+}
+
+/* Empty cell - simple dark square */
+.emptyCell {
+  width: 26px;
+  height: 26px;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+}
+
+/* Drop trail effect - kept simple */
+.dropTrail {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.3;
+}
+
+.dropTrailBeam {
+  position: absolute;
+  width: 26px;
+  background: var(--trail-color, rgba(255, 255, 255, 0.3));
+}
+
+/* Overlay for pause screen */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 10;
+}
+
+.pauseText {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 20px;
+  color: #fff;
+  letter-spacing: 2px;
+}
+
+/* Responsive sizing */
+@media (max-width: 768px) {
+  .boardWrapper {
+    padding: 6px;
+  }
+  
+  .emptyCell {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .dropTrailBeam {
+    width: 22px;
+  }
+  
+  .pauseText {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .boardWrapper {
+    padding: 4px;
+  }
+  
+  .emptyCell {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .dropTrailBeam {
+    width: 18px;
+  }
+  
+  .pauseText {
+    font-size: 12px;
+  }
+}

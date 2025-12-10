@@ -1,0 +1,135 @@
+/* =============================================================================
+   MINO (TETROMINO BLOCK) STYLES - Classic 90s Tetris Aesthetic
+   Clean, simple blocks with subtle 3D bevel
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   BASE MINO CELL
+   ----------------------------------------------------------------------------- */
+.mino {
+  --mino-size: 26px;
+  --mino-radius: 2px;
+  --mino-gap: 1px;
+  
+  width: var(--mino-size);
+  height: var(--mino-size);
+  border-radius: var(--mino-radius);
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* -----------------------------------------------------------------------------
+   FILLED MINO - Classic beveled blocks
+   ----------------------------------------------------------------------------- */
+.mino.filled {
+  /* Simple 3D bevel effect */
+  border: 2px solid;
+  border-top-color: rgba(255, 255, 255, 0.5);
+  border-left-color: rgba(255, 255, 255, 0.4);
+  border-bottom-color: rgba(0, 0, 0, 0.4);
+  border-right-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Small highlight in corner */
+.mino.filled::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 1px;
+}
+
+/* -----------------------------------------------------------------------------
+   STATE MODIFIERS
+   ----------------------------------------------------------------------------- */
+
+/* Currently falling piece - same as filled */
+.mino.filled.current {
+  /* No extra styling needed */
+}
+
+/* Locked/placed pieces - slightly darker */
+.mino.filled.locked {
+  filter: brightness(0.9);
+}
+
+/* Ghost piece - simple outline */
+.mino.ghost {
+  background: transparent !important;
+  border: 2px solid var(--mino-color, currentColor);
+  opacity: 0.4;
+}
+
+.mino.ghost::before {
+  display: none;
+}
+
+/* -----------------------------------------------------------------------------
+   SIZE VARIANTS
+   ----------------------------------------------------------------------------- */
+
+/* Small size for next queue */
+.mino.small {
+  --mino-size: 14px;
+  --mino-radius: 1px;
+}
+
+.mino.small.filled::before {
+  width: 3px;
+  height: 3px;
+  top: 1px;
+  left: 1px;
+}
+
+/* Preview size for hold and primary next */
+.mino.preview {
+  --mino-size: 18px;
+  --mino-radius: 2px;
+}
+
+.mino.preview.filled::before {
+  width: 4px;
+  height: 4px;
+}
+
+/* -----------------------------------------------------------------------------
+   ROW CONTAINER
+   ----------------------------------------------------------------------------- */
+.row {
+  display: flex;
+  gap: var(--mino-gap, 1px);
+}
+
+/* -----------------------------------------------------------------------------
+   RESPONSIVE ADJUSTMENTS
+   ----------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .mino {
+    --mino-size: 22px;
+  }
+  
+  .mino.preview {
+    --mino-size: 16px;
+  }
+  
+  .mino.small {
+    --mino-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mino {
+    --mino-size: 18px;
+  }
+  
+  .mino.preview {
+    --mino-size: 14px;
+  }
+  
+  .mino.small {
+    --mino-size: 10px;
+  }
+}

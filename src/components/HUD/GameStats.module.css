@@ -1,0 +1,227 @@
+/* =============================================================================
+   GAME STATS STYLES - Classic 90s Tetris Aesthetic
+   Simple beveled panels with clean typography
+   ============================================================================= */
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: #202020;
+  border: 3px solid;
+  border-top-color: #404040;
+  border-left-color: #353535;
+  border-bottom-color: #101010;
+  border-right-color: #151515;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1;
+}
+
+.statGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #303030;
+}
+
+.statGroup:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #606060;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.value {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 18px;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Clear info */
+.clearInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 50px;
+  padding: 8px;
+  background: #181818;
+  border: 2px solid #303030;
+}
+
+.clearType {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #00f0f0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.backToBack {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #ffaa00;
+}
+
+.combo {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #ff60a0;
+}
+
+.clearScore {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 14px;
+  color: #50ff80;
+  font-weight: 700;
+}
+
+/* =============================================================================
+   Zone Meter - Classic Style
+   ============================================================================= */
+
+.zoneMeter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #202020;
+  border: 3px solid;
+  border-top-color: #404040;
+  border-left-color: #353535;
+  border-bottom-color: #101010;
+  border-right-color: #151515;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.zoneMeter.zoneReady {
+  border-top-color: #606020;
+  border-left-color: #505018;
+  border-bottom-color: #202008;
+  border-right-color: #30300c;
+  background: #282818;
+}
+
+.zoneMeter.zoneActive {
+  background: #282010;
+  border-top-color: #605020;
+  border-left-color: #504018;
+  border-bottom-color: #201808;
+  border-right-color: #30280c;
+}
+
+.zoneLabel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #606060;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.zoneMeter.zoneActive .zoneLabel {
+  color: #c0a040;
+}
+
+/* Segmented Zone Meter */
+.segmentContainer {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #101010;
+  border: 2px solid;
+  border-top-color: #080808;
+  border-left-color: #0c0c0c;
+  border-bottom-color: #282828;
+  border-right-color: #242424;
+}
+
+.zoneSegment {
+  flex: 1;
+  height: 14px;
+  background: #181818;
+  border: 1px solid #282828;
+}
+
+.zoneSegment.segmentFilled {
+  background: #4080c0;
+  border-color: #60a0e0;
+}
+
+/* All segments filled - golden */
+.segmentContainer:has(.zoneSegment.segmentFilled:nth-child(4)) .zoneSegment.segmentFilled {
+  background: #c0a040;
+  border-color: #e0c060;
+}
+
+.zoneReady {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #ffcc00;
+  text-align: center;
+  padding-top: 2px;
+  letter-spacing: 1px;
+}
+
+.zoneInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background: #181810;
+  border: 2px solid #403820;
+}
+
+.zoneTime {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 22px;
+  color: #ffcc00;
+  font-weight: 700;
+}
+
+.zoneLines {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #fff;
+}
+
+/* =============================================================================
+   Responsive
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  .stats {
+    padding: 10px;
+    gap: 8px;
+  }
+  
+  .value {
+    font-size: 16px;
+  }
+  
+  .clearInfo {
+    min-height: 40px;
+    padding: 6px;
+  }
+  
+  .zoneMeter {
+    padding: 8px;
+  }
+  
+  .zoneTime {
+    font-size: 18px;
+  }
+  
+  .zoneSegment {
+    height: 12px;
+  }
+}

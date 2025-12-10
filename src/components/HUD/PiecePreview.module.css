@@ -1,0 +1,146 @@
+/* =============================================================================
+   PIECE PREVIEW STYLES - Classic 90s Tetris Aesthetic
+   Hold and Next queue panels with simple beveled borders
+   ============================================================================= */
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #202020;
+  border: 3px solid;
+  border-top-color: #404040;
+  border-left-color: #353535;
+  border-bottom-color: #101010;
+  border-right-color: #151515;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Compact preview inside queue */
+.queueList .preview {
+  background: #181818;
+  border-width: 2px;
+  border-top-color: #303030;
+  border-left-color: #282828;
+  border-bottom-color: #0c0c0c;
+  border-right-color: #101010;
+  padding: 6px;
+  gap: 0;
+}
+
+.preview.disabled {
+  opacity: 0.4;
+}
+
+.preview.small {
+  padding: 6px;
+}
+
+.preview.small .pieceContainer {
+  min-height: 28px;
+  min-width: 28px;
+  padding: 4px;
+}
+
+.label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #606060;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pieceContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 56px;
+  min-width: 56px;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: #101010;
+  border: 2px solid;
+  border-top-color: #080808;
+  border-left-color: #0c0c0c;
+  border-bottom-color: #282828;
+  border-right-color: #242424;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  color: #303030;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 16px;
+}
+
+/* =============================================================================
+   Queue Styles
+   ============================================================================= */
+
+.queue {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  background: #202020;
+  border: 3px solid;
+  border-top-color: #404040;
+  border-left-color: #353535;
+  border-bottom-color: #101010;
+  border-right-color: #151515;
+  box-sizing: border-box;
+}
+
+.queueLabel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #606060;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #303030;
+}
+
+.queueList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: stretch;
+}
+
+/* =============================================================================
+   Responsive
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  .preview {
+    padding: 8px;
+    gap: 6px;
+  }
+  
+  .queue {
+    padding: 8px;
+    gap: 4px;
+  }
+  
+  .pieceContainer {
+    min-height: 48px;
+    min-width: 48px;
+    padding: 4px;
+  }
+  
+  .preview.small .pieceContainer {
+    min-height: 24px;
+    min-width: 24px;
+    padding: 2px;
+  }
+}

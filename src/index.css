@@ -1,12 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Import glassmorphism design tokens */
+@import './styles/glass.css';
+
 :root {
-  background-color: #000000;
+  --color-bg: #080812;
+  --color-primary: #00f0f0;
+  --color-secondary: #a000f0;
+  --color-accent: #f0a000;
+  
+  background-color: var(--color-bg);
   color: #ffffff;
+  
+  /* Improve font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 html, body {
@@ -16,6 +31,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   position: fixed;
+  background: #080812;
 }
 
 #root {
@@ -24,11 +40,55 @@ html, body {
 }
 
 body {
-  font-family: 'Press Start 2P', monospace;
+  font-family: 'Press Start 2P', 'Roboto Mono', monospace;
 }
 
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 150, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 150, 255, 0.5);
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(0, 240, 240, 0.3);
+  color: #fff;
+}
+
+/* Focus outline for accessibility */
+:focus-visible {
+  outline: 2px solid rgba(0, 240, 240, 0.6);
+  outline-offset: 2px;
+}
+
+/* Disable text selection on game elements */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Utility classes */
 .pixel-text {
   font-family: 'Press Start 2P', monospace;
   text-transform: uppercase;
   letter-spacing: 1px;
-} 
+}
+
+.glow-text {
+  text-shadow: 
+    0 0 10px currentColor,
+    0 0 20px currentColor;
+}
