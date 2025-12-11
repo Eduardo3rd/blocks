@@ -60,7 +60,8 @@ export const getHighestScore = async (): Promise<number> => {
       .limit(1)
     
     if (error) throw error
-    return data && data.length > 0 ? data[0].score : 0
+    const firstScore = data?.[0]
+    return firstScore?.score ?? 0
   } catch (error) {
     console.error('Error fetching highest score:', error)
     return 0
@@ -80,16 +81,18 @@ const pruneHighScores = async (): Promise<void> => {
     if (fetchError) throw fetchError
     
     if (topScores && topScores.length === 100) {
-      const minScoreToKeep = topScores[99].score
-      const idsToKeep = topScores.map(s => s.id)
-      
-      // Delete all scores not in top 100
-      const { error: deleteError } = await supabase
-        .from('high_scores')
-        .delete()
-        .lt('score', minScoreToKeep)
-      
-      if (deleteError) throw deleteError
+      const lastScore = topScores[99]
+      if (lastScore) {
+        const minScoreToKeep = lastScore.score
+        
+        // Delete all scores below the 100th highest
+        const { error: deleteError } = await supabase
+          .from('high_scores')
+          .delete()
+          .lt('score', minScoreToKeep)
+        
+        if (deleteError) throw deleteError
+      }
     }
   } catch (error) {
     console.error('Error pruning high scores:', error)
