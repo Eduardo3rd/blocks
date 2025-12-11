@@ -241,6 +241,10 @@
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.05s;
+  /* Center text */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .systemButton:active {

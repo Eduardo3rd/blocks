@@ -39,15 +39,6 @@ export const SystemButtons: React.FC<SystemButtonsProps> = ({
 
   return (
     <div className={styles.systemButtons}>
-      {/* Start button - Pause */}
-      <button
-        className={`${styles.systemButton} ${styles.startButton}`}
-        {...createTouchHandlers('pause')}
-        aria-label="Start - Pause"
-      >
-        <span className={styles.systemLabel}>START</span>
-      </button>
-
       {/* Zone button - Activate Zone */}
       <button
         className={`${styles.systemButton} ${styles.zoneButton}`}
@@ -56,6 +47,15 @@ export const SystemButtons: React.FC<SystemButtonsProps> = ({
         aria-label="Zone - Activate Zone"
       >
         <span className={styles.systemLabel}>ZONE</span>
+      </button>
+
+      {/* Start button - Pause */}
+      <button
+        className={`${styles.systemButton} ${styles.startButton}`}
+        {...createTouchHandlers('pause')}
+        aria-label="Start - Pause"
+      >
+        <span className={styles.systemLabel}>START</span>
       </button>
 
       {/* Power LED indicator */}
