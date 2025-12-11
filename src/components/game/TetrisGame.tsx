@@ -240,7 +240,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
   } = useGameEngine(stage);
   
   // Audio system - responds to game events
-  const audio = useGameAudio(addEventListener, state.level, state.zone.isActive);
+  const audio = useGameAudio(addEventListener, state.level, state.zone.mode === 'active');
   const [soundEnabled, setSoundEnabled] = useState(true);
   
   const [hasStarted, setHasStarted] = useState(false);
@@ -453,9 +453,10 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
           />
           <ZoneMeter
             meter={state.zone.meter}
-            isActive={state.zone.isActive}
+            isActive={state.zone.mode === 'active'}
             timeRemaining={state.zone.timeRemaining}
-            stackedLines={state.zone.stackedLines}
+            linesCleared={state.zone.linesCleared}
+            maxTime={state.zone.maxTime}
           />
           <GameStats
             score={state.score}
@@ -473,7 +474,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
             board={state.board}
             currentPiece={state.currentPiece}
             ghostY={state.ghostY}
-            isZoneActive={state.zone.isActive}
+            isZoneActive={state.zone.mode === 'active'}
             isPaused={state.phase === 'paused'}
           />
         </div>

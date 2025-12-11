@@ -57,8 +57,8 @@ export function useGameEngine(initialStage?: StageInfo): UseGameEngineReturn {
     pieceY: number;
     pieceRotation: number;
     holdPiece: TetrominoType | null;
-    zoneActive: boolean;
-    zoneStacked: number;
+    zoneMode: string;
+    zoneLinesCleared: number;
     boardVersion: number;
   } | null>(null);
   
@@ -101,8 +101,8 @@ export function useGameEngine(initialStage?: StageInfo): UseGameEngineReturn {
       prev.pieceY !== (piece?.position.y ?? 0) ||
       prev.pieceRotation !== (piece?.rotation ?? 0) ||
       prev.holdPiece !== state.holdPiece ||
-      prev.zoneActive !== state.zone.isActive ||
-      prev.zoneStacked !== state.zone.stackedLines ||
+      prev.zoneMode !== state.zone.mode ||
+      prev.zoneLinesCleared !== state.zone.linesCleared ||
       boardChanged
     );
   }, []);
@@ -120,8 +120,8 @@ export function useGameEngine(initialStage?: StageInfo): UseGameEngineReturn {
       pieceY: piece?.position.y ?? 0,
       pieceRotation: piece?.rotation ?? 0,
       holdPiece: state.holdPiece,
-      zoneActive: state.zone.isActive,
-      zoneStacked: state.zone.stackedLines,
+      zoneMode: state.zone.mode,
+      zoneLinesCleared: state.zone.linesCleared,
       boardVersion: boardVersionRef.current,
     };
   }, []);
@@ -159,7 +159,7 @@ export function useGameEngine(initialStage?: StageInfo): UseGameEngineReturn {
     const now = performance.now();
     const timeSinceLastNotify = now - lastNotifyTimeRef.current;
     
-    if (hasStateChanged(state, boardChanged) || (state.zone.isActive && timeSinceLastNotify > 100)) {
+    if (hasStateChanged(state, boardChanged) || (state.zone.mode === 'active' && timeSinceLastNotify > 100)) {
       updatePrevState(state);
       lastNotifyTimeRef.current = now;
       notifyListeners();

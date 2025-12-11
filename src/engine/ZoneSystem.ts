@@ -5,10 +5,13 @@
 
 import {
   ZoneState,
+  ZoneMode,
   Board,
   ZONE_MAX_METER,
-  ZONE_DURATION,
-  ZONE_FILL_PER_LINE,
+  ZONE_SECONDS_PER_QUARTER,
+  ZONE_LINES_PER_QUARTER,
+  ZONE_PER_LINE_BONUS,
+  ZONE_MAX_MULTIPLIER,
   BOARD_WIDTH,
   BOARD_HEIGHT,
   Cell,
@@ -24,50 +27,87 @@ import { cloneBoard } from './Board';
  */
 export function createZoneState(): ZoneState {
   return {
+    mode: 'inactive',
     meter: 0,
-    isActive: false,
-    stackedLines: 0,
-    timeRemaining: ZONE_DURATION,
+    timeRemaining: 0,
+    maxTime: 0,
+    linesCleared: 0,
+    scoreBuffer: 0,
+    wasFullMeter: false,
+    linesSinceLastQuarter: 0,
   };
 }
 
 /**
- * Add meter based on lines cleared
+ * Add meter based on lines cleared using quarter-based system.
+ * 8 lines per quarter (25% of meter).
  */
-export function addZoneMeter(state: ZoneState, linesCleared: number): ZoneState {
-  if (state.isActive) {
+export function addZoneMeter(state: ZoneState, linesCleared: number, isTSpin: boolean = false): ZoneState {
+  if (state.mode === 'active') {
     // Don't add meter while Zone is active
     return state;
   }
   
-  const newMeter = Math.min(ZONE_MAX_METER, state.meter + (linesCleared * ZONE_FILL_PER_LINE));
+  // T-Spins count as extra lines for meter filling
+  let effectiveLines = linesCleared;
+  if (isTSpin) {
+    effectiveLines += 2;
+  }
+  
+  let newLinesSinceQuarter = state.linesSinceLastQuarter + effectiveLines;
+  let newMeter = state.meter;
+  
+  // Add 25% for each 8 lines
+  while (newLinesSinceQuarter >= ZONE_LINES_PER_QUARTER) {
+    newLinesSinceQuarter -= ZONE_LINES_PER_QUARTER;
+    newMeter = Math.min(ZONE_MAX_METER, newMeter + 0.25);
+  }
+  
+  // Update mode
+  let newMode: ZoneMode = state.mode;
+  if (newMeter > 0 && state.mode === 'inactive') {
+    newMode = 'charging';
+  }
   
   return {
     ...state,
     meter: newMeter,
+    mode: newMode,
+    linesSinceLastQuarter: newLinesSinceQuarter,
   };
 }
 
 /**
  * Check if Zone can be activated
+ * Zone can now be activated with any meter > 0 (not just full)
  */
 export function canActivateZone(state: ZoneState): boolean {
-  return state.meter >= ZONE_MAX_METER && !state.isActive;
+  return state.meter > 0 && state.mode !== 'active';
 }
 
 /**
  * Activate Zone mode
+ * Time is proportional to meter level (full meter = 20 seconds)
  */
 export function activateZone(state: ZoneState): ZoneState {
   if (!canActivateZone(state)) {
     return state;
   }
   
+  const currentMeter = state.meter;
+  // Full meter (1.0) = 20 seconds, proportional for partial
+  const maxTime = currentMeter * (ZONE_SECONDS_PER_QUARTER * 4) * 1000; // ms
+  const wasFullMeter = currentMeter >= ZONE_MAX_METER;
+  
   return {
+    mode: 'active',
     meter: 0, // Consume meter
-    isActive: true,
-    stackedLines: 0,
-    timeRemaining: ZONE_DURATION,
+    timeRemaining: maxTime,
+    maxTime: maxTime,
+    linesCleared: 0,
+    scoreBuffer: 0,
+    wasFullMeter: wasFullMeter,
+    linesSinceLastQuarter: 0,
   };
 }
 
@@ -79,7 +119,7 @@ export function updateZoneTimer(state: ZoneState, deltaTime: number): {
   state: ZoneState;
   hasEnded: boolean;
 } {
-  if (!state.isActive) {
+  if (state.mode !== 'active') {
     return { state, hasEnded: false };
   }
   
@@ -105,15 +145,53 @@ export function updateZoneTimer(state: ZoneState, deltaTime: number): {
 }
 
 /**
- * End Zone mode
+ * End Zone mode and reset state
  */
 export function deactivateZone(state: ZoneState): ZoneState {
-  return {
-    meter: 0,
-    isActive: false,
-    stackedLines: 0,
-    timeRemaining: ZONE_DURATION,
-  };
+  return createZoneState();
+}
+
+/**
+ * Calculate Zone end score with multiplier system
+ * - Base multiplier: 1x
+ * - +1x if activated with full meter
+ * - +1x if cleared 8+ lines during Zone
+ * - Capped at 3x
+ * - Plus per-line bonus
+ */
+export function calculateZoneEndScore(state: ZoneState): number {
+  let multiplier = 1;
+  
+  if (state.wasFullMeter) {
+    multiplier += 1;
+  }
+  
+  if (state.linesCleared >= 8) {
+    multiplier += 1;
+  }
+  
+  multiplier = Math.min(multiplier, ZONE_MAX_MULTIPLIER);
+  
+  const lineBonus = ZONE_PER_LINE_BONUS * state.linesCleared;
+  
+  return (state.scoreBuffer * multiplier) + lineBonus;
+}
+
+/**
+ * Get the current Zone multiplier (for display purposes)
+ */
+export function getZoneMultiplier(state: ZoneState): number {
+  let multiplier = 1;
+  
+  if (state.wasFullMeter) {
+    multiplier += 1;
+  }
+  
+  if (state.linesCleared >= 8) {
+    multiplier += 1;
+  }
+  
+  return Math.min(multiplier, ZONE_MAX_MULTIPLIER);
 }
 
 // -----------------------------------------------------------------------------
@@ -226,27 +304,26 @@ export function calculateZoneScore(lines: number, level: number): number {
 }
 
 /**
- * Zone meter fill rates for different clear types
+ * Virtual line bonuses for different clear types (for meter filling)
+ * These are added to actual line count for meter calculation
  */
-export const ZONE_FILL_RATES: Record<string, number> = {
-  single: 6,
-  double: 8,
-  triple: 10,
-  tetris: 15,
-  tSpinSingle: 10,
-  tSpinDouble: 15,
-  tSpinTriple: 20,
-  allClear: 25, // Perfect clear gives lots of Zone
+export const ZONE_VIRTUAL_LINE_BONUS: Record<string, number> = {
+  single: 0,
+  double: 0,
+  triple: 0,
+  tetris: 1,      // Tetris counts as 5 lines for meter
+  tSpinSingle: 2, // T-Spin single counts as 3 lines
+  tSpinDouble: 3, // T-Spin double counts as 5 lines  
+  tSpinTriple: 4, // T-Spin triple counts as 7 lines
+  allClear: 4,    // Perfect clear gives big meter bonus
 };
 
 /**
- * Calculate Zone meter fill based on clear type
+ * Get effective lines for meter filling (actual lines + bonus)
  */
-export function getZoneFillAmount(clearType: string, linesCleared: number): number {
-  const baseRate = ZONE_FILL_RATES[clearType] || ZONE_FILL_PER_LINE;
-  
-  // Additional bonus for combos could be added here
-  return baseRate;
+export function getEffectiveLinesForMeter(clearType: string, linesCleared: number): number {
+  const bonus = ZONE_VIRTUAL_LINE_BONUS[clearType] || 0;
+  return linesCleared + bonus;
 }
 
 // -----------------------------------------------------------------------------
@@ -256,8 +333,10 @@ export function getZoneFillAmount(clearType: string, linesCleared: number): numb
 /**
  * Visual effect intensity based on Zone time remaining
  */
-export function getZoneVisualIntensity(timeRemaining: number): number {
-  const progress = timeRemaining / ZONE_DURATION;
+export function getZoneVisualIntensity(state: ZoneState): number {
+  if (state.mode !== 'active' || state.maxTime === 0) return 0;
+  
+  const progress = state.timeRemaining / state.maxTime;
   
   // Intensity increases as time runs out
   if (progress > 0.5) return 0.3;
@@ -267,13 +346,13 @@ export function getZoneVisualIntensity(timeRemaining: number): number {
 }
 
 /**
- * Get Zone color based on stacked lines
+ * Get Zone color based on lines cleared during Zone
  */
-export function getZoneColor(stackedLines: number): string {
-  if (stackedLines >= 18) return '#ff00ff'; // Magenta - incredible
-  if (stackedLines >= 14) return '#ff5500'; // Orange - amazing
-  if (stackedLines >= 10) return '#ffaa00'; // Gold - decuple+
-  if (stackedLines >= 6) return '#00ffaa'; // Teal - great
+export function getZoneColor(linesCleared: number): string {
+  if (linesCleared >= 18) return '#ff00ff'; // Magenta - incredible
+  if (linesCleared >= 14) return '#ff5500'; // Orange - amazing
+  if (linesCleared >= 10) return '#ffaa00'; // Gold - decuple+
+  if (linesCleared >= 6) return '#00ffaa'; // Teal - great
   return '#00aaff'; // Blue - normal
 }
 
@@ -282,7 +361,7 @@ export function getZoneColor(stackedLines: number): string {
 // -----------------------------------------------------------------------------
 
 /**
- * Get Zone progress as percentage
+ * Get Zone meter as percentage (0-100)
  */
 export function getZoneMeterPercentage(state: ZoneState): number {
   return (state.meter / ZONE_MAX_METER) * 100;
@@ -292,7 +371,8 @@ export function getZoneMeterPercentage(state: ZoneState): number {
  * Get remaining Zone time as percentage
  */
 export function getZoneTimePercentage(state: ZoneState): number {
-  return (state.timeRemaining / ZONE_DURATION) * 100;
+  if (state.maxTime === 0) return 0;
+  return (state.timeRemaining / state.maxTime) * 100;
 }
 
 /**
@@ -300,4 +380,18 @@ export function getZoneTimePercentage(state: ZoneState): number {
  */
 export function isZoneMeterFull(state: ZoneState): boolean {
   return state.meter >= ZONE_MAX_METER;
+}
+
+/**
+ * Check if Zone is currently active
+ */
+export function isZoneActive(state: ZoneState): boolean {
+  return state.mode === 'active';
+}
+
+/**
+ * Check if Zone meter has any charge
+ */
+export function hasZoneCharge(state: ZoneState): boolean {
+  return state.meter > 0;
 }

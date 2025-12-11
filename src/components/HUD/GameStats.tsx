@@ -84,10 +84,11 @@ GameStats.displayName = 'GameStats';
 
 // Zone meter component with 4 segments like Tetris Effect
 interface ZoneMeterProps {
-  meter: number;  // 0-100
+  meter: number;  // 0.0-1.0 (fractional)
   isActive: boolean;
   timeRemaining?: number;
-  stackedLines?: number;
+  linesCleared?: number;
+  maxTime?: number;  // For calculating time percentage
 }
 
 // Individual segment component
@@ -105,13 +106,16 @@ export const ZoneMeter = memo<ZoneMeterProps>(({
   meter,
   isActive,
   timeRemaining = 0,
-  stackedLines = 0,
+  linesCleared = 0,
+  maxTime = 0,
 }) => {
-  const isFull = meter >= 100;
+  // Convert fractional meter (0-1) to percentage for display
+  const meterPercent = meter * 100;
+  const isFull = meter >= 1.0;
   const displayTime = Math.ceil(timeRemaining / 1000);
   
   // Calculate which segments are filled (4 segments, 25% each)
-  const filledSegments = Math.floor(meter / 25);
+  const filledSegments = Math.floor(meterPercent / 25);
   
   // Build class name based on state
   let meterClassName = styles.zoneMeter;
@@ -131,7 +135,7 @@ export const ZoneMeter = memo<ZoneMeterProps>(({
             {displayTime}s
           </span>
           <span className={styles.zoneLines}>
-            {stackedLines} LINES
+            {linesCleared} LINES
           </span>
         </div>
       ) : (

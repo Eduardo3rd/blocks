@@ -78,11 +78,23 @@ export type ClearType =
   | 'tSpinTriple'
   | 'allClear';  // Perfect clear
 
+export type ZoneMode = 'inactive' | 'charging' | 'active';
+
 export interface ZoneState {
-  meter: number;           // 0-100, percentage filled
-  isActive: boolean;
-  stackedLines: number;    // Lines cleared during Zone (stacked at bottom)
-  timeRemaining: number;   // Time left in Zone (ms)
+  mode: ZoneMode;
+  meter: number;              // 0.0–1.0 (0–100%)
+  timeRemaining: number;      // Time left in Zone (ms)
+  maxTime: number;            // Set on activation based on meter
+  
+  // Zone clear tracking
+  linesCleared: number;       // Lines cleared during this Zone
+  scoreBuffer: number;        // Base points earned, multiplied at end
+  
+  // Multiplier bonuses
+  wasFullMeter: boolean;      // +1x if started from full meter
+  
+  // For meter filling
+  linesSinceLastQuarter: number;  // Track lines for quarter-based meter fill
 }
 
 export interface GameState {
@@ -206,9 +218,12 @@ export const DEFAULT_INPUT_CONFIG: InputConfig = {
 export const LOCK_DELAY_DEFAULT = 500;  // 500ms lock delay
 export const MAX_LOCK_RESETS = 15;      // Guideline standard
 
-export const ZONE_MAX_METER = 100;
-export const ZONE_DURATION = 15000;     // 15 seconds max Zone time
-export const ZONE_FILL_PER_LINE = 8;    // Meter gained per line cleared
+// Zone constants (Tetris Effect style)
+export const ZONE_MAX_METER = 1.0;              // Meter is now 0.0-1.0
+export const ZONE_SECONDS_PER_QUARTER = 5;      // 5 seconds per 25% meter (full = 20s)
+export const ZONE_LINES_PER_QUARTER = 8;        // 8 lines to fill 25% of meter
+export const ZONE_PER_LINE_BONUS = 100;         // +100 points per line at Zone end
+export const ZONE_MAX_MULTIPLIER = 3;           // Cap multiplier at 3x
 
 // Piece bag for 7-bag randomizer
 export const ALL_PIECES: TetrominoType[] = [

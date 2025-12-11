@@ -22,8 +22,10 @@ import {
   LOCK_DELAY_DEFAULT,
   MAX_LOCK_RESETS,
   ZONE_MAX_METER,
-  ZONE_DURATION,
-  ZONE_FILL_PER_LINE,
+  ZONE_SECONDS_PER_QUARTER,
+  ZONE_LINES_PER_QUARTER,
+  ZONE_PER_LINE_BONUS,
+  ZONE_MAX_MULTIPLIER,
 } from './types';
 import {
   createEmptyBoard,
@@ -116,10 +118,14 @@ export class GameEngine {
   
   private createZoneState(): ZoneState {
     return {
+      mode: 'inactive',
       meter: 0,
-      isActive: false,
-      stackedLines: 0,
-      timeRemaining: ZONE_DURATION,
+      timeRemaining: 0,
+      maxTime: 0,
+      linesCleared: 0,
+      scoreBuffer: 0,
+      wasFullMeter: false,
+      linesSinceLastQuarter: 0,
     };
   }
   
@@ -427,7 +433,7 @@ export class GameEngine {
     this.emit({ type: 'pieceLocked', piece });
     
     // Find and clear lines (exclude zone lines at the bottom)
-    const zoneLinesToExclude = this.state.phase === 'zoneActive' ? this.state.zone.stackedLines : 0;
+    const zoneLinesToExclude = this.state.phase === 'zoneActive' ? this.state.zone.linesCleared : 0;
     const completedLines = findCompletedLines(newBoard, zoneLinesToExclude);
     
     if (completedLines.length > 0 || tSpin) {
@@ -480,11 +486,9 @@ export class GameEngine {
     // Calculate score
     const score = this.calculateScore(clearType, lines.length, newCombo);
     
-    // Update zone meter
-    const newZoneMeter = Math.min(
-      ZONE_MAX_METER,
-      this.state.zone.meter + (lines.length * ZONE_FILL_PER_LINE)
-    );
+    // Update zone meter using quarter-based system
+    // Only fill meter when NOT in Zone mode
+    const updatedZone = this.updateZoneMeter(lines.length, clearType);
     
     // Update lines cleared and check level up
     const newLinesCleared = this.state.linesCleared + lines.length;
@@ -502,7 +506,7 @@ export class GameEngine {
       level: newLevel,
       linesCleared: newLinesCleared,
       combo: newCombo,
-      zone: { ...this.state.zone, meter: newZoneMeter },
+      zone: updatedZone,
       lastClear: {
         type: clearType,
         lines: lines.length,
@@ -563,18 +567,73 @@ export class GameEngine {
   // Zone System
   // ---------------------------------------------------------------------------
   
+  /**
+   * Update zone meter using quarter-based system.
+   * 8 lines per quarter (25% of meter).
+   * T-Spins and combos can be weighted as extra "virtual lines".
+   */
+  private updateZoneMeter(linesCleared: number, clearType: ClearType): ZoneState {
+    const zone = this.state.zone;
+    
+    // Don't fill meter while Zone is active
+    if (zone.mode === 'active') {
+      return zone;
+    }
+    
+    // Calculate effective lines (can weight T-Spins, etc. differently)
+    let effectiveLines = linesCleared;
+    
+    // Bonus for T-Spins: count as extra lines
+    if (clearType.startsWith('tSpin')) {
+      effectiveLines += 2; // T-Spins count as 2 extra lines
+    }
+    
+    // Update lines since last quarter
+    let newLinesSinceQuarter = zone.linesSinceLastQuarter + effectiveLines;
+    let newMeter = zone.meter;
+    
+    // Add 25% (0.25) for each 8 lines
+    while (newLinesSinceQuarter >= ZONE_LINES_PER_QUARTER) {
+      newLinesSinceQuarter -= ZONE_LINES_PER_QUARTER;
+      newMeter = Math.min(ZONE_MAX_METER, newMeter + 0.25);
+    }
+    
+    // Update mode based on meter level
+    let newMode = zone.mode;
+    if (newMeter > 0 && zone.mode === 'inactive') {
+      newMode = 'charging';
+    }
+    
+    return {
+      ...zone,
+      meter: newMeter,
+      mode: newMode,
+      linesSinceLastQuarter: newLinesSinceQuarter,
+    };
+  }
+  
   private activateZone(): void {
-    if (this.state.zone.meter < ZONE_MAX_METER) return;
+    // Can activate Zone whenever meter > 0 (not just when full)
+    if (this.state.zone.meter <= 0) return;
     if (this.state.phase === 'zoneActive') return;
+    
+    const currentMeter = this.state.zone.meter;
+    // Calculate time proportional to meter: full meter (1.0) = 20 seconds
+    const maxTime = currentMeter * (ZONE_SECONDS_PER_QUARTER * 4) * 1000; // Convert to ms
+    const wasFullMeter = currentMeter >= ZONE_MAX_METER;
     
     this.state = {
       ...this.state,
       phase: 'zoneActive',
       zone: {
-        ...this.state.zone,
-        isActive: true,
-        stackedLines: 0,
-        timeRemaining: ZONE_DURATION,
+        mode: 'active',
+        meter: 0, // Consume meter on activation
+        timeRemaining: maxTime,
+        maxTime: maxTime,
+        linesCleared: 0,
+        scoreBuffer: 0,
+        wasFullMeter: wasFullMeter,
+        linesSinceLastQuarter: 0, // Reset for next charge cycle
       },
     };
     
@@ -593,9 +652,17 @@ export class GameEngine {
     // - Player continues playing on top of the zone lines
     // - When Zone ends, all stacked lines clear at once for massive points
     
-    const currentStackedLines = this.state.zone.stackedLines;
-    const newBoard = zonePushLinesToBottom(board, lines, currentStackedLines);
-    const newStackedLines = currentStackedLines + lines.length;
+    const currentZoneLines = this.state.zone.linesCleared;
+    const newBoard = zonePushLinesToBottom(board, lines, currentZoneLines);
+    const newZoneLines = currentZoneLines + lines.length;
+    
+    // Calculate base score for this clear (will be multiplied at Zone end)
+    const perfectClear = isPerfectClear(newBoard);
+    const clearType = determineClearType(lines.length, tSpin, perfectClear);
+    const baseScore = this.calculateScore(clearType, lines.length, this.state.combo);
+    
+    // Buffer the score for Zone end
+    const newScoreBuffer = this.state.zone.scoreBuffer + baseScore;
     
     this.state = {
       ...this.state,
@@ -603,52 +670,66 @@ export class GameEngine {
       currentPiece: null,
       zone: {
         ...this.state.zone,
-        stackedLines: newStackedLines,
+        linesCleared: newZoneLines,
+        scoreBuffer: newScoreBuffer,
       },
     };
     
-    this.emit({ type: 'linesCleared', lines, clearType: 'single', score: 0 });
+    // Emit event with 0 score since points are buffered for Zone end
+    this.emit({ type: 'linesCleared', lines, clearType, score: 0 });
     
     this.spawnNextPiece();
   }
   
   private endZone(): void {
-    const stackedLines = this.state.zone.stackedLines;
+    const zone = this.state.zone;
+    const zoneLinesCleared = zone.linesCleared;
     
     // Clear all the zone lines that have stacked at the bottom
-    const clearedBoard = clearZoneLines(this.state.board, stackedLines);
+    const clearedBoard = clearZoneLines(this.state.board, zoneLinesCleared);
     
-    // Calculate Zone clear bonus
-    const zoneScore = this.calculateZoneScore(stackedLines);
+    // Calculate Zone score with multiplier system
+    const zoneScore = this.calculateZoneEndScore(zone);
+    
+    // NOTE: Zone lines do NOT advance level or count toward line goals
+    // This is accurate to Tetris Effect behavior
     
     this.state = {
       ...this.state,
       phase: 'playing',
       board: clearedBoard,
       score: this.state.score + zoneScore,
-      linesCleared: this.state.linesCleared + stackedLines,
-      zone: {
-        meter: 0,
-        isActive: false,
-        stackedLines: 0,
-        timeRemaining: ZONE_DURATION,
-      },
+      // linesCleared stays the same - Zone lines don't count toward level/goals
+      zone: this.createZoneState(), // Reset to fresh state
     };
     
-    this.emit({ type: 'zoneEnded', linesCleared: stackedLines, score: zoneScore });
+    this.emit({ type: 'zoneEnded', linesCleared: zoneLinesCleared, score: zoneScore });
   }
   
-  private calculateZoneScore(lines: number): number {
-    // Zone scoring is exponential based on lines
-    // Decuple (10) = massive bonus, etc.
-    const level = this.state.level;
+  private calculateZoneEndScore(zone: ZoneState): number {
+    // Tetris Effect Zone multiplier system:
+    // - Base multiplier: 1x
+    // - +1x if activated with full meter
+    // - +1x if cleared 8+ lines during Zone
+    // - Capped at 3x
     
-    if (lines === 0) return 0;
-    if (lines <= 4) return lines * 200 * level;
-    if (lines <= 9) return lines * 400 * level;
-    if (lines <= 12) return lines * 800 * level;  // Decuple+
-    if (lines <= 16) return lines * 1200 * level; // Dodecuple+
-    return lines * 2000 * level; // Massive clears
+    let multiplier = 1;
+    
+    if (zone.wasFullMeter) {
+      multiplier += 1;
+    }
+    
+    if (zone.linesCleared >= 8) {
+      multiplier += 1;
+    }
+    
+    multiplier = Math.min(multiplier, ZONE_MAX_MULTIPLIER);
+    
+    // Per-line bonus (+100 per line cleared in Zone)
+    const lineBonus = ZONE_PER_LINE_BONUS * zone.linesCleared;
+    
+    // Final score = (buffered score * multiplier) + line bonus
+    return (zone.scoreBuffer * multiplier) + lineBonus;
   }
   
   // ---------------------------------------------------------------------------
@@ -663,7 +744,7 @@ export class GameEngine {
     let boardChanged = false;
     
     // Update Zone timer (mutate directly to avoid GC pressure)
-    if (this.state.phase === 'zoneActive') {
+    if (this.state.phase === 'zoneActive' && this.state.zone.mode === 'active') {
       this.state.zone.timeRemaining -= deltaTime;
       
       if (this.state.zone.timeRemaining <= 0) {
