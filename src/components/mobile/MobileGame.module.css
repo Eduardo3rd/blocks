@@ -32,46 +32,51 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
+  padding: 4px;
   overflow: hidden;
 }
 
 .gameLayout {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: stretch;
-  transform: scale(0.65);
+  transform: scale(0.7);
   transform-origin: center center;
 }
 
-/* Responsive scaling */
-@media (min-width: 400px) {
-  .gameLayout {
-    transform: scale(0.7);
-  }
-}
-
-@media (min-width: 450px) {
+/* Responsive scaling - optimized for modern phones */
+/* Small phones (iPhone SE, etc.) */
+@media (min-height: 600px) {
   .gameLayout {
     transform: scale(0.75);
   }
 }
 
-@media (min-height: 750px) {
-  .gameLayout {
-    transform: scale(0.75);
-  }
-}
-
-@media (min-height: 850px) {
+/* Medium phones */
+@media (min-height: 700px) {
   .gameLayout {
     transform: scale(0.85);
   }
 }
 
-@media (min-width: 500px) and (min-height: 900px) {
+/* iPhone 14/15/16 Pro size (850-900px height) */
+@media (min-height: 800px) {
   .gameLayout {
-    transform: scale(0.9);
+    transform: scale(0.95);
+  }
+}
+
+/* iPhone Pro Max / larger phones */
+@media (min-height: 900px) {
+  .gameLayout {
+    transform: scale(1.0);
+  }
+}
+
+/* Extra large phones or small tablets */
+@media (min-height: 1000px) {
+  .gameLayout {
+    transform: scale(1.1);
   }
 }
 
