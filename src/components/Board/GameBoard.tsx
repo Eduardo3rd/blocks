@@ -20,6 +20,7 @@ interface GameBoardProps {
   ghostY: number;
   isZoneActive?: boolean;
   isPaused?: boolean;
+  zoneLinesCleared?: number;
 }
 
 interface MinoProps {
@@ -72,9 +73,13 @@ interface RowProps {
   currentPieceCells: Set<string>;
   ghostCells: Set<string>;
   currentPieceType: TetrominoType | null;
+  isZoneLine?: boolean;
 }
 
-const BoardRow = memo<RowProps>(({ y, rowData, currentPieceCells, ghostCells, currentPieceType }) => {
+// Color for zone lines - bright white/silver to distinguish from regular pieces
+const ZONE_LINE_COLOR = '#e8e8e8';
+
+const BoardRow = memo<RowProps>(({ y, rowData, currentPieceCells, ghostCells, currentPieceType, isZoneLine }) => {
   const cells: React.ReactNode[] = [];
   
   for (let x = 0; x < BOARD_WIDTH; x++) {
@@ -96,7 +101,10 @@ const BoardRow = memo<RowProps>(({ y, rowData, currentPieceCells, ghostCells, cu
     if (cellType === null && !isGhostPiece) {
       cells.push(<EmptyCell key={x} />);
     } else {
-      const color = cellType !== null ? PIECE_COLORS[cellType] : '#888';
+      // Use zone line color for cells in zone lines, otherwise use normal piece color
+      const color = isZoneLine && boardCell !== null 
+        ? ZONE_LINE_COLOR 
+        : (cellType !== null ? PIECE_COLORS[cellType] : '#888');
       cells.push(
         <Mino
           key={x}
@@ -194,6 +202,7 @@ export const GameBoard: React.FC<GameBoardProps> = memo(({
   ghostY,
   isZoneActive = false,
   isPaused = false,
+  zoneLinesCleared = 0,
 }) => {
   // Extract stable primitive values for memoization
   const pieceX = currentPiece?.position.x ?? -1;
@@ -238,9 +247,16 @@ export const GameBoard: React.FC<GameBoardProps> = memo(({
     const result: React.ReactNode[] = [];
     const startRow = BOARD_HEIGHT - VISIBLE_HEIGHT;
     
+    // Zone lines are at the bottom of the board
+    // They occupy the last `zoneLinesCleared` rows of the visible area
+    const zoneLineStartRow = VISIBLE_HEIGHT - zoneLinesCleared;
+    
     for (let y = 0; y < VISIBLE_HEIGHT; y++) {
       const boardY = startRow + y;
       const rowData = board[boardY] || [];
+      
+      // Check if this row is a zone line (in the bottom N rows)
+      const isZoneLine = isZoneActive && y >= zoneLineStartRow;
       
       result.push(
         <BoardRow
@@ -250,12 +266,13 @@ export const GameBoard: React.FC<GameBoardProps> = memo(({
           currentPieceCells={currentPieceCells}
           ghostCells={ghostCells}
           currentPieceType={pieceType}
+          isZoneLine={isZoneLine}
         />
       );
     }
     
     return result;
-  }, [board, currentPieceCells, ghostCells, pieceType]);
+  }, [board, currentPieceCells, ghostCells, pieceType, zoneLinesCleared, isZoneActive]);
   
   const boardClassName = isZoneActive 
     ? `${styles.board} ${styles.zoneActive}` 

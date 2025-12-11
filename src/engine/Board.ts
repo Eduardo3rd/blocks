@@ -324,6 +324,10 @@ export function zonePushLinesToBottom(
 ): Board {
   if (completedLines.length === 0) return board;
   
+  // In Zone mode, completed lines move to the bottom (zone area).
+  // The playable area shrinks as zone lines accumulate.
+  // Total board height stays constant at BOARD_HEIGHT.
+  
   // Split the board:
   // - Playable area: rows 0 to (BOARD_HEIGHT - existingZoneLines - 1)
   // - Zone lines: last existingZoneLines rows
@@ -351,20 +355,34 @@ export function zonePushLinesToBottom(
     existingZoneRows.push(row ? [...row] : new Array(BOARD_WIDTH).fill(null));
   }
   
-  // Create empty rows to fill the top
+  // Build new board:
+  // [remaining playable] + [new zone rows] + [existing zone rows]
+  // 
+  // The playable area now shrinks by completedLines.length.
+  // We need to add empty rows at the TOP to maintain BOARD_HEIGHT.
+  const totalZoneLines = existingZoneLines + completedLines.length;
+  const newPlayableHeight = BOARD_HEIGHT - totalZoneLines;
+  
+  // Add empty rows at top if needed (remaining playable rows shifted up)
+  const emptyRowsNeeded = newPlayableHeight - remainingPlayableRows.length;
   const emptyRows: Cell[][] = [];
-  for (let i = 0; i < completedLines.length; i++) {
+  for (let i = 0; i < emptyRowsNeeded; i++) {
     emptyRows.push(new Array(BOARD_WIDTH).fill(null));
   }
   
-  // Build new board:
-  // [empty rows] + [remaining playable] + [new zone rows] + [existing zone rows]
+  // Build new board maintaining BOARD_HEIGHT:
+  // [empty rows (if any)] + [remaining playable] + [new zone rows] + [existing zone rows]
   const newBoard: Board = [
     ...emptyRows,
     ...remainingPlayableRows,
     ...newZoneRows,
     ...existingZoneRows,
   ];
+  
+  // Sanity check - ensure we have exactly BOARD_HEIGHT rows
+  if (newBoard.length !== BOARD_HEIGHT) {
+    console.error(`zonePushLinesToBottom: Board height mismatch! Got ${newBoard.length}, expected ${BOARD_HEIGHT}`);
+  }
   
   return newBoard;
 }

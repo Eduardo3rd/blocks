@@ -476,6 +476,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
             ghostY={state.ghostY}
             isZoneActive={state.zone.mode === 'active'}
             isPaused={state.phase === 'paused'}
+            zoneLinesCleared={state.zone.linesCleared}
           />
         </div>
         
