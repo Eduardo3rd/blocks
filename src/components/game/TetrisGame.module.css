@@ -537,6 +537,6 @@
 }
 
 .highScoreInGame {
-  margin-top: auto;
-  padding-top: 12px;
+  margin-top: 8px;
+  padding-top: 0;
 }

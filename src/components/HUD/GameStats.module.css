@@ -47,15 +47,18 @@
   font-weight: 700;
 }
 
-/* Clear info */
+/* Clear info - Fixed height to prevent layout shift */
 .clearInfo {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-height: 50px;
+  /* Fixed height to accommodate: clear type + back-to-back + combo + score */
+  height: 80px;
   padding: 8px;
   background: #181818;
   border: 2px solid #303030;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .clearType {
@@ -101,6 +104,8 @@
   border-bottom-color: #101010;
   border-right-color: #151515;
   width: 100%;
+  /* Fixed height to prevent layout shift between segment/active views */
+  height: 70px;
   box-sizing: border-box;
 }
 
@@ -209,12 +214,13 @@
   }
   
   .clearInfo {
-    min-height: 40px;
+    height: 70px;
     padding: 6px;
   }
   
   .zoneMeter {
     padding: 8px;
+    height: 60px;
   }
   
   .zoneTime {

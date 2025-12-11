@@ -2,14 +2,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: 4px;
 }
 
 .compact {
-  padding: 0.5rem 0.75rem;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 6px;
-  border: 1px solid rgba(255, 215, 0, 0.2);
+  padding: 8px 10px;
+  background: #202020;
+  border: 3px solid;
+  border-top-color: #404040;
+  border-left-color: #353535;
+  border-bottom-color: #101010;
+  border-right-color: #151515;
+  border-radius: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .full {
@@ -22,24 +28,27 @@
 
 .label {
   font-family: 'Press Start 2P', monospace;
-  font-size: 0.5rem;
+  font-size: 8px;
+  color: #606060;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.full .label {
+  font-size: 10px;
   color: #ffd700;
   text-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
 }
 
-.full .label {
-  font-size: 0.65rem;
-}
-
 .value {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 0.7rem;
-  color: #fff;
-  text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 14px;
+  color: #ffd700;
+  font-weight: 700;
 }
 
 .full .value {
-  font-size: 1rem;
+  font-size: 16px;
   color: #ffd700;
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
 }

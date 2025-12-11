@@ -92,3 +92,43 @@ body {
     0 0 10px currentColor,
     0 0 20px currentColor;
 }
+
+/* =============================================================================
+   Mobile Touch Behavior Prevention
+   ============================================================================= */
+
+/* Prevent pull-to-refresh and overscroll */
+html {
+  overscroll-behavior: none;
+}
+
+/* Prevent double-tap zoom on mobile */
+* {
+  touch-action: manipulation;
+}
+
+/* Prevent text selection on touch */
+@media (pointer: coarse) {
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  /* Re-enable for input fields */
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
+/* Prevent iOS button styling */
+button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Prevent tap highlight on mobile */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}

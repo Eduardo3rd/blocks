@@ -1,0 +1,568 @@
+/* =============================================================================
+   MOBILE GAME LAYOUT - Desktop-Style for Mobile
+   3-column layout matching desktop with compact sizing
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   Container - Full screen, no scroll
+   ----------------------------------------------------------------------------- */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  width: 100vw;
+  overflow: hidden;
+  background: #000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* -----------------------------------------------------------------------------
+   Game Area - 3 Column Layout
+   ----------------------------------------------------------------------------- */
+
+.gameArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.gameLayout {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  transform: scale(0.65);
+  transform-origin: center center;
+}
+
+/* Responsive scaling */
+@media (min-width: 400px) {
+  .gameLayout {
+    transform: scale(0.7);
+  }
+}
+
+@media (min-width: 450px) {
+  .gameLayout {
+    transform: scale(0.75);
+  }
+}
+
+@media (min-height: 750px) {
+  .gameLayout {
+    transform: scale(0.75);
+  }
+}
+
+@media (min-height: 850px) {
+  .gameLayout {
+    transform: scale(0.85);
+  }
+}
+
+@media (min-width: 500px) and (min-height: 900px) {
+  .gameLayout {
+    transform: scale(0.9);
+  }
+}
+
+.leftPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.centerPanel {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.rightPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.highScoreArea {
+  margin-top: 8px;
+}
+
+/* -----------------------------------------------------------------------------
+   Start Screen - Desktop Style
+   ----------------------------------------------------------------------------- */
+
+.startScreen {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  padding: 20px;
+}
+
+.startContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  max-width: 320px;
+  width: 100%;
+  padding: 30px 40px;
+  background: #202020;
+  border: 3px solid;
+  border-top-color: #404040;
+  border-left-color: #353535;
+  border-bottom-color: #101010;
+  border-right-color: #151515;
+}
+
+.title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 28px;
+  color: #00f0f0;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.subtitle {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #808080;
+  margin: -12px 0 0 0;
+  letter-spacing: 4px;
+}
+
+.mobileControls {
+  width: 100%;
+  padding: 16px;
+  background: #181818;
+  border: 2px solid #303030;
+}
+
+.mobileControls h3 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #808080;
+  margin: 0 0 14px 0;
+  letter-spacing: 1px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #303030;
+  text-align: center;
+}
+
+.controlsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.controlItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.controlKey {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #00f0f0;
+  background: #0a2020;
+  padding: 4px 8px;
+  border: 1px solid #00808080;
+}
+
+.controlAction {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
+  color: #a0a0a0;
+}
+
+.startButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.startButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: #fff;
+  background: #006060;
+  border: 3px solid;
+  border-top-color: #00a0a0;
+  border-left-color: #008080;
+  border-bottom-color: #003030;
+  border-right-color: #004040;
+  padding: 14px 24px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: background 0.1s;
+}
+
+.startButton:active {
+  background: #008080;
+  border-top-color: #003030;
+  border-left-color: #004040;
+  border-bottom-color: #00a0a0;
+  border-right-color: #008080;
+}
+
+.settingsBtn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #a0a0a0;
+  background: #303030;
+  border: 3px solid;
+  border-top-color: #505050;
+  border-left-color: #404040;
+  border-bottom-color: #181818;
+  border-right-color: #202020;
+  padding: 10px 24px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: background 0.1s;
+}
+
+.settingsBtn:active {
+  background: #404040;
+  color: #c0c0c0;
+}
+
+/* -----------------------------------------------------------------------------
+   Game Over Screen - Desktop Style
+   ----------------------------------------------------------------------------- */
+
+.gameOverScreen {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  padding: 20px;
+}
+
+.gameOverContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 320px;
+  width: 100%;
+  padding: 30px 40px;
+  background: #201010;
+  border: 3px solid;
+  border-top-color: #403030;
+  border-left-color: #352525;
+  border-bottom-color: #100808;
+  border-right-color: #150a0a;
+}
+
+.gameOverTitle {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 24px;
+  color: #ff4040;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.finalStats {
+  width: 100%;
+  background: #181010;
+  border: 2px solid #302020;
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #282020;
+}
+
+.statRow:last-child {
+  border-bottom: none;
+}
+
+.statRow span:first-child {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #806060;
+  letter-spacing: 1px;
+}
+
+.statRow span:last-child {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.nameInput {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nameInput label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #808080;
+  text-align: center;
+}
+
+.textInput {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: #fff;
+  background: #181010;
+  border: 2px solid #403030;
+  padding: 12px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.textInput::placeholder {
+  color: #504040;
+}
+
+.textInput:focus {
+  outline: none;
+  border-color: #604040;
+}
+
+.gameOverButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.submitButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #fff;
+  background: #306030;
+  border: 3px solid;
+  border-top-color: #50a050;
+  border-left-color: #408040;
+  border-bottom-color: #183018;
+  border-right-color: #204020;
+  padding: 12px 20px;
+  cursor: pointer;
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.skipButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #a0a0a0;
+  background: #303030;
+  border: 3px solid;
+  border-top-color: #505050;
+  border-left-color: #404040;
+  border-bottom-color: #181818;
+  border-right-color: #202020;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+/* -----------------------------------------------------------------------------
+   Pause Screen Overlay - Desktop Style
+   ----------------------------------------------------------------------------- */
+
+.pauseOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.pauseContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-width: 240px;
+  padding: 24px 28px;
+  background: #202020;
+  border: 3px solid;
+  border-top-color: #404040;
+  border-left-color: #353535;
+  border-bottom-color: #101010;
+  border-right-color: #151515;
+}
+
+.pauseTitle {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 18px;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.pauseStats {
+  width: 100%;
+  background: #181818;
+  border: 2px solid #303030;
+}
+
+.soundToggle {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #a0a0a0;
+  background: #181818;
+  border: 2px solid #303030;
+  padding: 8px 16px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.1s;
+}
+
+.soundToggle:active {
+  background: #202020;
+}
+
+.pauseButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.resumeButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #fff;
+  background: #404080;
+  border: 3px solid;
+  border-top-color: #6060a0;
+  border-left-color: #505090;
+  border-bottom-color: #202040;
+  border-right-color: #303060;
+  padding: 10px 24px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+
+.resumeButton:active {
+  border-top-color: #202040;
+  border-left-color: #303060;
+  border-bottom-color: #6060a0;
+  border-right-color: #505090;
+}
+
+/* -----------------------------------------------------------------------------
+   Settings Overlay - Desktop Style
+   ----------------------------------------------------------------------------- */
+
+.settingsOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.settingsContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 320px;
+  width: 100%;
+  padding: 24px;
+  background: #202020;
+  border: 3px solid;
+  border-top-color: #404040;
+  border-left-color: #353535;
+  border-bottom-color: #101010;
+  border-right-color: #151515;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.settingsTitle {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.settingsInfo {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
+  color: #a0a0a0;
+  line-height: 1.6;
+  width: 100%;
+}
+
+.settingsInfo p {
+  margin: 0 0 12px 0;
+}
+
+.settingsInfo ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background: #181818;
+  border: 2px solid #303030;
+}
+
+.settingsInfo li {
+  padding: 8px 12px;
+  border-bottom: 1px solid #282828;
+}
+
+.settingsInfo li:last-child {
+  border-bottom: none;
+}
+
+.settingsInfo strong {
+  color: #00f0f0;
+}
+
+.closeButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #a0a0a0;
+  background: #303030;
+  border: 3px solid;
+  border-top-color: #505050;
+  border-left-color: #404040;
+  border-bottom-color: #181818;
+  border-right-color: #202020;
+  padding: 10px 32px;
+  cursor: pointer;
+}
+
+.closeButton:active {
+  background: #404040;
+  color: #c0c0c0;
+}

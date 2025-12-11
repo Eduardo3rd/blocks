@@ -1,0 +1,280 @@
+/* =============================================================================
+   MOBILE CONTROLS - Classic 90s Styling (matching desktop)
+   Dark theme with cyan accents and beveled 3D buttons
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   Control Panel Container
+   ----------------------------------------------------------------------------- */
+
+.controlPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 16px;
+  background: #181818;
+  border-top: 3px solid;
+  border-top-color: #303030;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.mainControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.dpadArea {
+  flex: 0 0 auto;
+}
+
+.abxyArea {
+  flex: 0 0 auto;
+}
+
+.systemArea {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+/* -----------------------------------------------------------------------------
+   D-Pad Styling - Classic Dark Theme
+   ----------------------------------------------------------------------------- */
+
+.dpad {
+  display: grid;
+  grid-template-columns: 44px 44px 44px;
+  grid-template-rows: 44px 44px 44px;
+  gap: 0;
+  position: relative;
+}
+
+.dpadButton {
+  width: 44px;
+  height: 44px;
+  background: #252525;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.05s;
+}
+
+.dpadButton:active {
+  background: #303030;
+}
+
+.dpadButton:disabled {
+  opacity: 0.5;
+}
+
+.dpadUp {
+  grid-column: 2;
+  grid-row: 1;
+  border-radius: 6px 6px 0 0;
+  border: 2px solid;
+  border-top-color: #404040;
+  border-left-color: #383838;
+  border-bottom-color: #181818;
+  border-right-color: #1c1c1c;
+}
+
+.dpadDown {
+  grid-column: 2;
+  grid-row: 3;
+  border-radius: 0 0 6px 6px;
+  border: 2px solid;
+  border-top-color: #404040;
+  border-left-color: #383838;
+  border-bottom-color: #181818;
+  border-right-color: #1c1c1c;
+}
+
+.dpadLeft {
+  grid-column: 1;
+  grid-row: 2;
+  border-radius: 6px 0 0 6px;
+  border: 2px solid;
+  border-top-color: #404040;
+  border-left-color: #383838;
+  border-bottom-color: #181818;
+  border-right-color: #1c1c1c;
+}
+
+.dpadRight {
+  grid-column: 3;
+  grid-row: 2;
+  border-radius: 0 6px 6px 0;
+  border: 2px solid;
+  border-top-color: #404040;
+  border-left-color: #383838;
+  border-bottom-color: #181818;
+  border-right-color: #1c1c1c;
+}
+
+.dpadCenter {
+  grid-column: 2;
+  grid-row: 2;
+  width: 44px;
+  height: 44px;
+  background: #202020;
+  border: 2px solid #282828;
+}
+
+.dpadArrow {
+  color: #505050;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.dpadButton:active .dpadArrow {
+  color: #00f0f0;
+}
+
+/* -----------------------------------------------------------------------------
+   ABXY Buttons - Nintendo Switch Cross Pattern, Dark Theme
+   ----------------------------------------------------------------------------- */
+
+.abxyContainer {
+  display: grid;
+  grid-template-columns: 46px 46px 46px;
+  grid-template-rows: 46px 46px 46px;
+  gap: 4px;
+  position: relative;
+}
+
+.abxyButton {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #252525;
+  border: 3px solid;
+  border-top-color: #404040;
+  border-left-color: #383838;
+  border-bottom-color: #151515;
+  border-right-color: #181818;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.05s;
+}
+
+.abxyButton:active {
+  background: #303030;
+  border-top-color: #151515;
+  border-left-color: #181818;
+  border-bottom-color: #404040;
+  border-right-color: #383838;
+}
+
+.abxyButton:disabled {
+  opacity: 0.5;
+}
+
+/* X button - Top */
+.buttonX {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* Y button - Left */
+.buttonY {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+/* A button - Right */
+.buttonA {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+/* B button - Bottom */
+.buttonB {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.buttonLabel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: #606060;
+  pointer-events: none;
+}
+
+.abxyButton:active .buttonLabel {
+  color: #00f0f0;
+}
+
+/* -----------------------------------------------------------------------------
+   System Buttons - Menu, Select, Start
+   ----------------------------------------------------------------------------- */
+
+.systemButtons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.systemButton {
+  height: 26px;
+  padding: 0 14px;
+  background: #252525;
+  border: 2px solid;
+  border-top-color: #383838;
+  border-left-color: #303030;
+  border-bottom-color: #151515;
+  border-right-color: #181818;
+  border-radius: 13px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.05s;
+}
+
+.systemButton:active {
+  background: #303030;
+  border-top-color: #151515;
+  border-left-color: #181818;
+  border-bottom-color: #383838;
+  border-right-color: #303030;
+}
+
+.systemButton:disabled {
+  opacity: 0.5;
+}
+
+.systemLabel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  color: #707070;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.systemButton:active .systemLabel {
+  color: #a0a0a0;
+}
+
+/* Power LED - Cyan glow */
+.powerLed {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00f0f0;
+  box-shadow: 
+    0 0 4px #00f0f0,
+    0 0 8px #00f0f0;
+  margin-left: 8px;
+}
