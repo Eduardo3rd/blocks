@@ -1,4 +1,5 @@
 import { HighScores } from '../HighScores/HighScores';
+import { CurrentHighScore } from '../CurrentHighScore/CurrentHighScore';
 import styles from './StartScreen.module.css';
 
 interface StartScreenProps {
@@ -7,15 +8,25 @@ interface StartScreenProps {
 
 export const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
   return (
-    <div 
-      className="absolute inset-0 bg-black flex items-center justify-center cursor-pointer"
-      onClick={onStart}
-    >
-      <div className="text-center pixel-text">
-        <div className="text-4xl text-blue-500 mb-8">TETRIS</div>
-        <div className="text-xl text-white mb-8">Tap or Click to Start</div>
-        <div className="mt-8">
-          <HighScores />
+    <div className={styles.container}>
+      <div className={styles.content}>
+        <h1 className={styles.title}>TETRIS</h1>
+        
+        <div className={styles.highScoreSection}>
+          <CurrentHighScore variant="full" />
+        </div>
+        
+        <button 
+          className={styles.startButton}
+          onClick={onStart}
+        >
+          TAP TO START
+        </button>
+        
+        <div className={styles.hint}>or press ENTER</div>
+        
+        <div className={styles.leaderboardSection}>
+          <HighScores limit={10} refreshInterval={5000} />
         </div>
       </div>
     </div>

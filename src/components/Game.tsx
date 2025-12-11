@@ -13,10 +13,12 @@ import { HoldAreaErrorBoundary } from './game/HoldArea/HoldAreaErrorBoundary';
 import { NextPieceErrorBoundary } from './game/NextPiece/NextPieceErrorBoundary';
 import { StatsErrorBoundary } from './game/Stats/StatsErrorBoundary';
 import { saveHighScore } from '../utils/highScores'
-import { HighScores } from './game/HighScores/HighScores'
 import { getGamepadState, getNewPresses } from '../utils/gamepadControls';
 import { Settings } from './game/Settings/Settings';
 import { StartScreen } from './game/StartScreen/StartScreen';
+import { GameOverModal } from './game/GameOverModal/GameOverModal';
+import { useHighScore } from './game/CurrentHighScore/CurrentHighScore';
+import { CurrentHighScore } from './game/CurrentHighScore/CurrentHighScore';
 
 // Add DAS and ARR constants
 const DAS_DELAY = 167; // 167ms before auto-repeat starts
@@ -93,12 +95,17 @@ const Game: React.FC = () => {
   const [lastMoveTime, setLastMoveTime] = useState<number>(0);
   const [isAutoShifting, setIsAutoShifting] = useState(false);
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const [showGameOverModal, setShowGameOverModal] = useState(false);
   const touchStartRef = useRef<{ x: number; y: number; time: number; initialX: number; initialY: number; hasMoved: boolean } | null>(null);
   const lastTapRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const longPressTimeoutRef = useRef<number | null>(null);
+  
+  // High score tracking
+  const { highScore, refresh: refreshHighScore } = useHighScore(30000);
 
   const restartGame = useCallback(() => {
     setGameState(createInitialGameState());
+    setShowGameOverModal(false);
   }, []);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -248,16 +255,19 @@ const Game: React.FC = () => {
   // Add useEffect to watch for game over state
   useEffect(() => {
     if (gameState.isGameOver) {
-      handleGameOver();
+      setShowGameOverModal(true);
     }
   }, [gameState.isGameOver]);
 
-  const handleGameOver = async () => {
-    const playerName = prompt('Game Over! Enter your name for the high score:')
-    if (playerName) {
-      await saveHighScore(playerName, gameState.score)
-    }
-  }
+  const handleScoreSubmit = async (playerName: string) => {
+    await saveHighScore(playerName, gameState.score);
+    refreshHighScore();
+    restartGame();
+  };
+
+  const handleScoreSkip = () => {
+    restartGame();
+  };
 
   // Add gamepad polling
   useEffect(() => {
@@ -564,34 +574,39 @@ const Game: React.FC = () => {
                 <StatsErrorBoundary>
                   <Stats gameState={gameState} />
                 </StatsErrorBoundary>
+                {/* High score display on desktop */}
+                <CurrentHighScore variant="compact" refreshInterval={30000} />
               </div>
             </div>
 
-            {(gameState.isGameOver || gameState.isPaused) && (
+            {/* High score display - mobile only, fixed position */}
+            <div className="md:hidden fixed top-2 right-2 z-50">
+              <CurrentHighScore variant="compact" refreshInterval={30000} />
+            </div>
+
+            {/* Pause overlay */}
+            {gameState.isPaused && !gameState.isGameOver && (
               <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                 <div className="text-center pixel-text">
-                  {gameState.isGameOver ? (
-                    <div 
-                      className="cursor-pointer"
-                      onClick={restartGame}
-                    >
-                      <div className="text-4xl text-red-500 mb-4">Game Over!</div>
-                      <div className="text-xl text-white">Final Score: {gameState.score}</div>
-                      <div className="text-lg text-gray-400 mt-4">Tap or Click to Play Again</div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="text-4xl text-yellow-500 mb-4">Paused</div>
-                      <button 
-                        className="text-lg text-white bg-gray-800 px-4 py-2 rounded mt-4"
-                        onClick={() => setShowSettings(true)}
-                      >
-                        Settings
-                      </button>
-                    </>
-                  )}
+                  <div className="text-4xl text-yellow-500 mb-4">Paused</div>
+                  <button 
+                    className="text-lg text-white bg-gray-800 px-4 py-2 rounded mt-4"
+                    onClick={() => setShowSettings(true)}
+                  >
+                    Settings
+                  </button>
                 </div>
               </div>
+            )}
+
+            {/* Game Over Modal */}
+            {showGameOverModal && (
+              <GameOverModal
+                score={gameState.score}
+                highScore={highScore}
+                onSubmit={handleScoreSubmit}
+                onSkip={handleScoreSkip}
+              />
             )}
             {showSettings && (
               <Settings

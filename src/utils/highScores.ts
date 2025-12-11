@@ -13,7 +13,7 @@ export interface HighScore {
   created_at?: string
 }
 
-export const saveHighScore = async (playerName: string, score: number): Promise<void> => {
+export const saveHighScore = async (playerName: string, score: number): Promise<boolean> => {
   try {
     const { error, data } = await supabase
       .from('high_scores')
@@ -24,8 +24,14 @@ export const saveHighScore = async (playerName: string, score: number): Promise<
       throw error;
     }
     console.log('Score saved successfully:', data);
+    
+    // Prune to keep only top 100 after inserting
+    await pruneHighScores();
+    
+    return true;
   } catch (error) {
     console.error('Error saving high score:', error);
+    return false;
   }
 }
 
@@ -42,5 +48,50 @@ export const getTopHighScores = async (limit: number = 10): Promise<HighScore[]>
   } catch (error) {
     console.error('Error fetching high scores:', error)
     return []
+  }
+}
+
+export const getHighestScore = async (): Promise<number> => {
+  try {
+    const { data, error } = await supabase
+      .from('high_scores')
+      .select('score')
+      .order('score', { ascending: false })
+      .limit(1)
+    
+    if (error) throw error
+    return data && data.length > 0 ? data[0].score : 0
+  } catch (error) {
+    console.error('Error fetching highest score:', error)
+    return 0
+  }
+}
+
+// Keep only top 100 scores in the database
+const pruneHighScores = async (): Promise<void> => {
+  try {
+    // Get the 100th highest score
+    const { data: topScores, error: fetchError } = await supabase
+      .from('high_scores')
+      .select('id, score')
+      .order('score', { ascending: false })
+      .limit(100)
+    
+    if (fetchError) throw fetchError
+    
+    if (topScores && topScores.length === 100) {
+      const minScoreToKeep = topScores[99].score
+      const idsToKeep = topScores.map(s => s.id)
+      
+      // Delete all scores not in top 100
+      const { error: deleteError } = await supabase
+        .from('high_scores')
+        .delete()
+        .lt('score', minScoreToKeep)
+      
+      if (deleteError) throw deleteError
+    }
+  } catch (error) {
+    console.error('Error pruning high scores:', error)
   }
 } 

@@ -473,3 +473,22 @@
     font-size: 12px;
   }
 }
+
+/* =============================================================================
+   High Score Styles
+   ============================================================================= */
+
+.highScoreDisplay {
+  margin: 10px 0;
+}
+
+.leaderboard {
+  margin-top: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.highScoreInGame {
+  margin-top: auto;
+  padding-top: 12px;
+}

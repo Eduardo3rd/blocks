@@ -10,6 +10,10 @@ import { HoldPiece, NextQueue } from '../HUD/PiecePreview';
 import { GameStats, ZoneMeter } from '../HUD/GameStats';
 import { GameEvent, StageInfo, ClearType } from '../../engine/types';
 import { useGameAudio } from '../../systems/AudioSystem';
+import { HighScores } from './HighScores/HighScores';
+import { CurrentHighScore, useHighScore } from './CurrentHighScore/CurrentHighScore';
+import { GameOverModal } from './GameOverModal/GameOverModal';
+import { saveHighScore } from '../../utils/highScores';
 import styles from './TetrisGame.module.css';
 
 // -----------------------------------------------------------------------------
@@ -43,6 +47,11 @@ const StartScreen: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       <h1 className={styles.title}>TETRIS</h1>
       <p className={styles.subtitle}>EFFECT CLONE</p>
       
+      {/* Current High Score Display */}
+      <div className={styles.highScoreDisplay}>
+        <CurrentHighScore variant="full" />
+      </div>
+      
       <div className={styles.controls}>
         <h3>CONTROLS</h3>
         <ul>
@@ -62,6 +71,11 @@ const StartScreen: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       </button>
       
       <p className={styles.hint}>Or press ENTER</p>
+      
+      {/* Leaderboard */}
+      <div className={styles.leaderboard}>
+        <HighScores limit={10} refreshInterval={5000} />
+      </div>
     </div>
   );
 };
@@ -211,6 +225,10 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
   const [soundEnabled, setSoundEnabled] = useState(true);
   
   const [hasStarted, setHasStarted] = useState(false);
+  const [showGameOverModal, setShowGameOverModal] = useState(false);
+  
+  // High score tracking
+  const { highScore, refresh: refreshHighScore } = useHighScore(30000);
   
   // Session statistics tracking
   const [sessionStats, setSessionStats] = useState<SessionStats>({
@@ -271,9 +289,22 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
       piecesPlaced: 0,
       playTime: 0,
     });
+    setShowGameOverModal(false);
     restart(stage);
     start();
   }, [restart, start, stage]);
+  
+  // Handle score submission
+  const handleScoreSubmit = useCallback(async (playerName: string) => {
+    await saveHighScore(playerName, state.score);
+    refreshHighScore();
+    handleRestart();
+  }, [state.score, refreshHighScore, handleRestart]);
+  
+  // Handle score skip
+  const handleScoreSkip = useCallback(() => {
+    handleRestart();
+  }, [handleRestart]);
   
   // Handle resume from pause
   const handleResume = useCallback(() => {
@@ -307,6 +338,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
       switch (event.type) {
         case 'gameOver':
           onGameOver?.(event.finalScore);
+          setShowGameOverModal(true);
           break;
           
         case 'linesCleared':
@@ -347,16 +379,15 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
     );
   }
   
-  // Show game over screen
-  if (state.phase === 'gameOver') {
+  // Show game over modal
+  if (state.phase === 'gameOver' && showGameOverModal) {
     return (
       <div className={styles.container}>
-        <GameOverScreen
+        <GameOverModal
           score={state.score}
-          level={state.level}
-          lines={state.linesCleared}
-          stats={sessionStats}
-          onRestart={handleRestart}
+          highScore={highScore}
+          onSubmit={handleScoreSubmit}
+          onSkip={handleScoreSkip}
         />
       </div>
     );
@@ -398,9 +429,12 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
           />
         </div>
         
-        {/* Right panel - Next queue */}
+        {/* Right panel - Next queue and High Score */}
         <div className={styles.rightPanel}>
           <NextQueue pieces={state.nextPieces} count={5} />
+          <div className={styles.highScoreInGame}>
+            <CurrentHighScore variant="compact" refreshInterval={30000} />
+          </div>
         </div>
       </div>
       
