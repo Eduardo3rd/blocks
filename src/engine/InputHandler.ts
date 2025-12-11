@@ -621,8 +621,8 @@ export class GamepadHandler {
 // Factory Functions
 // -----------------------------------------------------------------------------
 
-export function createInputHandler(config?: Partial<InputConfig>): InputHandler {
-  return new InputHandler(config);
+export function createInputHandler(config?: Partial<InputConfig>, bindings?: KeyBinding[]): InputHandler {
+  return new InputHandler(config, bindings);
 }
 
 export function createGamepadHandler(config?: Partial<InputConfig>): GamepadHandler {
