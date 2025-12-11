@@ -1,0 +1,270 @@
+.container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 200;
+}
+
+.panel {
+  background: #202020;
+  border: 3px solid;
+  border-top-color: #404040;
+  border-left-color: #353535;
+  border-bottom-color: #101010;
+  border-right-color: #151515;
+  padding: 24px;
+  min-width: 320px;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: #00f0f0;
+  text-align: center;
+  margin: 0 0 20px 0;
+  letter-spacing: 1px;
+}
+
+.bindingsList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.bindingRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #181818;
+  border: 2px solid #303030;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bindingRow:hover {
+  background: #252525;
+  border-color: #404040;
+}
+
+.bindingRow.listening {
+  background: #1a2a1a;
+  border-color: #00f0f0;
+  box-shadow: 0 0 10px rgba(0, 240, 240, 0.2);
+}
+
+.actionName {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
+  color: #a0a0a0;
+}
+
+.keyDisplay {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #00f0f0;
+  background: #0a2020;
+  padding: 4px 8px;
+  border: 1px solid #00808080;
+  min-width: 60px;
+  text-align: center;
+}
+
+.pressKey {
+  color: #ffcc00;
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Conflict Dialog */
+.conflictOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10;
+}
+
+.conflictDialog {
+  background: #301010;
+  border: 3px solid #602020;
+  padding: 20px;
+  text-align: center;
+  max-width: 280px;
+}
+
+.conflictMessage {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  color: #e0e0e0;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.conflictMessage strong {
+  color: #ff6060;
+}
+
+.conflictButtons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.swapButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #fff;
+  background: #604020;
+  border: 2px solid;
+  border-top-color: #906030;
+  border-left-color: #805028;
+  border-bottom-color: #302010;
+  border-right-color: #402818;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.swapButton:hover {
+  background: #805030;
+}
+
+.cancelConflictButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #a0a0a0;
+  background: #303030;
+  border: 2px solid;
+  border-top-color: #505050;
+  border-left-color: #404040;
+  border-bottom-color: #181818;
+  border-right-color: #202020;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.cancelConflictButton:hover {
+  background: #404040;
+}
+
+/* Main Buttons */
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resetButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #808080;
+  background: transparent;
+  border: 1px solid #404040;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.resetButton:hover {
+  color: #a0a0a0;
+  border-color: #606060;
+}
+
+.mainButtons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.saveButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #fff;
+  background: #006060;
+  border: 3px solid;
+  border-top-color: #00a0a0;
+  border-left-color: #008080;
+  border-bottom-color: #003030;
+  border-right-color: #004040;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.saveButton:hover:not(:disabled) {
+  background: #008080;
+}
+
+.saveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #a0a0a0;
+  background: #303030;
+  border: 3px solid;
+  border-top-color: #505050;
+  border-left-color: #404040;
+  border-bottom-color: #181818;
+  border-right-color: #202020;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.cancelButton:hover {
+  background: #404040;
+  color: #c0c0c0;
+}
+
+.unsavedHint {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px;
+  color: #ffcc00;
+  text-align: center;
+  margin: 12px 0 0 0;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .panel {
+    min-width: 280px;
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 12px;
+  }
+
+  .actionName {
+    font-size: 10px;
+  }
+
+  .keyDisplay {
+    font-size: 8px;
+    min-width: 50px;
+  }
+}
+

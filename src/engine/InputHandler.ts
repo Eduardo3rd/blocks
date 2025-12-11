@@ -90,6 +90,35 @@ export class InputHandler {
     this.callback = callback;
   }
   
+  /**
+   * Update key bindings at runtime
+   */
+  setBindings(bindings: KeyBinding[]): void {
+    this.setupBindings(bindings);
+    // Clear current key states to prevent stuck keys
+    this.keyStates.clear();
+  }
+  
+  /**
+   * Get current key bindings
+   */
+  getBindings(): KeyBinding[] {
+    // Reconstruct bindings from the map
+    const actionToKeys = new Map<InputAction, string[]>();
+    
+    for (const [key, action] of this.keyBindings) {
+      if (!actionToKeys.has(action)) {
+        actionToKeys.set(action, []);
+      }
+      actionToKeys.get(action)!.push(key);
+    }
+    
+    return Array.from(actionToKeys.entries()).map(([action, keys]) => ({
+      action,
+      keys,
+    }));
+  }
+  
   // ---------------------------------------------------------------------------
   // Enable/Disable
   // ---------------------------------------------------------------------------

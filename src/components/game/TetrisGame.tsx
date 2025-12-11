@@ -13,7 +13,9 @@ import { useGameAudio } from '../../systems/AudioSystem';
 import { HighScores } from './HighScores/HighScores';
 import { CurrentHighScore, useHighScore } from './CurrentHighScore/CurrentHighScore';
 import { GameOverModal } from './GameOverModal/GameOverModal';
+import { Settings } from './Settings/Settings';
 import { saveHighScore } from '../../utils/highScores';
+import { KeyBindings } from '../../utils/keyBindingsStorage';
 import styles from './TetrisGame.module.css';
 
 // -----------------------------------------------------------------------------
@@ -41,7 +43,12 @@ interface SessionStats {
 // Start Screen Component
 // -----------------------------------------------------------------------------
 
-const StartScreen: React.FC<{ onStart: () => void }> = ({ onStart }) => {
+interface StartScreenProps {
+  onStart: () => void;
+  onSettings: () => void;
+}
+
+const StartScreen: React.FC<StartScreenProps> = ({ onStart, onSettings }) => {
   return (
     <div className={styles.startScreen}>
       <h1 className={styles.title}>TETRIS</h1>
@@ -66,9 +73,14 @@ const StartScreen: React.FC<{ onStart: () => void }> = ({ onStart }) => {
         </ul>
       </div>
       
-      <button className={styles.startButton} onClick={onStart}>
-        PRESS TO START
-      </button>
+      <div className={styles.startButtons}>
+        <button className={styles.startButton} onClick={onStart}>
+          PRESS TO START
+        </button>
+        <button className={styles.settingsButton} onClick={onSettings}>
+          SETTINGS
+        </button>
+      </div>
       
       <p className={styles.hint}>Or press ENTER</p>
       
@@ -92,6 +104,7 @@ interface PauseScreenProps {
   soundEnabled: boolean;
   onToggleSound: () => void;
   onResume: () => void;
+  onSettings: () => void;
 }
 
 const PauseScreen: React.FC<PauseScreenProps> = ({
@@ -102,6 +115,7 @@ const PauseScreen: React.FC<PauseScreenProps> = ({
   soundEnabled,
   onToggleSound,
   onResume,
+  onSettings,
 }) => {
   // Calculate Tetris rate (percentage of clears that are tetrises)
   const tetrisRate = stats.totalClears > 0 
@@ -139,6 +153,10 @@ const PauseScreen: React.FC<PauseScreenProps> = ({
         >
           <span className={styles.soundIcon}>{soundEnabled ? '🔊' : '🔇'}</span>
           <span className={styles.soundLabel}>SOUND {soundEnabled ? 'ON' : 'OFF'}</span>
+        </button>
+        
+        <button className={styles.settingsButtonPause} onClick={onSettings}>
+          SETTINGS
         </button>
         
         <button className={styles.resumeButton} onClick={onResume}>
@@ -218,6 +236,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
     pause,
     restart,
     addEventListener,
+    setKeyBindings,
   } = useGameEngine(stage);
   
   // Audio system - responds to game events
@@ -226,6 +245,10 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
   
   const [hasStarted, setHasStarted] = useState(false);
   const [showGameOverModal, setShowGameOverModal] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  
+  // DAS/ARR settings (stored locally for now)
+  const [dasArrSettings, setDasArrSettings] = useState({ das: 167, arr: 33 });
   
   // High score tracking
   const { highScore, refresh: refreshHighScore } = useHighScore(30000);
@@ -318,6 +341,24 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
     audio.setEnabled(newEnabled);
   }, [soundEnabled, audio]);
   
+  // Handle settings
+  const handleOpenSettings = useCallback(() => {
+    setShowSettings(true);
+  }, []);
+  
+  const handleCloseSettings = useCallback(() => {
+    setShowSettings(false);
+  }, []);
+  
+  const handleDasArrSave = useCallback((settings: { das: number; arr: number }) => {
+    setDasArrSettings(settings);
+    // TODO: Apply to input handler if needed
+  }, []);
+  
+  const handleKeyBindingsChange = useCallback((bindings: KeyBindings) => {
+    setKeyBindings(bindings);
+  }, [setKeyBindings]);
+  
   // Listen for Enter key on start screen
   useEffect(() => {
     if (hasStarted) return;
@@ -374,7 +415,15 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
   if (!hasStarted) {
     return (
       <div className={styles.container}>
-        <StartScreen onStart={handleStart} />
+        <StartScreen onStart={handleStart} onSettings={handleOpenSettings} />
+        {showSettings && (
+          <Settings
+            settings={dasArrSettings}
+            onSave={handleDasArrSave}
+            onClose={handleCloseSettings}
+            onKeyBindingsChange={handleKeyBindingsChange}
+          />
+        )}
       </div>
     );
   }
@@ -439,7 +488,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
       </div>
       
       {/* Pause Screen */}
-      {state.phase === 'paused' && (
+      {state.phase === 'paused' && !showSettings && (
         <PauseScreen
           stats={sessionStats}
           score={state.score}
@@ -448,6 +497,17 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
           soundEnabled={soundEnabled}
           onToggleSound={handleToggleSound}
           onResume={handleResume}
+          onSettings={handleOpenSettings}
+        />
+      )}
+      
+      {/* Settings Modal */}
+      {showSettings && (
+        <Settings
+          settings={dasArrSettings}
+          onSave={handleDasArrSave}
+          onClose={handleCloseSettings}
+          onKeyBindingsChange={handleKeyBindingsChange}
         />
       )}
     </div>

@@ -152,6 +152,54 @@
   border-right-color: #008080;
 }
 
+.startButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.settingsButton {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #a0a0a0;
+  background: #303030;
+  border: 3px solid;
+  border-top-color: #505050;
+  border-left-color: #404040;
+  border-bottom-color: #181818;
+  border-right-color: #202020;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: background 0.1s;
+  letter-spacing: 1px;
+}
+
+.settingsButton:hover {
+  background: #404040;
+  color: #c0c0c0;
+}
+
+.settingsButtonPause {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #a0a0a0;
+  background: #303030;
+  border: 2px solid #404040;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.1s;
+  letter-spacing: 1px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.settingsButtonPause:hover {
+  background: #404040;
+  color: #c0c0c0;
+  border-color: #505050;
+}
+
 .hint {
   font-family: 'Press Start 2P', monospace;
   font-size: 7px;

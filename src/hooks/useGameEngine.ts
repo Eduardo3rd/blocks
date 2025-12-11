@@ -5,8 +5,9 @@
 
 import { useEffect, useRef, useCallback, useSyncExternalStore, useState } from 'react';
 import { GameEngine, createGameEngine } from '../engine/GameEngine';
-import { InputHandler, GamepadHandler, createInputHandler, createGamepadHandler } from '../engine/InputHandler';
+import { InputHandler, GamepadHandler, createInputHandler, createGamepadHandler, KeyBinding } from '../engine/InputHandler';
 import { GameState, GameEvent, InputAction, StageInfo, InputConfig, TetrominoType } from '../engine/types';
+import { loadKeyBindings, keyBindingsToArray, KeyBindings } from '../utils/keyBindingsStorage';
 
 // -----------------------------------------------------------------------------
 // Hook Return Type
@@ -24,6 +25,7 @@ export interface UseGameEngineReturn {
   // Input
   handleInput: (action: InputAction) => void;
   setInputConfig: (config: Partial<InputConfig>) => void;
+  setKeyBindings: (bindings: KeyBindings) => void;
   
   // Events
   addEventListener: (listener: (event: GameEvent) => void) => () => void;
@@ -192,8 +194,12 @@ export function useGameEngine(initialStage?: StageInfo): UseGameEngineReturn {
     const engine = engineRef.current;
     if (!engine) return;
     
-    // Create input handler
-    const inputHandler = createInputHandler();
+    // Load saved key bindings
+    const savedBindings = loadKeyBindings();
+    const bindingsArray = keyBindingsToArray(savedBindings);
+    
+    // Create input handler with saved bindings
+    const inputHandler = createInputHandler(undefined, bindingsArray);
     inputHandlerRef.current = inputHandler;
     
     // Create gamepad handler
@@ -258,6 +264,11 @@ export function useGameEngine(initialStage?: StageInfo): UseGameEngineReturn {
     inputHandlerRef.current?.setConfig(config);
   }, []);
   
+  const setKeyBindings = useCallback((bindings: KeyBindings) => {
+    const bindingsArray = keyBindingsToArray(bindings);
+    inputHandlerRef.current?.setBindings(bindingsArray);
+  }, []);
+  
   const addEventListener = useCallback((listener: (event: GameEvent) => void) => {
     return engineRef.current?.addEventListener(listener) ?? (() => {});
   }, []);
@@ -272,6 +283,7 @@ export function useGameEngine(initialStage?: StageInfo): UseGameEngineReturn {
     restart,
     handleInput,
     setInputConfig,
+    setKeyBindings,
     addEventListener,
   };
 }
