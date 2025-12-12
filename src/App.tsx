@@ -1,5 +1,5 @@
 import React from 'react';
-import { TetrisGame } from './components/game/TetrisGame';
+import { BlocksGame } from './components/game/BlocksGame';
 import { MobileGame } from './components/mobile/MobileGame';
 import { useMobileDetect } from './hooks/useMobileDetect';
 import '@fontsource/press-start-2p';
@@ -19,7 +19,7 @@ const App: React.FC = () => {
   }
 
   // Render desktop UI for larger screens
-  return <TetrisGame onGameOver={handleGameOver} />;
+  return <BlocksGame onGameOver={handleGameOver} />;
 };
 
-export default App; 
+export default App;

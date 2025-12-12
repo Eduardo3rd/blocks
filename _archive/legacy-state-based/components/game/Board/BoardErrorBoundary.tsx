@@ -25,4 +25,5 @@ export const BoardErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ ch
   >
     {children}
   </ErrorBoundary>
-); 
+);
+

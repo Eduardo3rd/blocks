@@ -13,7 +13,7 @@ interface ABXYButtonsProps {
   disabled?: boolean;
 }
 
-// Button to action mapping (PS5 Tetris Effect style)
+// Button to action mapping (PS5 style)
 const buttonActions: Record<string, InputAction> = {
   A: 'rotateCW',      // Circle (right) - Rotate Clockwise
   B: 'rotateCCW',     // Cross (bottom) - Rotate Counter-Clockwise

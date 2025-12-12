@@ -1,6 +1,6 @@
-# Tetris Effect Clone - Technical Architecture
+# Blocks - Technical Architecture
 
-A browser-based Tetris clone inspired by **Tetris Effect**, built with React, TypeScript, and modern web technologies. Features the signature Zone mechanic, neon aesthetics, and gamepad support.
+A browser-based block puzzle game built with React, TypeScript, and modern web technologies. Features the Zone mechanic, neon aesthetics, synthesized audio, and full gamepad support.
 
 ---
 
@@ -12,10 +12,11 @@ A browser-based Tetris clone inspired by **Tetris Effect**, built with React, Ty
 4. [Core Systems](#core-systems)
 5. [State Management](#state-management)
 6. [Rendering & Components](#rendering--components)
-7. [Styling System](#styling-system)
-8. [Input Handling](#input-handling)
+7. [Input Handling](#input-handling)
+8. [Audio System](#audio-system)
 9. [Game Mechanics](#game-mechanics)
-10. [Performance Optimizations](#performance-optimizations)
+10. [Mobile Support](#mobile-support)
+11. [Performance Optimizations](#performance-optimizations)
 
 ---
 
@@ -27,8 +28,10 @@ A browser-based Tetris clone inspired by **Tetris Effect**, built with React, Ty
 | Language | TypeScript |
 | Build Tool | Vite |
 | Styling | CSS Modules + Tailwind CSS |
-| State | Custom hook with `useSyncExternalStore` + Zustand |
-| Fonts | Press Start 2P (retro), Roboto Mono |
+| State | Custom hook with `useSyncExternalStore` |
+| Audio | Web Audio API (synthesized) |
+| Backend | Supabase (leaderboard) |
+| Fonts | Press Start 2P, Roboto Mono |
 
 ---
 
@@ -39,7 +42,7 @@ The application follows a **clean separation between game logic and rendering**:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      React UI Layer                         │
-│  (TetrisGame, GameBoard, GameStats, PiecePreview, etc.)    │
+│  (BlocksGame, GameBoard, GameStats, MobileGame, etc.)      │
 └─────────────────────────┬───────────────────────────────────┘
                           │
                           │ useSyncExternalStore
@@ -56,6 +59,10 @@ The application follows a **clean separation between game logic and rendering**:
 │  │ (State)  │ │(Collision│ │ (Shapes, │ │ Handler  │       │
 │  │          │ │ Clearing)│ │ Rotation)│ │ (DAS/ARR)│       │
 │  └──────────┘ └──────────┘ └──────────┘ └──────────┘       │
+│  ┌──────────┐ ┌──────────┐                                  │
+│  │  Zone    │ │ Particle │                                  │
+│  │  System  │ │  System  │                                  │
+│  └──────────┘ └──────────┘                                  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -67,39 +74,57 @@ The application follows a **clean separation between game logic and rendering**:
 
 ```
 src/
-├── engine/                 # Pure TypeScript game logic (no React)
-│   ├── types.ts           # All type definitions, enums, constants
-│   ├── GameEngine.ts      # Main game loop, state machine, events
-│   ├── Board.ts           # Board ops, collision, line clearing, T-spin
-│   ├── Piece.ts           # Tetromino shapes, colors, SRS rotation
-│   ├── InputHandler.ts    # Keyboard & gamepad input with DAS/ARR
-│   └── ZoneSystem.ts      # Zone mechanic encapsulation
+├── engine/                    # Pure TypeScript game logic (no React)
+│   ├── types.ts              # All type definitions, enums, constants
+│   ├── GameEngine.ts         # Main game loop, state machine, events
+│   ├── Board.ts              # Board ops, collision, line clearing, T-spin
+│   ├── Piece.ts              # Piece shapes, colors, SRS rotation
+│   ├── InputHandler.ts       # Keyboard & gamepad input with DAS/ARR
+│   ├── ZoneSystem.ts         # Zone mechanic encapsulation
+│   └── ParticleSystem.ts     # Visual effects system
 │
 ├── hooks/
-│   └── useGameEngine.ts   # React hook binding engine to UI
+│   ├── useGameEngine.ts      # React hook binding engine to UI
+│   ├── useMobileDetect.ts    # Device detection for mobile UI
+│   └── useParticles.ts       # Particle effect hook
 │
 ├── components/
-│   ├── game/
-│   │   └── TetrisGame.tsx # Main game container & layout
 │   ├── Board/
-│   │   ├── GameBoard.tsx  # Game board rendering with drop trail
-│   │   └── GameBoard.module.css
-│   └── HUD/
-│       ├── GameStats.tsx  # Score, level, lines, Zone meter
-│       ├── PiecePreview.tsx # Hold piece & next queue
-│       └── *.module.css
-│
-├── styles/
-│   ├── Mino.module.css    # Unified tetromino block styling
-│   ├── theme.ts           # Theme tokens
-│   └── tokens/            # Design tokens (colors, spacing, etc.)
+│   │   └── GameBoard.tsx     # Main game board rendering
+│   ├── HUD/
+│   │   ├── GameStats.tsx     # Score, level, lines, Zone meter
+│   │   └── PiecePreview.tsx  # Hold piece & next queue
+│   ├── game/
+│   │   ├── BlocksGame.tsx    # Main desktop game container
+│   │   ├── CurrentHighScore/ # Live high score display
+│   │   ├── GameOverModal/    # Score submission modal
+│   │   ├── HighScores/       # Leaderboard display
+│   │   ├── HoldArea/         # Hold piece display
+│   │   ├── NextPiece/        # Next piece queue
+│   │   ├── Settings/         # DAS/ARR configuration
+│   │   ├── StartScreen/      # Title screen with controls
+│   │   └── Stats/            # In-game statistics
+│   ├── mobile/
+│   │   ├── MobileGame.tsx    # GameBoy-style mobile UI
+│   │   └── controls/         # Touch D-pad and buttons
+│   └── common/
+│       └── ErrorBoundary.tsx # Error handling wrapper
 │
 ├── systems/
-│   ├── ScoringSystem.ts   # Score calculation utilities
-│   ├── LevelSystem.ts     # Level progression
-│   └── AudioSystem.ts     # Audio stub (future)
+│   ├── AudioSystem.ts        # Web Audio API synthesized SFX
+│   ├── ScoringSystem.ts      # Score calculation utilities
+│   └── LevelSystem.ts        # Level progression
 │
-└── utils/                  # Shared utilities
+├── styles/
+│   ├── Mino.module.css       # Unified block styling
+│   ├── theme.ts              # Theme tokens
+│   └── tokens/               # Design tokens (colors, spacing, etc.)
+│
+└── utils/
+    ├── constants.ts          # Game constants (shapes, colors, speeds)
+    ├── highScores.ts         # Supabase leaderboard integration
+    ├── keyBindingsStorage.ts # Persist custom key bindings
+    └── gamepadControls.ts    # Gamepad state management
 ```
 
 ---
@@ -116,20 +141,20 @@ The central orchestrator. Manages:
 - **Input processing**: Converts `InputAction` into state changes
 
 ```typescript
-// Key state interface
 interface GameState {
   phase: GamePhase;
   board: Board;
-  currentPiece: Tetromino | null;
+  currentPiece: Piece | null;
   ghostY: number;
-  holdPiece: TetrominoType | null;
-  nextPieces: TetrominoType[];
+  holdPiece: PieceType | null;
+  nextPieces: PieceType[];
   score: number;
   level: number;
   linesCleared: number;
   lock: LockState;
   combo: ComboState;
   zone: ZoneState;
+  lastClear: ClearType | null;
 }
 ```
 
@@ -146,36 +171,30 @@ Handles all board-level operations:
 
 ### Piece (`src/engine/Piece.ts`)
 
-Defines tetromino data:
+Defines piece data:
 
 - **Shapes**: 4x4 grid definitions for each rotation state
 - **Colors**: Neon color palette per piece type
 - **SRS Wall Kicks**: Standard + I-piece kick tables
 - **7-Bag Randomizer**: Ensures fair piece distribution
 
-### Types (`src/engine/types.ts`)
+### InputHandler (`src/engine/InputHandler.ts`)
 
-Central type definitions:
+Handles keyboard and gamepad input with professional-grade timing:
 
 ```typescript
-// Tetromino types
-enum TetrominoType { I, O, T, S, Z, J, L }
-
-// Board dimensions
-const BOARD_WIDTH = 10;
-const BOARD_HEIGHT = 40;  // 20 visible + 20 buffer
-const VISIBLE_HEIGHT = 20;
-
-// Clear types for scoring
-type ClearType = 'single' | 'double' | 'triple' | 'tetris' 
-              | 'tSpinSingle' | 'tSpinDouble' | 'tSpinTriple' | 'allClear' | ...
+interface InputConfig {
+  das: number;  // Delayed Auto Shift (167ms default)
+  arr: number;  // Auto Repeat Rate (33ms default)
+  sdf: number;  // Soft Drop Factor (20x)
+}
 ```
 
 ---
 
 ## State Management
 
-### Primary: `useGameEngine` Hook
+### `useGameEngine` Hook (`src/hooks/useGameEngine.ts`)
 
 Uses React 18's `useSyncExternalStore` for efficient state sync:
 
@@ -200,19 +219,12 @@ function useGameEngine(initialStage?: StageInfo): UseGameEngineReturn {
 }
 ```
 
-### Alternative: Zustand Store
+**Why this pattern?**
 
-Also available for more complex state needs:
-
-```typescript
-const useGameStore = create<GameStore>((set, get) => ({
-  engine: null,
-  state: null,
-  initialize: () => { /* ... */ },
-  start: () => { /* ... */ },
-  handleInput: (action) => { /* ... */ },
-}));
-```
+1. **No React in engine**: Game logic is pure TypeScript, testable without React
+2. **Selective re-renders**: Only update React when meaningful state changes
+3. **60 FPS game loop**: Engine updates independently of React render cycle
+4. **Event-driven audio**: Audio system subscribes to game events
 
 ---
 
@@ -221,128 +233,66 @@ const useGameStore = create<GameStore>((set, get) => ({
 ### Component Hierarchy
 
 ```
-TetrisGame
-├── GameBoard (center)
-│   ├── DropTrail (Zone mode only)
-│   ├── BoardRow[] (memoized)
-│   │   └── Mino / EmptyCell
-│   └── PauseOverlay
-├── Left Panel
-│   ├── HoldPiece
-│   ├── ZoneMeter (4 segments)
-│   └── GameStats (score, level, lines)
-└── Right Panel
-    └── NextQueue (5 pieces)
+App
+├── BlocksGame (desktop)                    # or MobileGame (mobile)
+│   ├── GameBoard (center)
+│   │   ├── Grid cells (memoized rows)
+│   │   ├── Ghost piece
+│   │   └── Current piece
+│   ├── Left Panel
+│   │   ├── HoldPiece
+│   │   ├── ZoneMeter
+│   │   └── GameStats
+│   └── Right Panel
+│       ├── NextQueue (5 pieces)
+│       └── CurrentHighScore
+│
+└── MobileGame (phones)
+    ├── Compact GameBoard
+    ├── GameBoy-style controls
+    │   ├── D-Pad
+    │   └── ABXY buttons
+    └── System buttons (pause, zone)
 ```
 
 ### Memoization Strategy
 
-All components use `React.memo` with carefully chosen dependencies:
+All components use `React.memo` with carefully chosen dependencies to minimize re-renders:
 
-```typescript
-// Memoized single block
-const Mino = memo<MinoProps>(({ color, isGhost, isCurrent }) => {
-  // ...
-});
-
-// Memoized row - only re-renders when row data changes
-const BoardRow = memo<RowProps>(({ y, rowData, currentPieceCells, ... }) => {
-  // ...
-});
-
-// Board uses useMemo for computed values
-const currentPieceCells = useMemo(() => {
-  // Only recompute when piece position/rotation changes
-}, [piece?.position.x, piece?.position.y, piece?.rotation, piece?.type]);
-```
-
----
-
-## Styling System
-
-### CSS Architecture
-
-1. **CSS Modules**: Scoped styles per component (`.module.css`)
-2. **Shared Mino Styles**: `Mino.module.css` defines all block appearances
-3. **CSS Custom Properties**: Easy theming and consistency
-
-### Mino Styling (`Mino.module.css`)
-
-All tetromino blocks share the same base style with state modifiers:
-
-```css
-/* Base block with 3D bevel and neon glow */
-.mino.filled {
-  box-shadow: 
-    inset 2px 2px 4px var(--mino-highlight),
-    inset -2px -2px 3px var(--mino-shadow),
-    0 0 8px var(--mino-color),
-    0 0 16px var(--mino-color);
-}
-
-/* State modifiers */
-.mino.filled.current { /* Extra bright glow */ }
-.mino.filled.locked { /* Slightly dimmer */ }
-.mino.ghost { /* Dashed outline */ }
-
-/* Size variants */
-.mino.small { --mino-size: 14px; }
-.mino.preview { --mino-size: 18px; }
-```
-
-### Visual Theme (Tetris Effect Aesthetic)
-
-| Element | Style |
-|---------|-------|
-| Background | Deep space gradient with nebula effects and stars |
-| Board Frame | Metallic 3D beveled border |
-| Empty Cells | Very dark, semi-transparent |
-| Filled Blocks | Neon glow with 3D bevel |
-| Drop Trail | Vertical light beam (Zone mode only) |
-| Zone Meter | 4-segment display with fill animations |
+- **Board rows**: Only re-render when row data changes
+- **Preview pieces**: Memoized by piece type
+- **Stats**: Only re-render when values change
 
 ---
 
 ## Input Handling
 
-### InputHandler (`src/engine/InputHandler.ts`)
+### Keyboard Controls
 
-Handles keyboard input with DAS/ARR:
+| Action | Default Keys |
+|--------|-------------|
+| Move Left/Right | ← → |
+| Soft Drop | ↓ |
+| Hard Drop | Space |
+| Rotate CW | ↑ or X |
+| Rotate CCW | Z |
+| Rotate 180° | A |
+| Hold | C or Shift |
+| Zone | E |
+| Pause | Escape |
 
-```typescript
-interface InputConfig {
-  das: number;  // Delayed Auto Shift (167ms default)
-  arr: number;  // Auto Repeat Rate (33ms default)
-  sdf: number;  // Soft Drop Factor (20x)
-}
+### Gamepad Support
 
-// Key bindings
-const DEFAULT_KEY_BINDINGS = {
-  ArrowLeft: 'moveLeft',
-  ArrowRight: 'moveRight',
-  ArrowDown: 'softDrop',
-  ArrowUp: 'hardDrop',    // Tetris Effect style
-  KeyZ: 'rotateCCW',
-  KeyX: 'rotateCW',
-  KeyC: 'hold',
-  KeyE: 'zone',
-  Escape: 'pause',
-};
-```
-
-### GamepadHandler
-
-Full PS5 DualSense support with Tetris Effect mappings:
+Full PS5 DualSense / Xbox controller support:
 
 ```typescript
-// Button mappings (PS5 controller)
 const buttonMappings = {
-  0: 'rotateCCW',  // Cross
-  1: 'rotateCW',   // Circle
-  4: 'hold',       // L1
-  5: 'hold',       // R1
-  6: 'zone',       // L2
-  7: 'zone',       // R2
+  0: 'rotateCCW',  // Cross / A
+  1: 'rotateCW',   // Circle / B
+  4: 'hold',       // L1 / LB
+  5: 'hold',       // R1 / RB
+  6: 'zone',       // L2 / LT
+  7: 'zone',       // R2 / RT
   12: 'hardDrop',  // D-pad Up
   13: 'softDrop',  // D-pad Down
   14: 'moveLeft',  // D-pad Left
@@ -352,34 +302,84 @@ const buttonMappings = {
 
 ---
 
+## Audio System
+
+The audio system (`src/systems/AudioSystem.ts`) uses the **Web Audio API** for synthesized sound effects:
+
+### Features
+
+- **Quantized tones**: Musical notes from C Major Pentatonic scale
+- **Procedural SFX**: All sounds generated programmatically (no audio files for SFX)
+- **Zone mode effect**: Low-pass filter for "underwater" audio effect
+- **Event-driven**: Subscribes to game events via `useGameAudio` hook
+
+### Sound Types
+
+| Event | Sound |
+|-------|-------|
+| Rotate | Cycling scale notes |
+| Move | Short quantized tone |
+| Hard Drop | Low thud + noise burst |
+| Line Clear | Ascending arpeggio |
+| Quad | Triumphant chord |
+| Zone Activate | High sustained tone |
+
+---
+
 ## Game Mechanics
 
-### Implemented (Tetris Guideline + Tetris Effect)
+### Implemented Features
 
 | Mechanic | Description |
 |----------|-------------|
 | **SRS Rotation** | Super Rotation System with wall kicks |
 | **7-Bag Randomizer** | Fair piece distribution |
-| **Hold Piece** | Store piece for later |
+| **Hold Piece** | Store piece for later (once per piece) |
 | **Ghost Piece** | Drop preview |
-| **Lock Delay** | 500ms with up to 15 move resets |
+| **Lock Delay** | 500ms with up to 15 move/rotate resets |
 | **T-Spin Detection** | 3-corner rule, mini vs full |
 | **Combos** | Consecutive line clears |
-| **Back-to-Back** | Bonus for consecutive difficult clears |
+| **Back-to-Back** | 1.5x bonus for consecutive difficult clears |
+| **Perfect Clear** | Bonus for clearing entire board |
 | **Zone Mechanic** | Freeze time, stack lines at bottom |
-| **DAS/ARR** | Smooth piece movement |
+| **DAS/ARR** | Configurable delayed auto-shift |
 
 ### Zone Mode (Signature Feature)
 
-1. Fill meter by clearing lines (8% per line)
+1. Fill meter by clearing lines (25% per line)
 2. Activate with full meter (press E or L2/R2)
 3. During Zone:
    - Gravity disabled
-   - Timer counts down (15 seconds)
+   - Timer counts down (up to 20 seconds based on fill)
    - Cleared lines **stack at bottom** (don't disappear)
-   - Drop trail visual effect active
+   - Each cleared line extends zone time
 4. Zone ends → all stacked lines clear at once
-5. Scoring: Exponential bonus based on total lines (Decahexatris = 16 lines!)
+5. Scoring: Exponential bonus based on total lines
+
+| Zone Clear | Lines | Base Score |
+|------------|-------|------------|
+| Sexdeca | 16+ | 26,000 |
+| Dodeca | 12-15 | 18,000 |
+| Octo | 8-11 | 10,000 |
+
+---
+
+## Mobile Support
+
+### Device Detection
+
+`useMobileDetect` hook checks viewport width and touch capability to render the appropriate UI:
+
+- **Desktop**: Full BlocksGame with keyboard/gamepad
+- **Mobile**: GameBoy-inspired MobileGame with touch controls
+
+### Touch Controls
+
+GameBoy-style control layout:
+
+- **D-Pad**: Left side for movement (swipe gestures)
+- **ABXY Buttons**: Right side for rotation
+- **System Buttons**: Top for pause, zone, hold
 
 ---
 
@@ -388,41 +388,35 @@ const buttonMappings = {
 ### Engine Level
 
 - **Direct state mutation** for hot paths (timer updates) to reduce GC pressure
-- **Immutable updates** only for meaningful state changes
+- **Primitive comparisons** in state change detection (no string concatenation)
+- **Lazy board comparisons**: Only check board when lines are cleared
 
 ### React Level
 
 - **`useSyncExternalStore`**: Only re-render when state actually changes
-- **Throttled updates**: Zone timer only triggers re-render every 100ms
+- **Throttled zone timer**: Visual updates every 100ms, not every frame
 - **`React.memo`** on all components with proper dependency arrays
-- **`useMemo`** for computed values (piece cells, ghost cells)
+- **`useMemo`** for computed values (piece cells, ghost position)
 
-### CSS Level
+### Audio Level
 
-- Removed expensive animations during Zone mode
-- Simplified `box-shadow` intensities
-- No `filter` effects on locked pieces
-
----
-
-## Future Considerations
-
-- **Audio System**: Web Audio API integration (stubs exist)
-- **Journey Mode**: Stage progression with themes
-- **Particle Effects**: Line clear celebrations
-- **Leaderboards**: Online high scores
-- **Replays**: Record and playback games
+- **Non-blocking context resume**: Fire-and-forget for audio context
+- **Efficient oscillator creation**: Minimal node graph per sound
+- **No audio file loading**: All SFX synthesized on demand
 
 ---
 
-## Key Files for Reference
+## Key Files Reference
 
 | File | Purpose |
 |------|---------|
 | `src/engine/types.ts` | All type definitions |
-| `src/engine/GameEngine.ts` | Core game logic |
-| `src/engine/Board.ts` | Board operations |
+| `src/engine/GameEngine.ts` | Core game logic & state machine |
+| `src/engine/Board.ts` | Board operations & collision |
+| `src/engine/Piece.ts` | Piece data & 7-bag |
 | `src/hooks/useGameEngine.ts` | React integration |
+| `src/components/game/BlocksGame.tsx` | Desktop game container |
+| `src/components/mobile/MobileGame.tsx` | Mobile game container |
 | `src/components/Board/GameBoard.tsx` | Main board render |
+| `src/systems/AudioSystem.ts` | Web Audio SFX |
 | `src/styles/Mino.module.css` | Block styling |
-| `src/components/game/TetrisGame.module.css` | Layout & background |

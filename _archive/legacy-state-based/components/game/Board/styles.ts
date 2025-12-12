@@ -53,4 +53,5 @@ export const Cell = styled.div<{ $color?: string | undefined }>`
       border-radius: 2px;
     }
   `}
-`; 
+`;
+

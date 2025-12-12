@@ -1,3 +1,16 @@
+# Original Project Brief
+
+> **Note**: This was the original project specification from early development. The actual implementation evolved significantly beyond this brief, particularly with:
+> - React DOM rendering instead of HTML5 Canvas
+> - Tetris Effect-inspired Zone mechanic
+> - Full gamepad support
+> - Mobile GameBoy-style UI
+> - Web Audio synthesized sound effects
+> - Online leaderboard via Supabase
+> - Engine-based architecture (see `src/engine/`)
+
+---
+
 ## Project Overview
 Create a modern web-based Tetris clone that faithfully reproduces the core gameplay mechanics of the classic game while adding modern features and a polished user interface.
 
@@ -192,3 +205,4 @@ src/
 - Adjustable game speed
 
 This brief provides a foundation for creating a modern, polished Tetris clone. The implementation should focus on code quality, performance, and user experience while maintaining the classic Tetris gameplay that players expect.
+

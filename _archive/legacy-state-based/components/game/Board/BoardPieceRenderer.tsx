@@ -32,4 +32,5 @@ export const BoardPieceRenderer = ({ piece, isGhost = false, position }: BoardPi
       )}
     </>
   );
-}; 
+};
+

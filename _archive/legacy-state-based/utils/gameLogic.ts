@@ -679,4 +679,5 @@ export const rotate180 = (gameState: GameState): GameState => {
   // Rotate twice using existing rotate function
   const firstRotation = rotate(gameState, true);
   return rotate(firstRotation, true);
-}; 
+};
+

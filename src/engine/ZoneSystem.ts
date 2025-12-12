@@ -1,6 +1,6 @@
 // =============================================================================
-// TETRIS EFFECT CLONE - ZONE SYSTEM
-// The signature Tetris Effect mechanic: freeze time and stack massive clears
+// BLOCKS - ZONE SYSTEM
+// Freeze time and stack massive clears
 // =============================================================================
 
 import {
@@ -240,7 +240,7 @@ export const ZONE_CLEAR_NAMES: Record<number, string> = {
   1: 'Single',
   2: 'Double',
   3: 'Triple',
-  4: 'Tetris',
+  4: 'Quad',
   5: 'Pentris',
   6: 'Hexris',
   7: 'Heptris',
@@ -311,7 +311,7 @@ export const ZONE_VIRTUAL_LINE_BONUS: Record<string, number> = {
   single: 0,
   double: 0,
   triple: 0,
-  tetris: 1,      // Tetris counts as 5 lines for meter
+  quad: 1,        // Quad counts as 5 lines for meter
   tSpinSingle: 2, // T-Spin single counts as 3 lines
   tSpinDouble: 3, // T-Spin double counts as 5 lines  
   tSpinTriple: 4, // T-Spin triple counts as 7 lines

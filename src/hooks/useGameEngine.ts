@@ -1,5 +1,5 @@
 // =============================================================================
-// TETRIS EFFECT CLONE - REACT GAME ENGINE HOOK
+// BLOCKS - REACT GAME ENGINE HOOK
 // Binds the game engine to React with state synchronization
 // =============================================================================
 

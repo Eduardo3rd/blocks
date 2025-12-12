@@ -141,7 +141,7 @@ export function useParticleEffects(
           for (const lineY of event.lines) {
             // Get colors for the line (we'd need board state for accurate colors)
             // For now, use a gradient based on clear type
-            const baseColor = event.clearType === 'tetris' ? '#00f0f0' :
+            const baseColor = event.clearType === 'quad' ? '#00f0f0' :
                              event.clearType.includes('tSpin') ? '#a000f0' :
                              '#60a0ff';
             particles.emitLineClear(lineY, [baseColor]);

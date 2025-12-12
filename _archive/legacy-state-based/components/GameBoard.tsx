@@ -120,4 +120,5 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState }) => {
   );
 };
 
-export default GameBoard; 
+export default GameBoard;
+

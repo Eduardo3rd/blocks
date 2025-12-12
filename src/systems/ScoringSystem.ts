@@ -1,5 +1,5 @@
 // =============================================================================
-// TETRIS EFFECT CLONE - SCORING SYSTEM
+// BLOCKS - SCORING SYSTEM
 // Complete scoring logic with combos, T-spins, back-to-back, Zone bonuses
 // =============================================================================
 
@@ -11,13 +11,13 @@ import { ClearType } from '../engine/types';
 
 /**
  * Base scores for each clear type (before level multiplier)
- * Based on Tetris Guideline scoring
+ * Based on standard block puzzle scoring
  */
 export const BASE_SCORES: Record<ClearType, number> = {
   single: 100,
   double: 300,
   triple: 500,
-  tetris: 800,
+  quad: 800,
   tSpinMini: 100,
   tSpinMiniSingle: 200,
   tSpinMiniDouble: 400,
@@ -35,24 +35,24 @@ export const ZONE_LINE_NAMES: Record<number, string> = {
   1: 'Single',
   2: 'Double',
   3: 'Triple',
-  4: 'Tetris',
-  5: 'Pentris',
-  6: 'Hexris',
-  7: 'Heptris',
-  8: 'Octris',
-  9: 'Nonaris',
-  10: 'Decuple',
-  11: 'Undecuple',
-  12: 'Dodecuple',
-  13: 'Tridecuple',
-  14: 'Quattuordecuple',
-  15: 'Quindecuple',
-  16: 'Sexdecuple',
-  17: 'Septendecuple',
-  18: 'Octodecuple',
-  19: 'Novemdecuple',
-  20: 'Perfectris',
-  21: 'Ultimatris',
+  4: 'Quad',
+  5: 'Penta',
+  6: 'Hexa',
+  7: 'Hepta',
+  8: 'Octo',
+  9: 'Nona',
+  10: 'Deca',
+  11: 'Undeca',
+  12: 'Dodeca',
+  13: 'Trideca',
+  14: 'Quattuordeca',
+  15: 'Quindeca',
+  16: 'Sexdeca',
+  17: 'Septendeca',
+  18: 'Octodeca',
+  19: 'Novemdeca',
+  20: 'Perfecta',
+  21: 'Ultima',
 };
 
 // Zone scores increase exponentially
@@ -83,7 +83,7 @@ export function getClearTypeName(clearType: ClearType): string {
     single: 'Single',
     double: 'Double',
     triple: 'Triple',
-    tetris: 'Tetris',
+    quad: 'Quad',
     tSpinMini: 'T-Spin Mini',
     tSpinMiniSingle: 'T-Spin Mini Single',
     tSpinMiniDouble: 'T-Spin Mini Double',
@@ -102,7 +102,7 @@ export function getClearTypeName(clearType: ClearType): string {
  */
 export function isDifficultClear(clearType: ClearType): boolean {
   const difficultTypes: ClearType[] = [
-    'tetris',
+    'quad',
     'tSpinSingle',
     'tSpinDouble',
     'tSpinTriple',
@@ -251,7 +251,7 @@ export const PERFECT_CLEAR_SCORES: Record<number, number> = {
   1: 800,   // Single Perfect Clear
   2: 1200,  // Double Perfect Clear
   3: 1800,  // Triple Perfect Clear
-  4: 2000,  // Tetris Perfect Clear (actually gives allClear type which is 3500)
+  4: 2000,  // Quad Perfect Clear (actually gives allClear type which is 3500)
 };
 
 /**
@@ -275,7 +275,7 @@ export interface GameStats {
   singles: number;
   doubles: number;
   triples: number;
-  tetrises: number;
+  quads: number;
   
   // T-spin counts
   tSpins: number;
@@ -293,7 +293,7 @@ export interface GameStats {
   startTime: number;
   endTime: number | null;
   
-  // Zone stats (Tetris Effect specific)
+  // Zone stats
   zonesActivated: number;
   zoneLinesCleared: number;
   maxZoneClear: number;
@@ -307,7 +307,7 @@ export function createEmptyStats(): GameStats {
     singles: 0,
     doubles: 0,
     triples: 0,
-    tetrises: 0,
+    quads: 0,
     tSpins: 0,
     tSpinMinis: 0,
     tSpinSingles: 0,
@@ -347,8 +347,8 @@ export function updateStatsForClear(
     case 'triple':
       newStats.triples++;
       break;
-    case 'tetris':
-      newStats.tetrises++;
+    case 'quad':
+      newStats.quads++;
       break;
     case 'tSpin':
     case 'tSpinMini':
@@ -401,7 +401,7 @@ export interface HighScoreEntry {
   stage?: string;
 }
 
-const HIGH_SCORES_KEY = 'tetris_high_scores';
+const HIGH_SCORES_KEY = 'blocks_high_scores';
 const MAX_HIGH_SCORES = 10;
 
 export function loadHighScores(): HighScoreEntry[] {

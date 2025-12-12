@@ -1,5 +1,5 @@
 // =============================================================================
-// TETRIS EFFECT CLONE - GAME ENGINE
+// BLOCKS - GAME ENGINE
 // Main game loop, state machine, and event coordination
 // =============================================================================
 
@@ -537,7 +537,7 @@ export class GameEngine {
       single: 100,
       double: 300,
       triple: 500,
-      tetris: 800,
+      quad: 800,
       tSpinMini: 100,
       tSpinMiniSingle: 200,
       tSpinMiniDouble: 400,
@@ -646,7 +646,7 @@ export class GameEngine {
     tSpin: 'full' | 'mini' | null
   ): void {
     // In Zone mode, completed lines MOVE to the bottom (don't disappear!)
-    // This is the signature Tetris Effect Zone mechanic:
+    // This is the signature Zone mechanic:
     // - Completed lines stack at the bottom
     // - The blocks above shift down to fill the gaps
     // - Player continues playing on top of the zone lines
@@ -692,7 +692,7 @@ export class GameEngine {
     const zoneScore = this.calculateZoneEndScore(zone);
     
     // NOTE: Zone lines do NOT advance level or count toward line goals
-    // This is accurate to Tetris Effect behavior
+    // This is accurate to Zone mode behavior
     
     this.state = {
       ...this.state,
@@ -707,7 +707,7 @@ export class GameEngine {
   }
   
   private calculateZoneEndScore(zone: ZoneState): number {
-    // Tetris Effect Zone multiplier system:
+    // Zone multiplier system:
     // - Base multiplier: 1x
     // - +1x if activated with full meter
     // - +1x if cleared 8+ lines during Zone
@@ -809,7 +809,7 @@ export class GameEngine {
   
   private getGravity(): number {
     // Gravity curve (cells per second)
-    // Based on modern Tetris guidelines
+    // Based on modern puzzle game guidelines
     const gravityTable: Record<number, number> = {
       1: 1,
       2: 1.2,

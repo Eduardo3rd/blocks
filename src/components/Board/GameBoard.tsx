@@ -1,5 +1,5 @@
 // =============================================================================
-// TETRIS EFFECT CLONE - GAME BOARD COMPONENT
+// BLOCKS - GAME BOARD COMPONENT
 // Renders the game board with pieces, ghost piece, drop trail, and effects
 // HIGHLY OPTIMIZED for 60fps performance
 // =============================================================================

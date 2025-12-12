@@ -76,4 +76,5 @@ export const PieceRenderer: React.FC<PieceRendererProps> = ({
       )}
     </svg>
   );
-}; 
+};
+

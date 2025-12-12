@@ -1,5 +1,5 @@
 // =============================================================================
-// TETRIS EFFECT CLONE - PIECE PREVIEW COMPONENT
+// BLOCKS - PIECE PREVIEW COMPONENT
 // Used for Hold piece and Next queue display
 // Uses shared Mino styles for consistent block appearance
 // Optimized with memoization

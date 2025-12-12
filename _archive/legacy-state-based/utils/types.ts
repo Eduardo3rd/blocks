@@ -43,4 +43,5 @@ export interface GameState {
 }
 
 // Add a helper type for board cells
-export type BoardCell = TetrominoType | null; 
+export type BoardCell = TetrominoType | null;
+

@@ -8,7 +8,7 @@ import styles from './MobileGame.module.css';
 
 interface SessionStats {
   totalClears: number;
-  tetrisCount: number;
+  quadCount: number;
   tSpinCount: number;
   longestCombo: number;
   perfectClears: number;
@@ -36,8 +36,8 @@ export const MobileGameOverScreen: React.FC<MobileGameOverScreenProps> = ({
   const [playerName, setPlayerName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const tetrisRate = stats.totalClears > 0 
-    ? Math.round((stats.tetrisCount / stats.totalClears) * 100) 
+  const quadRate = stats.totalClears > 0 
+    ? Math.round((stats.quadCount / stats.totalClears) * 100) 
     : 0;
 
   const handleSubmit = async () => {
@@ -67,8 +67,8 @@ export const MobileGameOverScreen: React.FC<MobileGameOverScreenProps> = ({
             <span>{lines}</span>
           </div>
           <div className={styles.statRow}>
-            <span>TETRIS RATE</span>
-            <span>{tetrisRate}%</span>
+            <span>QUAD RATE</span>
+            <span>{quadRate}%</span>
           </div>
         </div>
 

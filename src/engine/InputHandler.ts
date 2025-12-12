@@ -1,7 +1,7 @@
 // =============================================================================
-// TETRIS EFFECT CLONE - INPUT HANDLER
+// BLOCKS - INPUT HANDLER
 // DAS/ARR implementation, input buffering, keyboard/gamepad handling
-// Gamepad mappings match Tetris Effect defaults
+// Gamepad mappings for block puzzle games
 // =============================================================================
 
 import { InputAction, InputConfig, DEFAULT_INPUT_CONFIG } from './types';
@@ -315,7 +315,7 @@ enum GamepadButton {
 }
 
 // -----------------------------------------------------------------------------
-// Gamepad Handler - Tetris Effect PS5 Default Mappings
+// Gamepad Handler - PS5 Default Mappings
 // -----------------------------------------------------------------------------
 
 export class GamepadHandler {
@@ -331,8 +331,7 @@ export class GamepadHandler {
   // DAS/ARR state tracking
   private buttonHoldStates: Map<string, { pressTime: number; lastRepeatTime: number }> = new Map();
   
-  // Tetris Effect PS5 Default Button Mappings
-  // https://gamefaqs.gamespot.com/ps4/240623-tetris-effect/faqs/77557
+  // PS5 Default Button Mappings for block puzzle games
   private buttonMappings: Map<GamepadButton, InputAction> = new Map([
     // Face buttons
     [GamepadButton.Cross, 'rotateCCW'],      // Cross = Rotate Counter-Clockwise
@@ -417,7 +416,7 @@ export class GamepadHandler {
     // Check if it's a PlayStation controller
     const id = event.gamepad.id.toLowerCase();
     if (id.includes('dualsense') || id.includes('dualshock') || id.includes('playstation')) {
-      console.log('PlayStation controller detected - using Tetris Effect mappings');
+      console.log('PlayStation controller detected - using default mappings');
     }
   };
   
@@ -521,7 +520,7 @@ export class GamepadHandler {
     let leftDirection: string | null = null;
     
     if (Math.abs(leftX) > this.deadzone || Math.abs(leftY) > this.deadzone) {
-      // Prioritize horizontal movement (more common in Tetris)
+      // Prioritize horizontal movement (more common in block puzzles)
       if (Math.abs(leftX) > Math.abs(leftY)) {
         leftDirection = leftX < -this.deadzone ? 'left' : leftX > this.deadzone ? 'right' : null;
       } else {

@@ -622,4 +622,5 @@ const Game: React.FC = () => {
   );
 };
 
-export default Game; 
+export default Game;
+

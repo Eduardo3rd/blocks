@@ -26,7 +26,7 @@ export type KeyBinding = {
 // Constants
 // -----------------------------------------------------------------------------
 
-const STORAGE_KEY = 'tetris-key-bindings';
+const STORAGE_KEY = 'blocks-key-bindings';
 
 // Default key bindings (one primary key per action)
 export const DEFAULT_KEY_BINDINGS: KeyBindings = {

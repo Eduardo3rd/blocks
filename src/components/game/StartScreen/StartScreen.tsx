@@ -10,7 +10,7 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        <h1 className={styles.title}>TETRIS</h1>
+        <h1 className={styles.title}>BLOCKS</h1>
         
         <div className={styles.highScoreSection}>
           <CurrentHighScore variant="full" />

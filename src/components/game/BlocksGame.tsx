@@ -1,5 +1,5 @@
 // =============================================================================
-// TETRIS GAME - MAIN GAME COMPONENT
+// BLOCKS GAME - MAIN GAME COMPONENT
 // Classic 90s aesthetic with modern gameplay mechanics
 // =============================================================================
 
@@ -16,13 +16,13 @@ import { GameOverModal } from './GameOverModal/GameOverModal';
 import { Settings } from './Settings/Settings';
 import { saveHighScore } from '../../utils/highScores';
 import { KeyBindings } from '../../utils/keyBindingsStorage';
-import styles from './TetrisGame.module.css';
+import styles from './BlocksGame.module.css';
 
 // -----------------------------------------------------------------------------
 // Types
 // -----------------------------------------------------------------------------
 
-interface TetrisGameProps {
+interface BlocksGameProps {
   stage?: StageInfo;
   onGameOver?: (score: number) => void;
 }
@@ -30,7 +30,7 @@ interface TetrisGameProps {
 // Session statistics for pause screen
 interface SessionStats {
   totalClears: number;
-  tetrisCount: number;
+  quadCount: number;
   tSpinCount: number;
   longestCombo: number;
   perfectClears: number;
@@ -51,8 +51,8 @@ interface StartScreenProps {
 const StartScreen: React.FC<StartScreenProps> = ({ onStart, onSettings }) => {
   return (
     <div className={styles.startScreen}>
-      <h1 className={styles.title}>TETRIS</h1>
-      <p className={styles.subtitle}>EFFECT CLONE</p>
+      <h1 className={styles.title}>BLOCKS</h1>
+      <p className={styles.subtitle}>ZONE EDITION</p>
       
       {/* Current High Score Display */}
       <div className={styles.highScoreDisplay}>
@@ -117,9 +117,9 @@ const PauseScreen: React.FC<PauseScreenProps> = ({
   onResume,
   onSettings,
 }) => {
-  // Calculate Tetris rate (percentage of clears that are tetrises)
-  const tetrisRate = stats.totalClears > 0 
-    ? Math.round((stats.tetrisCount / stats.totalClears) * 100) 
+  // Calculate Quad rate (percentage of clears that are quads)
+  const quadRate = stats.totalClears > 0 
+    ? Math.round((stats.quadCount / stats.totalClears) * 100) 
     : 0;
   
   return (
@@ -141,8 +141,8 @@ const PauseScreen: React.FC<PauseScreenProps> = ({
             <span className={styles.pauseStatValue}>{lines}</span>
           </div>
           <div className={styles.pauseStatRow}>
-            <span className={styles.pauseStatLabel}>TETRIS RATE</span>
-            <span className={`${styles.pauseStatValue} ${styles.accent}`}>{tetrisRate}%</span>
+            <span className={styles.pauseStatLabel}>QUAD RATE</span>
+            <span className={`${styles.pauseStatValue} ${styles.accent}`}>{quadRate}%</span>
           </div>
         </div>
         
@@ -187,8 +187,8 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({
   stats,
   onRestart,
 }) => {
-  const tetrisRate = stats.totalClears > 0 
-    ? Math.round((stats.tetrisCount / stats.totalClears) * 100) 
+  const quadRate = stats.totalClears > 0 
+    ? Math.round((stats.quadCount / stats.totalClears) * 100) 
     : 0;
   
   return (
@@ -209,8 +209,8 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({
           <span>{lines}</span>
         </div>
         <div className={styles.finalStat}>
-          <span>TETRIS RATE</span>
-          <span>{tetrisRate}%</span>
+          <span>QUAD RATE</span>
+          <span>{quadRate}%</span>
         </div>
         <div className={styles.finalStat}>
           <span>T-SPINS</span>
@@ -229,7 +229,7 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({
 // Main Game Component
 // -----------------------------------------------------------------------------
 
-export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => {
+export const BlocksGame: React.FC<BlocksGameProps> = ({ stage, onGameOver }) => {
   const {
     state,
     start,
@@ -256,7 +256,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
   // Session statistics tracking
   const [sessionStats, setSessionStats] = useState<SessionStats>({
     totalClears: 0,
-    tetrisCount: 0,
+    quadCount: 0,
     tSpinCount: 0,
     longestCombo: 0,
     perfectClears: 0,
@@ -289,7 +289,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
     setHasStarted(true);
     setSessionStats({
       totalClears: 0,
-      tetrisCount: 0,
+      quadCount: 0,
       tSpinCount: 0,
       longestCombo: 0,
       perfectClears: 0,
@@ -304,7 +304,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
   const handleRestart = useCallback(() => {
     setSessionStats({
       totalClears: 0,
-      tetrisCount: 0,
+      quadCount: 0,
       tSpinCount: 0,
       longestCombo: 0,
       perfectClears: 0,
@@ -386,7 +386,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
           setSessionStats(prev => ({
             ...prev,
             totalClears: prev.totalClears + 1,
-            tetrisCount: prev.tetrisCount + (event.clearType === 'tetris' ? 1 : 0),
+            quadCount: prev.quadCount + (event.clearType === 'quad' ? 1 : 0),
             tSpinCount: prev.tSpinCount + (isTSpin(event.clearType) ? 1 : 0),
             perfectClears: prev.perfectClears + (event.clearType === 'allClear' ? 1 : 0),
           }));
@@ -516,4 +516,8 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ stage, onGameOver }) => 
   );
 };
 
-export default TetrisGame;
+// Legacy export for backwards compatibility
+export const TetrisGame = BlocksGame;
+
+export default BlocksGame;
+

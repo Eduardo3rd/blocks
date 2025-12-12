@@ -1,5 +1,5 @@
 // =============================================================================
-// TETRIS EFFECT CLONE - LEVEL SYSTEM
+// BLOCKS - LEVEL SYSTEM
 // Journey mode stages, speed curves, and progression
 // =============================================================================
 
@@ -11,7 +11,7 @@ import { StageInfo, SpeedCurve, JourneyProgress } from '../engine/types';
 // -----------------------------------------------------------------------------
 
 /**
- * Standard speed curve (similar to Tetris Guidelines)
+ * Standard speed curve for block puzzle games
  */
 export const STANDARD_SPEED_CURVE: SpeedCurve = {
   startLevel: 1,
@@ -235,7 +235,7 @@ export function calculateLevel(linesCleared: number, startLevel: number = 1): nu
 // Progress Management
 // -----------------------------------------------------------------------------
 
-const PROGRESS_KEY = 'tetris_journey_progress';
+const PROGRESS_KEY = 'blocks_journey_progress';
 
 /**
  * Create empty progress

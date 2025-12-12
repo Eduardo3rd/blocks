@@ -131,4 +131,5 @@ export const Board: React.FC<BoardProps> = ({ gameState }) => {
       </BoardContainer>
     </div>
   );
-}; 
+};
+

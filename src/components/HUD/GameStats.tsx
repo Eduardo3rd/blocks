@@ -1,5 +1,5 @@
 // =============================================================================
-// TETRIS EFFECT CLONE - GAME STATS COMPONENT
+// BLOCKS - GAME STATS COMPONENT
 // Displays score, level, lines, and clear info
 // Optimized with memoization
 // =============================================================================
@@ -82,7 +82,7 @@ export const GameStats = memo<GameStatsProps>(({
 
 GameStats.displayName = 'GameStats';
 
-// Zone meter component with 4 segments like Tetris Effect
+// Zone meter component with 4 segments
 interface ZoneMeterProps {
   meter: number;  // 0.0-1.0 (fractional)
   isActive: boolean;

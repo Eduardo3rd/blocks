@@ -30,7 +30,7 @@ interface MobileGameProps {
 
 interface SessionStats {
   totalClears: number;
-  tetrisCount: number;
+  quadCount: number;
   tSpinCount: number;
   longestCombo: number;
   perfectClears: number;
@@ -63,7 +63,7 @@ export const MobileGame: React.FC<MobileGameProps> = ({ stage, onGameOver }) => 
   // Session statistics
   const [sessionStats, setSessionStats] = useState<SessionStats>({
     totalClears: 0,
-    tetrisCount: 0,
+    quadCount: 0,
     tSpinCount: 0,
     longestCombo: 0,
     perfectClears: 0,
@@ -95,7 +95,7 @@ export const MobileGame: React.FC<MobileGameProps> = ({ stage, onGameOver }) => 
     setHasStarted(true);
     setSessionStats({
       totalClears: 0,
-      tetrisCount: 0,
+      quadCount: 0,
       tSpinCount: 0,
       longestCombo: 0,
       perfectClears: 0,
@@ -109,7 +109,7 @@ export const MobileGame: React.FC<MobileGameProps> = ({ stage, onGameOver }) => 
   const handleRestart = useCallback(() => {
     setSessionStats({
       totalClears: 0,
-      tetrisCount: 0,
+      quadCount: 0,
       tSpinCount: 0,
       longestCombo: 0,
       perfectClears: 0,
@@ -174,7 +174,7 @@ export const MobileGame: React.FC<MobileGameProps> = ({ stage, onGameOver }) => 
           setSessionStats(prev => ({
             ...prev,
             totalClears: prev.totalClears + 1,
-            tetrisCount: prev.tetrisCount + (event.clearType === 'tetris' ? 1 : 0),
+            quadCount: prev.quadCount + (event.clearType === 'quad' ? 1 : 0),
             tSpinCount: prev.tSpinCount + (isTSpin(event.clearType) ? 1 : 0),
             perfectClears: prev.perfectClears + (event.clearType === 'allClear' ? 1 : 0),
           }));

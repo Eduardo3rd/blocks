@@ -1,5 +1,5 @@
 // =============================================================================
-// TETRIS EFFECT CLONE - PIECE SYSTEM
+// BLOCKS - PIECE SYSTEM
 // SRS (Super Rotation System) implementation with wall kicks
 // =============================================================================
 

@@ -9,6 +9,6 @@ export const spacing = {
   xxl: '48px',   // 48px - Massive spacing
   
   // Game specific
-  block: '30px', // Standard tetris block size
+  block: '30px', // Standard block size
   grid: '2px',   // Grid line thickness
 }; 

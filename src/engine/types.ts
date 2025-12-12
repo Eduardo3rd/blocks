@@ -1,12 +1,12 @@
 // =============================================================================
-// TETRIS EFFECT CLONE - TYPE DEFINITIONS
+// BLOCKS - TYPE DEFINITIONS
 // =============================================================================
 
 // -----------------------------------------------------------------------------
-// Tetromino Types
+// Piece Types
 // -----------------------------------------------------------------------------
 
-export enum TetrominoType {
+export enum PieceType {
   I = 'I',
   O = 'O',
   T = 'T',
@@ -21,8 +21,8 @@ export interface Position {
   y: number;
 }
 
-export interface Tetromino {
-  type: TetrominoType;
+export interface Piece {
+  type: PieceType;
   position: Position;
   rotation: RotationState;
 }
@@ -33,7 +33,7 @@ export type RotationState = 0 | 1 | 2 | 3; // 0=spawn, 1=CW, 2=180, 3=CCW
 // Board Types
 // -----------------------------------------------------------------------------
 
-export type Cell = TetrominoType | null;
+export type Cell = PieceType | null;
 export type Board = Cell[][];
 
 export const BOARD_WIDTH = 10;
@@ -68,7 +68,7 @@ export type ClearType =
   | 'single'
   | 'double'
   | 'triple'
-  | 'tetris'
+  | 'quad'
   | 'tSpinMini'
   | 'tSpinMiniSingle'
   | 'tSpinMiniDouble'
@@ -100,11 +100,11 @@ export interface ZoneState {
 export interface GameState {
   phase: GamePhase;
   board: Board;
-  currentPiece: Tetromino | null;
+  currentPiece: Piece | null;
   ghostY: number;          // Y position of ghost piece
-  holdPiece: TetrominoType | null;
+  holdPiece: PieceType | null;
   canHold: boolean;
-  nextPieces: TetrominoType[];
+  nextPieces: PieceType[];
   
   // Scoring
   score: number;
@@ -190,12 +190,12 @@ export interface JourneyProgress {
 // -----------------------------------------------------------------------------
 
 export type GameEvent =
-  | { type: 'pieceSpawned'; piece: Tetromino }
-  | { type: 'pieceMoved'; piece: Tetromino }
-  | { type: 'pieceRotated'; piece: Tetromino; wallKick: boolean }
-  | { type: 'pieceLocked'; piece: Tetromino }
+  | { type: 'pieceSpawned'; piece: Piece }
+  | { type: 'pieceMoved'; piece: Piece }
+  | { type: 'pieceRotated'; piece: Piece; wallKick: boolean }
+  | { type: 'pieceLocked'; piece: Piece }
   | { type: 'linesCleared'; lines: number[]; clearType: ClearType; score: number }
-  | { type: 'hold'; piece: TetrominoType }
+  | { type: 'hold'; piece: PieceType }
   | { type: 'levelUp'; level: number }
   | { type: 'zoneActivated' }
   | { type: 'zoneEnded'; linesCleared: number; score: number }
@@ -218,7 +218,7 @@ export const DEFAULT_INPUT_CONFIG: InputConfig = {
 export const LOCK_DELAY_DEFAULT = 500;  // 500ms lock delay
 export const MAX_LOCK_RESETS = 15;      // Guideline standard
 
-// Zone constants (Tetris Effect style)
+// Zone constants
 export const ZONE_MAX_METER = 1.0;              // Meter is now 0.0-1.0
 export const ZONE_SECONDS_PER_QUARTER = 5;      // 5 seconds per 25% meter (full = 20s)
 export const ZONE_LINES_PER_QUARTER = 8;        // 8 lines to fill 25% of meter
@@ -226,12 +226,17 @@ export const ZONE_PER_LINE_BONUS = 100;         // +100 points per line at Zone 
 export const ZONE_MAX_MULTIPLIER = 3;           // Cap multiplier at 3x
 
 // Piece bag for 7-bag randomizer
-export const ALL_PIECES: TetrominoType[] = [
-  TetrominoType.I,
-  TetrominoType.O,
-  TetrominoType.T,
-  TetrominoType.S,
-  TetrominoType.Z,
-  TetrominoType.J,
-  TetrominoType.L,
+export const ALL_PIECES: PieceType[] = [
+  PieceType.I,
+  PieceType.O,
+  PieceType.T,
+  PieceType.S,
+  PieceType.Z,
+  PieceType.J,
+  PieceType.L,
 ];
+
+// Legacy alias for backwards compatibility during transition
+export type TetrominoType = PieceType;
+export const TetrominoType = PieceType;
+export type Tetromino = Piece;

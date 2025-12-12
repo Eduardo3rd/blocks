@@ -18,8 +18,8 @@ export const MobileStartScreen: React.FC<MobileStartScreenProps> = ({
   return (
     <div className={styles.startScreen}>
       <div className={styles.startContent}>
-        <h1 className={styles.title}>TETRIS</h1>
-        <p className={styles.subtitle}>EFFECT CLONE</p>
+        <h1 className={styles.title}>BLOCKS</h1>
+        <p className={styles.subtitle}>ZONE EDITION</p>
         
         <div className={styles.mobileControls}>
           <h3>CONTROLS</h3>

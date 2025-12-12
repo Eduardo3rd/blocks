@@ -1,5 +1,5 @@
 // =============================================================================
-// TETRIS EFFECT CLONE - BOARD SYSTEM
+// BLOCKS - BOARD SYSTEM
 // Board operations, collision detection, line clearing, locking
 // =============================================================================
 
@@ -305,7 +305,7 @@ export function clearLines(board: Board, lines: number[]): Board {
 /**
  * Zone mode line clear: Push completed lines to the BOTTOM of the playable area.
  * 
- * In Tetris Effect Zone mode:
+ * In Zone mode:
  * 1. Completed lines don't disappear - they move to the bottom
  * 2. The stack above shifts DOWN to fill the gaps  
  * 3. Completed lines accumulate at the very bottom (becoming zone lines)
@@ -539,7 +539,7 @@ export function determineClearType(
     case 1: return 'single';
     case 2: return 'double';
     case 3: return 'triple';
-    case 4: return 'tetris';
+    case 4: return 'quad';
     default: return 'single';
   }
 }
@@ -548,7 +548,7 @@ export function determineClearType(
  * Check if a clear type is "difficult" (qualifies for back-to-back)
  */
 export function isDifficultClear(clearType: ClearType): boolean {
-  return clearType === 'tetris' ||
+  return clearType === 'quad' ||
     clearType === 'tSpinSingle' ||
     clearType === 'tSpinDouble' ||
     clearType === 'tSpinTriple' ||

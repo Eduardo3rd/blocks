@@ -19,7 +19,7 @@ export type SoundEffect =
   | 'lock'
   | 'hold'
   | 'lineClear'
-  | 'tetris'
+  | 'quad'
   | 'tSpin'
   | 'combo'
   | 'backToBack'
@@ -315,9 +315,9 @@ export class AudioSystem {
   }
   
   /**
-   * Play tetris (4-line) sound
+   * Play quad (4-line) sound
    */
-  playTetrisSound(): void {
+  playQuadSound(): void {
     if (!this.enabled || !this.audioContext || !this.sfxGain) return;
     
     this.ensureContextRunning();
@@ -393,8 +393,8 @@ export class AudioSystem {
       case 'lineClear':
         this.playLineClearSound(1);
         break;
-      case 'tetris':
-        this.playTetrisSound();
+      case 'quad':
+        this.playQuadSound();
         break;
       case 'move':
         this.playQuantizedTone(0.3, 0.05);
@@ -415,7 +415,7 @@ export class AudioSystem {
         this.playQuantizedTone(0.7, 0.15);
         break;
       case 'levelUp':
-        this.playTetrisSound();
+        this.playQuadSound();
         break;
       case 'zoneActivate':
         this.playQuantizedTone(0.9, 0.3);
@@ -435,13 +435,13 @@ export class AudioSystem {
     if (!this.enabled) return;
     
     // Determine which sound to play based on clear type
-    if (clearType === 'tetris') {
-      this.playSfx('tetris');
+    if (clearType === 'quad') {
+      this.playSfx('quad');
     } else if (clearType.startsWith('tSpin')) {
       this.playSfx('tSpin');
     } else if (clearType === 'allClear') {
-      this.playTetrisSound();
-      this.playTetrisSound(); // Double for emphasis
+      this.playQuadSound();
+      this.playQuadSound(); // Double for emphasis
     } else {
       const lineCount = clearType === 'single' ? 1 :
                        clearType === 'double' ? 2 :
