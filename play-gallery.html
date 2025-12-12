@@ -1,0 +1,147 @@
+<!--
+  Play Page Gallery for Squarespace
+  
+  Instructions:
+  1. Copy everything below into a Squarespace Code Block
+  2. Save and publish - images are served from GitHub
+-->
+
+<style>
+  .play-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .play-card {
+    background: #fafafa;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .play-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  }
+
+  .play-card-image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+  }
+
+  .play-card-content {
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .play-card-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
+  }
+
+  .play-card-description {
+    margin: 0 0 1.5rem 0;
+    font-size: 1rem;
+    color: #666;
+    line-height: 1.5;
+  }
+
+  .play-button {
+    display: inline-block;
+    padding: 0.875rem 2.5rem;
+    background: #1a1a1a;
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+
+  .play-button:hover {
+    background: #333;
+    transform: scale(1.02);
+  }
+
+  .play-button:active {
+    transform: scale(0.98);
+  }
+
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .play-card {
+      background: #1a1a1a;
+    }
+
+    .play-card-title {
+      color: #fff;
+    }
+
+    .play-card-description {
+      color: #999;
+    }
+
+    .play-button {
+      background: #fff;
+      color: #1a1a1a;
+    }
+
+    .play-button:hover {
+      background: #eee;
+    }
+  }
+</style>
+
+<div class="play-gallery">
+  
+  <!-- Blocks -->
+  <div class="play-card">
+    <img 
+      src="https://raw.githubusercontent.com/Eduardo3rd/blocks/main/blocks.png" 
+      alt="Blocks - Browser-based puzzle game" 
+      class="play-card-image"
+    />
+    <div class="play-card-content">
+      <h3 class="play-card-title">Blocks</h3>
+      <p class="play-card-description">
+        Browser-based puzzle game featuring zone mechanic with gamepad and mobile support.
+      </p>
+      <a href="https://eduardo3rd.github.io/blocks/" target="_blank" rel="noopener" class="play-button">
+        Play
+      </a>
+    </div>
+  </div>
+
+  <!-- Mondrian Generator -->
+  <div class="play-card">
+    <img 
+      src="https://raw.githubusercontent.com/Eduardo3rd/blocks/main/mondrian.png" 
+      alt="Mondrian Generator - Algorithmic art" 
+      class="play-card-image"
+    />
+    <div class="play-card-content">
+      <h3 class="play-card-title">Mondrian Generator</h3>
+      <p class="play-card-description">
+        Algorithmic art generator in the style of Piet Mondrian. Create unique compositions with primary colors and geometric forms.
+      </p>
+      <a href="https://eduardo3rd.github.io/mondrian-generator/" target="_blank" rel="noopener" class="play-button">
+        Play
+      </a>
+    </div>
+  </div>
+
+</div>
+
