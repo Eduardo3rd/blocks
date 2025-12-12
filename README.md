@@ -4,6 +4,8 @@ A browser-based block puzzle game featuring the Zone mechanic, neon aesthetics, 
 
 **[Play Now](https://eduardo3rd.github.io/blocks/)**
 
+![Blocks gameplay screenshot](blocks.png)
+
 ## Features
 
 - **Zone Mechanic** - Fill the meter by clearing lines, then freeze time to stack lines at the bottom for massive combos
