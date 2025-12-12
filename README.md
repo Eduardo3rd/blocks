@@ -49,4 +49,7 @@ npm run build
 
 ## License
 
-MIT License 
+MIT License
+
+---
+*Last tested: December 2024*
