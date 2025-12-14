@@ -311,9 +311,13 @@ export class GameEngine {
       this.state.ghostY = getGhostY(this.state.board, result.piece);
       this.lastRotationWasWallKick = result.wallKickUsed;
       
-      // Reset lock delay
+      // Check ground state after rotation
       if (isOnGround(this.state.board, result.piece)) {
+        // Reset lock delay if still on ground
         this.resetLockDelay(result.piece.position.y);
+      } else {
+        // Cancel lock if wall kick moved piece off the ground
+        this.state.lock.isLocking = false;
       }
       
       this.emit({ type: 'pieceRotated', piece: result.piece, wallKick: result.wallKickUsed });
@@ -331,8 +335,12 @@ export class GameEngine {
       this.state.ghostY = getGhostY(this.state.board, result.piece);
       this.lastRotationWasWallKick = result.wallKickUsed;
       
+      // Check ground state after rotation
       if (isOnGround(this.state.board, result.piece)) {
         this.resetLockDelay(result.piece.position.y);
+      } else {
+        // Cancel lock if wall kick moved piece off the ground
+        this.state.lock.isLocking = false;
       }
       
       this.emit({ type: 'pieceRotated', piece: result.piece, wallKick: result.wallKickUsed });
